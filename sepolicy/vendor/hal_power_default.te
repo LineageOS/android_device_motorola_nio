@@ -6,6 +6,7 @@ allow hal_power_default {
 
 allow hal_power_default {
   cgroup
+  proc
   sysfs_devfreq
   sysfs_devices_system_cpu
   sysfs_graphics
