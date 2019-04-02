@@ -28,6 +28,7 @@
 #include <utils/Log.h>
 #include <utils/Trace.h>
 
+#include "AudioStreaming.h"
 #include "Power.h"
 #include "display-helper.h"
 
@@ -42,13 +43,6 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::power::V1_0::Feature;
 using ::android::hardware::power::V1_0::Status;
-
-// Keep sync with darwinn HAL
-constexpr size_t kTpuBoostStop = 1000;
-constexpr size_t kTpuBoostShort = 1001;
-constexpr size_t kTpuBoostLong = 1002;
-constexpr size_t kTpuBoostDurationShortMs = 200;
-constexpr size_t kTpuBoostDurationLongMs = 2000;
 
 Power::Power()
     : mHintManager(nullptr),
@@ -248,17 +242,18 @@ Return<void> Power::powerHintAsync_1_2(PowerHint_1_2 hint, int32_t data) {
             if (mVRModeOn || mSustainedPerfModeOn) {
                 ALOGV("%s: ignoring due to other active perf hints", __func__);
             } else {
-                if (data == 1) {
+                if (data == static_cast<int32_t>(AUDIO_STREAMING_HINT::AUDIO_STREAMING_ON)) {
                     mHintManager->DoHint("AUDIO_STREAMING");
-                } else if (data == 0) {
+                } else if (data ==
+                           static_cast<int32_t>(AUDIO_STREAMING_HINT::AUDIO_STREAMING_OFF)) {
                     mHintManager->EndHint("AUDIO_STREAMING");
-                } else if (data == kTpuBoostShort) {
+                } else if (data == static_cast<int32_t>(AUDIO_STREAMING_HINT::TPU_BOOST_SHORT)) {
                     mHintManager->DoHint("TPU_BOOST",
-                                         std::chrono::milliseconds(kTpuBoostDurationShortMs));
-                } else if (data == kTpuBoostLong) {
+                                         std::chrono::milliseconds(TPU_HINT_DURATION_MS::SHORT));
+                } else if (data == static_cast<int32_t>(AUDIO_STREAMING_HINT::TPU_BOOST_LONG)) {
                     mHintManager->DoHint("TPU_BOOST",
-                                         std::chrono::milliseconds(kTpuBoostDurationLongMs));
-                } else if (data == kTpuBoostStop) {
+                                         std::chrono::milliseconds(TPU_HINT_DURATION_MS::LONG));
+                } else if (data == static_cast<int32_t>(AUDIO_STREAMING_HINT::TPU_BOOST_OFF)) {
                     mHintManager->EndHint("TPU_BOOST");
                 } else {
                     ALOGE("AUDIO STREAMING INVALID DATA: %d", data);
