@@ -202,6 +202,9 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     vendor.swvdec.log.level=1 \
     vendor.vidc.debug.level=1
 
+PRODUCT_PRODUCT_PROPERTIES += \
+    media.stagefright.thumbnail.prefer_hw_codecs=true
+
 # Memory optimizations
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     ro.vendor.qti.sys.fw.bservice_age=5000 \
