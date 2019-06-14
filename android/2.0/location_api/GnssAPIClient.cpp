@@ -61,6 +61,7 @@ GnssAPIClient::GnssAPIClient(const sp<V1_0::IGnssCallback>& gpsCb,
     mControlClient(new LocationAPIControlClient()),
     mLocationCapabilitiesMask(0),
     mLocationCapabilitiesCached(false),
+    mTracking(false),
     mGnssCbIface_2_0(nullptr)
 {
     LOC_LOGD("%s]: (%p %p)", __FUNCTION__, &gpsCb, &niCb);
@@ -76,6 +77,7 @@ GnssAPIClient::GnssAPIClient(const sp<V2_0::IGnssCallback>& gpsCb) :
     mControlClient(new LocationAPIControlClient()),
     mLocationCapabilitiesMask(0),
     mLocationCapabilitiesCached(false),
+    mTracking(false),
     mGnssCbIface_2_0(nullptr)
 {
     LOC_LOGD("%s]: (%p)", __FUNCTION__, &gpsCb);
@@ -179,6 +181,11 @@ void GnssAPIClient::gnssUpdateCallbacks_2_0(const sp<V2_0::IGnssCallback>& gpsCb
 bool GnssAPIClient::gnssStart()
 {
     LOC_LOGD("%s]: ()", __FUNCTION__);
+
+    mMutex.lock();
+    mTracking = true;
+    mMutex.unlock();
+
     bool retVal = true;
     locAPIStartTracking(mTrackingOptions);
     return retVal;
@@ -187,6 +194,11 @@ bool GnssAPIClient::gnssStart()
 bool GnssAPIClient::gnssStop()
 {
     LOC_LOGD("%s]: ()", __FUNCTION__);
+
+    mMutex.lock();
+    mTracking = false;
+    mMutex.unlock();
+
     bool retVal = true;
     locAPIStopTracking();
     return retVal;
@@ -412,11 +424,17 @@ void GnssAPIClient::onCapabilitiesCb(LocationCapabilitiesMask capabilitiesMask)
 
 void GnssAPIClient::onTrackingCb(Location location)
 {
-    LOC_LOGD("%s]: (flags: %02x)", __FUNCTION__, location.flags);
     mMutex.lock();
     auto gnssCbIface(mGnssCbIface);
     auto gnssCbIface_2_0(mGnssCbIface_2_0);
+    bool isTracking = mTracking;
     mMutex.unlock();
+
+    LOC_LOGD("%s]: (flags: %02x isTracking: %d)", __FUNCTION__, location.flags, isTracking);
+
+    if (!isTracking) {
+        return;
+    }
 
     if (gnssCbIface_2_0 != nullptr) {
         V2_0::GnssLocation gnssLocation;
@@ -517,7 +535,7 @@ void GnssAPIClient::onGnssNiCb(uint32_t id, GnssNiNotification gnssNiNotificatio
 
 void GnssAPIClient::onGnssSvCb(GnssSvNotification gnssSvNotification)
 {
-    LOC_LOGD("%s]: (count: %zu)", __FUNCTION__, gnssSvNotification.count);
+    LOC_LOGD("%s]: (count: %u)", __FUNCTION__, gnssSvNotification.count);
     mMutex.lock();
     auto gnssCbIface(mGnssCbIface);
     auto gnssCbIface_2_0(mGnssCbIface_2_0);
@@ -561,7 +579,7 @@ void GnssAPIClient::onGnssNmeaCb(GnssNmeaNotification gnssNmeaNotification)
                 auto r = gnssCbIface_2_0->gnssNmeaCb(
                         static_cast<V1_0::GnssUtcTime>(gnssNmeaNotification.timestamp), nmeaString);
                 if (!r.isOk()) {
-                    LOC_LOGE("%s] Error from gnssCbIface_2_0 nmea=%s length=%zu description=%s",
+                    LOC_LOGE("%s] Error from gnssCbIface_2_0 nmea=%s length=%u description=%s",
                              __func__, gnssNmeaNotification.nmea, gnssNmeaNotification.length,
                              r.description().c_str());
                 }
@@ -569,7 +587,7 @@ void GnssAPIClient::onGnssNmeaCb(GnssNmeaNotification gnssNmeaNotification)
                 auto r = gnssCbIface->gnssNmeaCb(
                         static_cast<V1_0::GnssUtcTime>(gnssNmeaNotification.timestamp), nmeaString);
                 if (!r.isOk()) {
-                    LOC_LOGE("%s] Error from gnssNmeaCb nmea=%s length=%zu description=%s",
+                    LOC_LOGE("%s] Error from gnssNmeaCb nmea=%s length=%u description=%s",
                              __func__, gnssNmeaNotification.nmea, gnssNmeaNotification.length,
                              r.description().c_str());
                 }

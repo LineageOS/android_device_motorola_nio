@@ -70,8 +70,6 @@ public:
             getLocIpcInetTcpSender(const char* serverName, int32_t port);
     static shared_ptr<LocIpcSender>
             getLocIpcQrtrSender(int service, int instance);
-    static shared_ptr<LocIpcSender>
-            getLocIpcQsockSender(int service, int instance);
 
     static unique_ptr<LocIpcRecver>
             getLocIpcLocalRecver(const shared_ptr<ILocIpcListener>& listener,
@@ -82,9 +80,6 @@ public:
     static unique_ptr<LocIpcRecver>
             getLocIpcQrtrRecver(const shared_ptr<ILocIpcListener>& listener,
                                 int service, int instance);
-    static unique_ptr<LocIpcRecver>
-            getLocIpcQsockRecver(const shared_ptr<ILocIpcListener>& listener,
-                                 int service, int instance);
 
     static pair<shared_ptr<LocIpcSender>, unique_ptr<LocIpcRecver>>
             getLocIpcQmiLocServiceSenderRecverPair(const shared_ptr<ILocIpcListener>& listener,
@@ -164,7 +159,7 @@ public:
     inline Sock(int sid, const uint32_t maxTxSize = 8192) : mMaxTxSize(maxTxSize), mSid(sid) {}
     inline ~Sock() { close(); }
     inline bool isValid() const { return -1 != mSid; }
-    ssize_t send(const void *buf, size_t len, int flags, const struct sockaddr *destAddr,
+    ssize_t send(const void *buf, uint32_t len, int flags, const struct sockaddr *destAddr,
                  socklen_t addrlen) const;
     ssize_t recv(const shared_ptr<ILocIpcListener>& dataCb, int flags, struct sockaddr *srcAddr,
                  socklen_t *addrlen, int sid = -1) const;
