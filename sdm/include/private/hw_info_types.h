@@ -30,11 +30,12 @@
 #include <core/core_interface.h>
 #include <utils/locker.h>
 #include <utils/debug.h>
-#include <vector>
-#include <map>
-#include <string>
 #include <bitset>
+#include <map>
 #include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
 namespace sdm {
 using std::string;
@@ -354,10 +355,12 @@ struct HWPanelInfo {
   bool is_pluggable = false;          // Panel is pluggable
   HWSplitInfo split_info;             // Panel split configuration
   char panel_name[256] = {0};         // Panel name
-  int panel_max_brightness = 0;       // Max panel brightness
+  float panel_max_brightness = 255.0f;  // Max panel brightness
+  float panel_min_brightness = 1.0f;  // Min panel brightness
   uint32_t left_roi_count = 1;        // Number if ROI supported on left panel
   uint32_t right_roi_count = 1;       // Number if ROI supported on right panel
   bool hdr_enabled = false;           // HDR feature supported
+  bool hdr_plus_enabled = false;      // HDR10+ feature supported
   bool hdr_metadata_type_one = false;     // Static HDR metadata type one
   uint32_t hdr_eotf = 0;              // Electro optical transfer function
   float peak_luminance = 0.0f;        // Panel's peak luminance level
@@ -614,6 +617,10 @@ struct HWHDRLayerInfo {
 
   int32_t layer_index = -1;
   HDROperation operation = kNoOp;
+  bool in_hdr_mode = false;  // True if already in HDR mode with static metadata.
+  bool blend_space_layer_changed = false;  // True if HDR layer's index changed.
+  std::set<uint32_t> hdr_layers;  // Non-tonemapped HDR layer indices.
+  std::vector<uint8_t> dyn_hdr_vsif_payload;  // Dynamic HDR VSIF data.
 };
 
 struct LayerExt {

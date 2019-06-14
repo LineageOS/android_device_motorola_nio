@@ -846,6 +846,8 @@ DisplayError HWCDisplayBuiltIn::ControlIdlePowerCollapse(bool enable, bool synch
 DisplayError HWCDisplayBuiltIn::SetDynamicDSIClock(uint64_t bitclk) {
   {
     SEQUENCE_WAIT_SCOPE_LOCK(HWCSession::locker_[type_]);
+    DisablePartialUpdateOneFrame();
+
     DisplayError error = display_intf_->SetDynamicDSIClock(bitclk);
     if (error != kErrorNone) {
       DLOGE(" failed: Clk: %llu Error: %d", bitclk, error);
@@ -886,4 +888,21 @@ HWC2::Error HWCDisplayBuiltIn::SetPendingRefresh() {
   return HWC2::Error::None;
 }
 
+HWC2::Error HWCDisplayBuiltIn::SetPanelBrightness(float brightness) {
+  DisplayError ret = display_intf_->SetPanelBrightness(brightness);
+  if (ret != kErrorNone) {
+    return HWC2::Error::NoResources;
+  }
+
+  return HWC2::Error::None;
+}
+
+HWC2::Error HWCDisplayBuiltIn::GetPanelBrightness(float *brightness) {
+  DisplayError ret = display_intf_->GetPanelBrightness(brightness);
+  if (ret != kErrorNone) {
+    return HWC2::Error::NoResources;
+  }
+
+  return HWC2::Error::None;
+}
 }  // namespace sdm

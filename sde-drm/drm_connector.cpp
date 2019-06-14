@@ -537,15 +537,18 @@ void DRMConnector::ParseCapabilities(uint64_t blob_id, drm_msm_ext_hdr_propertie
 
   if(hdr_cdata) {
    hdr_info->hdr_supported = hdr_cdata->hdr_supported;
+   hdr_info->hdr_plus_supported = hdr_cdata->hdr_plus_supported;
    hdr_info->hdr_eotf = hdr_cdata->hdr_eotf;
    hdr_info->hdr_metadata_type_one = hdr_cdata->hdr_metadata_type_one;
    hdr_info->hdr_max_luminance = hdr_cdata->hdr_max_luminance;
    hdr_info->hdr_avg_luminance = hdr_cdata->hdr_avg_luminance;
    hdr_info->hdr_min_luminance = hdr_cdata->hdr_min_luminance;
-   DRM_LOGI("hdr_supported=%d , hdr_eotf= %d , hdr_metadata_type_one= %d,"
-            "hdr_max_luminance= %d , hdr_avg_luminance= %d , hdr_min_luminance %d\n",
-            hdr_info->hdr_supported,hdr_info->hdr_eotf, hdr_info->hdr_metadata_type_one,
-            hdr_info->hdr_max_luminance, hdr_info->hdr_avg_luminance, hdr_info->hdr_min_luminance);
+   DRM_LOGI("hdr_supported = %d, hdr_plus_supported = %d, hdr_eotf = %d, "
+            "hdr_metadata_type_one = %d, hdr_max_luminance = %d, hdr_avg_luminance = %d, "
+            "hdr_min_luminance = %d\n", hdr_info->hdr_supported,
+            hdr_info->hdr_plus_supported,
+            hdr_info->hdr_eotf, hdr_info->hdr_metadata_type_one, hdr_info->hdr_max_luminance,
+            hdr_info->hdr_avg_luminance, hdr_info->hdr_min_luminance);
   }
   drmModeFreePropertyBlob(blob);
 }
@@ -576,6 +579,7 @@ int DRMConnector::GetInfo(DRMConnectorInfo *info) {
       info->is_connected = false;
       info->modes.clear();
       info->type = drm_connector_->connector_type;
+      info->type_id = drm_connector_->connector_type_id;
       DLOGW("Connector %u not found. Possibly removed.", conn_id);
       return 0;
     }
@@ -596,6 +600,7 @@ int DRMConnector::GetInfo(DRMConnectorInfo *info) {
   info->mmWidth = drm_connector_->mmWidth;
   info->mmHeight = drm_connector_->mmHeight;
   info->type = drm_connector_->connector_type;
+  info->type_id = drm_connector_->connector_type_id;
   info->is_connected = IsConnected();
 
   drmModeObjectProperties *props =
@@ -802,7 +807,7 @@ void DRMConnector::Perform(DRMOps code, drmModeAtomicReq *req, va_list args) {
       if (frame_trigger_mode >= 0) {
         uint32_t prop_id = prop_mgr_.GetPropertyId(DRMProperty::FRAME_TRIGGER);
         int ret = drmModeAtomicAddProperty(req, obj_id, prop_id, frame_trigger_mode);
-        if (ret) {
+        if (ret < 0) {
           DRM_LOGE("AtomicAddProperty failed obj_id 0x%x, prop_id %d mode %d ret %d",
                    obj_id, prop_id, frame_trigger_mode, ret);
         } else {

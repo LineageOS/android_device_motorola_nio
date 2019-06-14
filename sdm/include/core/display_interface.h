@@ -191,7 +191,8 @@ struct DisplayConfigFixedInfo {
   bool underscan = false;              //!< If display support CE underscan.
   bool secure = false;                 //!< If this display is capable of handling secure content.
   bool is_cmdmode = false;             //!< If panel is command mode panel.
-  bool hdr_supported = false;          //!< if HDR is enabled
+  bool hdr_supported = false;          //!< If HDR10 is supported.
+  bool hdr_plus_supported = false;     //!< If HDR10+ is supported.
   bool hdr_metadata_type_one = false;  //!< Metadata type one obtained from HDR sink
   uint32_t hdr_eotf = 0;               //!< Electro optical transfer function
   float max_luminance = 0.0f;          //!< From Panel's peak luminance
@@ -537,13 +538,13 @@ class DisplayInterface {
   */
   virtual bool IsUnderscanSupported() = 0;
 
-  /*! @brief Method to set brightness of the primary display.
+  /*! @brief Method to set brightness of the builtin display.
 
-    @param[in] level the new backlight level.
+    @param[in] brightness the new backlight level 0.0f(min) to 1.0f(max) where -1.0f represents off.
 
     @return \link DisplayError \endlink
   */
-  virtual DisplayError SetPanelBrightness(int level) = 0;
+  virtual DisplayError SetPanelBrightness(float brightness) = 0;
 
   /*! @brief Method to notify display about change in min HDCP encryption level.
 
@@ -652,11 +653,11 @@ class DisplayInterface {
 
   /*! @brief Method to get the brightness level of the display
 
-    @param[out] level brightness level
+    @param[out] brightness brightness percentage
 
     @return \link DisplayError \endlink
   */
-  virtual DisplayError GetPanelBrightness(int *level) = 0;
+  virtual DisplayError GetPanelBrightness(float *brightness) = 0;
 
   /*! @brief Method to set layer mixer resolution.
 
