@@ -153,6 +153,7 @@ enum HwHdrEotf {
 };
 
 enum HWSrcTonemap {
+  kSrcTonemapNone,
   kSrcTonemap1d,  // DMA
   kSrcTonemap3d,  // VIG
 };
@@ -194,7 +195,7 @@ class PPFeatureInfo {
 };
 
 struct HWDynBwLimitInfo {
-  uint32_t cur_mode = kBwDefault;
+  uint32_t cur_mode = kBwVFEOn;
   uint64_t total_bw_limit[kBwModeMax] = { 0 };
   uint64_t pipe_bw_limit[kBwModeMax] = { 0 };
 };
@@ -270,6 +271,7 @@ struct HWResourceInfo {
   uint32_t max_rotation_pipe_width = 1088;
   uint32_t max_cursor_size = 0;
   uint64_t max_pipe_bw =  0;
+  uint64_t max_pipe_bw_high = 0;
   uint32_t max_sde_clk = 0;
   float clk_fudge_factor = 1.0f;
   uint32_t macrotile_nv12_factor = 0;
@@ -283,7 +285,6 @@ struct HWResourceInfo {
   bool has_decimation = false;
   bool has_non_scalar_rgb = false;
   bool is_src_split = false;
-  bool has_dyn_bw_support = false;
   bool separate_rotator = false;
   bool has_qseed3 = false;
   bool has_concurrent_writeback = false;
@@ -588,6 +589,7 @@ struct HWPipeInfo {
   HWPipeCscInfo dgm_csc_info = {};
   std::vector<HWPipeTonemapLutInfo> lut_info = {};
   LayerTransform transform;
+  HWSrcTonemap tonemap = kSrcTonemapNone;
 };
 
 struct HWSolidfillStage {

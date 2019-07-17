@@ -5,7 +5,9 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/lib64/hw/android.hardware.gr
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.graphics.composer@2.2-service)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.graphics.composer@2.2-service.rc)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/lib64/hw/android.hardware.graphics.composer@2.2-impl.so)
-
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.graphics.composer@2.3-service)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.graphics.composer@2.3-service.rc)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/lib64/hw/android.hardware.graphics.composer@2.3-impl.so)
 
 # Clean old target objs
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/lib64/hw/hwcomposer.kona.so)
@@ -43,3 +45,6 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/lib/hw/memtrack.talos.so)
 
 #Clean display includes
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/include/qcom/display)
+
+# Clean old allocator rc file
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/vendor.qti.hardware.display.allocator@1.0-service.rc)

@@ -261,7 +261,9 @@ static void GetDRMFormat(LayerBufferFormat format, uint32_t *drm_format,
 
 class FrameBufferObject : public LayerBufferObject {
  public:
-  explicit FrameBufferObject(uint32_t fb_id) : fb_id_(fb_id) {
+  explicit FrameBufferObject(uint32_t fb_id, LayerBufferFormat format,
+                             uint32_t width, uint32_t height)
+    :fb_id_(fb_id), format_(format), width_(width), height_(height) {
   }
 
   ~FrameBufferObject() {
@@ -273,9 +275,15 @@ class FrameBufferObject : public LayerBufferObject {
     }
   }
   uint32_t GetFbId() { return fb_id_; }
+  bool IsEqual(LayerBufferFormat format, uint32_t width, uint32_t height) {
+    return (format == format_ && width == width_ && height == height_);
+  }
 
  private:
   uint32_t fb_id_;
+  LayerBufferFormat format_;
+  uint32_t width_;
+  uint32_t height_;
 };
 
 HWDeviceDRM::Registry::Registry(BufferAllocator *buffer_allocator) :
@@ -343,9 +351,16 @@ void HWDeviceDRM::Registry::MapBufferToFbId(Layer* layer, LayerBuffer* buffer) {
     // In legacy path, clear fb_id map in each frame.
     layer->buffer_map->buffer_map.clear();
   } else {
-    if (layer->buffer_map->buffer_map.find(handle_id) != layer->buffer_map->buffer_map.end()) {
-      // Found fb_id for given handle_id key
-      return;
+    auto it = layer->buffer_map->buffer_map.find(handle_id);
+    if (it != layer->buffer_map->buffer_map.end()) {
+      FrameBufferObject *fb_obj = static_cast<FrameBufferObject*>(it->second.get());
+      if (fb_obj->IsEqual(buffer->format, buffer->width, buffer->height)) {
+        // Found fb_id for given handle_id key
+        return;
+      } else {
+        // Erase from fb_id map if format or size have been modified
+        layer->buffer_map->buffer_map.erase(it);
+      }
     }
 
     if (layer->buffer_map->buffer_map.size() >= fbid_cache_limit_) {
@@ -357,7 +372,8 @@ void HWDeviceDRM::Registry::MapBufferToFbId(Layer* layer, LayerBuffer* buffer) {
   uint32_t fb_id = 0;
   if (CreateFbId(buffer, &fb_id) >= 0) {
     // Create and cache the fb_id in map
-    layer->buffer_map->buffer_map[handle_id] = std::make_shared<FrameBufferObject>(fb_id);
+    layer->buffer_map->buffer_map[handle_id] = std::make_shared<FrameBufferObject>(fb_id,
+        buffer->format, buffer->width, buffer->height);
   }
 }
 
@@ -371,8 +387,14 @@ void HWDeviceDRM::Registry::MapOutputBufferToFbId(LayerBuffer *output_buffer) {
     // In legacy path, clear output buffer map in each frame.
     output_buffer_map_.clear();
   } else {
-    if (output_buffer_map_.find(handle_id) != output_buffer_map_.end()) {
-      return;
+    auto it = output_buffer_map_.find(handle_id);
+    if (it != output_buffer_map_.end()) {
+      FrameBufferObject *fb_obj = static_cast<FrameBufferObject*>(it->second.get());
+      if (fb_obj->IsEqual(output_buffer->format, output_buffer->width, output_buffer->height)) {
+        return;
+      } else {
+        output_buffer_map_.erase(it);
+      }
     }
 
     if (output_buffer_map_.size() >= UI_FBID_LIMIT) {
@@ -383,7 +405,8 @@ void HWDeviceDRM::Registry::MapOutputBufferToFbId(LayerBuffer *output_buffer) {
 
   uint32_t fb_id = 0;
   if (CreateFbId(output_buffer, &fb_id) >= 0) {
-    output_buffer_map_[handle_id] = std::make_shared<FrameBufferObject>(fb_id);
+    output_buffer_map_[handle_id] = std::make_shared<FrameBufferObject>(fb_id,
+        output_buffer->format, output_buffer->width, output_buffer->height);
   }
 }
 
@@ -807,6 +830,18 @@ DisplayError HWDeviceDRM::SetDisplayAttributes(uint32_t index) {
     return kErrorParameters;
   }
 
+  drmModeModeInfo to_set = connector_info_.modes[index].mode;
+  uint64_t current_bit_clk = connector_info_.modes[current_mode_index_].bit_clk_rate;
+  for (uint32_t mode_index = 0; mode_index < connector_info_.modes.size(); mode_index++) {
+    if ((to_set.vdisplay == connector_info_.modes[mode_index].mode.vdisplay) &&
+        (to_set.hdisplay == connector_info_.modes[mode_index].mode.hdisplay) &&
+        (to_set.vrefresh == connector_info_.modes[mode_index].mode.vrefresh) &&
+        (current_bit_clk == connector_info_.modes[mode_index].bit_clk_rate)) {
+      index = mode_index;
+      break;
+    }
+  }
+
   current_mode_index_ = index;
   PopulateHWPanelInfo();
   UpdateMixerAttributes();
@@ -874,7 +909,7 @@ DisplayError HWDeviceDRM::PowerOff(bool teardown) {
     return kErrorNone;
   }
 
-  SetFullROI();
+  ResetROI();
   drmModeModeInfo current_mode = connector_info_.modes[current_mode_index_].mode;
   drm_atomic_intf_->Perform(DRMOps::CRTC_SET_MODE, token_.crtc_id, &current_mode);
   drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_POWER_MODE, token_.conn_id, DRMPowerMode::OFF);
@@ -991,34 +1026,32 @@ void HWDeviceDRM::SetupAtomic(HWLayers *hw_layers, bool validate) {
   bool resource_update = hw_layers->updates_mask.test(kUpdateResources);
   bool update_config = resource_update || hw_layer_info.stack->flags.geometry_changed;
 
-  // TODO(user): Once destination scalar is enabled we can always send ROIs if driver allows
-  if (hw_panel_info_.partial_update && update_config && !IsDestScalingNeeded()) {
-    const int kNumMaxROIs = 4;
-    DRMRect crtc_rects[kNumMaxROIs] = {{0, 0, mixer_attributes_.width, mixer_attributes_.height}};
-    DRMRect conn_rects[kNumMaxROIs] = {{0, 0, display_attributes_[index].x_pixels,
-                                        display_attributes_[index].y_pixels}};
+  if (hw_panel_info_.partial_update && update_config) {
+    if (IsFullFrameUpdate(hw_layer_info)) {
+      ResetROI();
+    } else {
+      const int kNumMaxROIs = 4;
+      DRMRect crtc_rects[kNumMaxROIs] = {{0, 0, mixer_attributes_.width, mixer_attributes_.height}};
+      DRMRect conn_rects[kNumMaxROIs] = {{0, 0, display_attributes_[index].x_pixels,
+                                          display_attributes_[index].y_pixels}};
 
-    for (uint32_t i = 0; i < hw_layer_info.left_frame_roi.size(); i++) {
-      auto &roi = hw_layer_info.left_frame_roi.at(i);
-      // TODO(user): In multi PU, stitch ROIs vertically adjacent and upate plane destination
-      crtc_rects[i].left = UINT32(roi.left);
-      crtc_rects[i].right = UINT32(roi.right);
-      crtc_rects[i].top = UINT32(roi.top);
-      crtc_rects[i].bottom = UINT32(roi.bottom);
-      // TODO(user): In Dest scaler + PU, populate from HWDestScaleInfo->panel_roi
-      // TODO(user): panel_roi need to be made as a vector in HWLayersInfo and
-      // needs to be removed from  HWDestScaleInfo.
-      conn_rects[i].left = UINT32(roi.left);
-      conn_rects[i].right = UINT32(roi.right);
-      conn_rects[i].top = UINT32(roi.top);
-      conn_rects[i].bottom = UINT32(roi.bottom);
+      for (uint32_t i = 0; i < hw_layer_info.left_frame_roi.size(); i++) {
+        auto &roi = hw_layer_info.left_frame_roi.at(i);
+        // TODO(user): In multi PU, stitch ROIs vertically adjacent and upate plane destination
+        crtc_rects[i].left = UINT32(roi.left);
+        crtc_rects[i].right = UINT32(roi.right);
+        crtc_rects[i].top = UINT32(roi.top);
+        crtc_rects[i].bottom = UINT32(roi.bottom);
+        conn_rects[i].left = UINT32(roi.left);
+        conn_rects[i].right = UINT32(roi.right);
+        conn_rects[i].top = UINT32(roi.top);
+        conn_rects[i].bottom = UINT32(roi.bottom);
+      }
+
+      uint32_t num_rects = std::max(1u, static_cast<uint32_t>(hw_layer_info.left_frame_roi.size()));
+      drm_atomic_intf_->Perform(DRMOps::CRTC_SET_ROI, token_.crtc_id, num_rects, crtc_rects);
+      drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_ROI, token_.conn_id, num_rects, conn_rects);
     }
-
-    uint32_t num_rects = std::max(1u, static_cast<uint32_t>(hw_layer_info.left_frame_roi.size()));
-    drm_atomic_intf_->Perform(DRMOps::CRTC_SET_ROI, token_.crtc_id,
-                              num_rects, crtc_rects);
-    drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_ROI, token_.conn_id,
-                              num_rects, conn_rects);
   }
 
   for (uint32_t i = 0; i < hw_layer_count; i++) {
@@ -1202,7 +1235,8 @@ void HWDeviceDRM::SetupAtomic(HWLayers *hw_layers, bool validate) {
                               topology_control_);
     drm_atomic_intf_->Perform(DRMOps::CRTC_SET_ACTIVE, token_.crtc_id, 1);
     drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_CRTC, token_.conn_id, token_.crtc_id);
-    drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_POWER_MODE, token_.conn_id, DRMPowerMode::ON);
+    DRMPowerMode power_mode = pending_doze_ ? DRMPowerMode::DOZE : DRMPowerMode::ON;
+    drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_POWER_MODE, token_.conn_id, power_mode);
   } else if (pending_doze_ && !validate) {
     drm_atomic_intf_->Perform(DRMOps::CRTC_SET_ACTIVE, token_.crtc_id, 1);
     drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_POWER_MODE, token_.conn_id, DRMPowerMode::DOZE);
@@ -1446,6 +1480,7 @@ DisplayError HWDeviceDRM::AtomicCommit(HWLayers *hw_layers) {
   first_cycle_ = false;
   update_mode_ = false;
   hw_layers->updates_mask = 0;
+  pending_doze_ = false;
 
   return kErrorNone;
 }
@@ -2047,17 +2082,22 @@ void HWDeviceDRM::DumpConnectorModeInfo() {
   }
 }
 
-void HWDeviceDRM::SetFullROI() {
-  // Reset the CRTC ROI and connector ROI only for the panel that supports partial update
-  if (!hw_panel_info_.partial_update) {
-    return;
+void HWDeviceDRM::ResetROI() {
+  drm_atomic_intf_->Perform(DRMOps::CRTC_SET_ROI, token_.crtc_id, 0, nullptr);
+  drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_ROI, token_.conn_id, 0, nullptr);
+}
+
+bool HWDeviceDRM::IsFullFrameUpdate(const HWLayersInfo &hw_layer_info) {
+  LayerRect full_frame = {0, 0, FLOAT(mixer_attributes_.width), FLOAT(mixer_attributes_.height)};
+
+  const LayerRect &frame_roi = hw_layer_info.left_frame_roi.at(0);
+  // If multiple ROIs are present, then it's not fullscreen update.
+  if (hw_layer_info.left_frame_roi.size() > 1 ||
+      (IsValid(frame_roi) && !IsCongruent(full_frame, frame_roi))) {
+    return false;
   }
-  uint32_t index = current_mode_index_;
-  DRMRect crtc_rects = {0, 0, mixer_attributes_.width, mixer_attributes_.height};
-  DRMRect conn_rects = {0, 0, display_attributes_[index].x_pixels,
-                         display_attributes_[index].y_pixels};
-  drm_atomic_intf_->Perform(DRMOps::CRTC_SET_ROI, token_.crtc_id, 1, &crtc_rects);
-  drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_ROI, token_.conn_id, 1, &conn_rects);
+
+  return true;
 }
 
 DisplayError HWDeviceDRM::SetDynamicDSIClock(uint64_t bit_clk_rate) {

@@ -541,6 +541,7 @@ struct DRMPlaneTypeInfo {
   uint32_t max_horizontal_deci;
   uint32_t max_vertical_deci;
   uint64_t max_pipe_bandwidth;
+  uint64_t max_pipe_bandwidth_high;
   uint32_t cache_size;  // cache size in bytes for inline rotation support.
   bool has_excl_rect = false;
   QSEEDStepVersion qseed3_version;
@@ -735,6 +736,7 @@ struct DRMDppsLtmBuffers {
 
 struct DRMDppsFeatureInfo {
   DRMDPPSFeatureID id;
+  uint32_t obj_id;
   uint32_t version;
   uint32_t payload_size;
   void *payload;

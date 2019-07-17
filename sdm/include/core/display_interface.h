@@ -532,6 +532,14 @@ class DisplayInterface {
   */
   virtual DisplayError SetRefreshRate(uint32_t refresh_rate, bool final_rate) = 0;
 
+  /*! @brief Method to get the refresh rate of a display.
+
+    @param[in] refresh_rate refresh rate of the display.
+
+    @return \link DisplayError \endlink
+  */
+  virtual DisplayError GetRefreshRate(uint32_t *refresh_rate) = 0;
+
   /*! @brief Method to query whether scanning is support for the HDMI display.
 
     @return \link DisplayError \endlink
@@ -861,6 +869,21 @@ class DisplayInterface {
   */
   virtual DisplayError GetDisplayIdentificationData(uint8_t *out_port, uint32_t *out_data_size,
                                                     uint8_t *out_data) = 0;
+
+  /*! @brief Method to set min/max luminance for dynamic tonemapping of external device over WFD.
+
+    @param[in] min_lum min luminance supported by external device.
+    @param[in] max_lum max luminance supported by external device.
+
+    @return \link DisplayError \endlink
+  */
+  virtual DisplayError SetPanelLuminanceAttributes(float min_lum, float max_lum) = 0;
+
+  /*! @brief Method to query if there is a need to validate.
+
+      @return \link boolean \endlink
+  */
+  virtual bool CanSkipValidate() = 0;
 
  protected:
   virtual ~DisplayInterface() { }

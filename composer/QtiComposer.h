@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2018, The Linux Foundation. All rights reserved.
+* Copyright (c) 2019, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -27,46 +27,57 @@
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __DEBUG_H__
-#define __DEBUG_H__
 
-#include <stdint.h>
-#include <debug_handler.h>
-#include <core/sdm_types.h>
-#include <core/display_interface.h>
-#include <display_properties.h>
+#ifndef __QTICOMPOSER_H__
+#define __QTICOMPOSER_H__
 
-namespace sdm {
+#include <vendor/qti/hardware/display/composer/2.0/IQtiComposer.h>
+#include <log/log.h>
+#include <unordered_set>
+#include <QtiComposerClient.h>
 
-using display::DebugHandler;
+// TODO(user): recheck on this header inclusion
+#include <hardware/hwcomposer2.h>
 
-class Debug {
+
+namespace vendor {
+namespace qti {
+namespace hardware {
+namespace display {
+namespace composer {
+namespace V2_0 {
+namespace implementation {
+
+using ::vendor::qti::hardware::display::composer::V2_0::IQtiComposer;
+
+class QtiComposer : public IQtiComposer {
  public:
-  static inline DebugHandler* Get() { return DebugHandler::Get(); }
-  static int GetSimulationFlag();
-  static bool GetExternalResolution(char *val);
-  static void GetIdleTimeoutMs(uint32_t *active_ms, uint32_t *inactive_ms);
-  static bool IsRotatorDownScaleDisabled();
-  static bool IsDecimationDisabled();
-  static int GetMaxPipesPerMixer(DisplayType display_type);
-  static int GetMaxUpscale();
-  static bool IsVideoModeEnabled();
-  static bool IsRotatorUbwcDisabled();
-  static bool IsRotatorSplitDisabled();
-  static bool IsScalarDisabled();
-  static bool IsUbwcTiledFrameBuffer();
-  static bool IsAVRDisabled();
-  static bool IsExtAnimDisabled();
-  static bool IsPartialSplitDisabled();
-  static bool IsSrcSplitPreferred();
-  static DisplayError GetMixerResolution(uint32_t *width, uint32_t *height);
-  static DisplayError GetReducedConfig(uint32_t *num_vig_pipes, uint32_t *num_dma_pipes);
-  static int GetExtMaxlayers();
-  static DisplayError GetProperty(const char *property_name, char *value);
-  static DisplayError GetProperty(const char *property_name, int *value);
+  QtiComposer();
+  virtual ~QtiComposer();
+  // Methods from ::android::hardware::graphics::composer::V2_1::IComposer follow.
+  Return<void> getCapabilities(getCapabilities_cb _hidl_cb) override;
+  Return<void> dumpDebugInfo(dumpDebugInfo_cb _hidl_cb) override;
+  Return<void> createClient(createClient_cb _hidl_cb) override;
+
+  // Methods from ::android::hardware::graphics::composer::V2_3::IComposer follow.
+  Return<void> createClient_2_3(createClient_2_3_cb _hidl_cb) override;
+
+  // Methods from ::android::hidl::base::V1_0::IBase follow.
+
+  static QtiComposer *initialize();
+
+ private:
+    HWCSession *hwc_session_ = nullptr;
 };
 
-}  // namespace sdm
+extern "C" IQtiComposer* HIDL_FETCH_IQtiComposer(const char* name);
 
-#endif  // __DEBUG_H__
+}  // namespace implementation
+}  // namespace V2_0
+}  // namespace composer
+}  // namespace display
+}  // namespace hardware
+}  // namespace qti
+}  // namespace vendor
 
+#endif  // __QTICOMPOSER_H__

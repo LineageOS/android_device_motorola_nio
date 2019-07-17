@@ -42,7 +42,7 @@ namespace sdm {
 int HWCDisplayVirtual::Create(CoreInterface *core_intf, HWCBufferAllocator *buffer_allocator,
                               HWCCallbacks *callbacks, hwc2_display_t id, int32_t sdm_id,
                               uint32_t width, uint32_t height, int32_t *format,
-                              HWCDisplay **hwc_display) {
+                              HWCDisplay **hwc_display, float min_lum, float max_lum) {
   int status = 0;
   HWCDisplayVirtual *hwc_display_virtual = new HWCDisplayVirtual(core_intf, buffer_allocator,
                                                                  callbacks, id, sdm_id);
@@ -55,6 +55,10 @@ int HWCDisplayVirtual::Create(CoreInterface *core_intf, HWCBufferAllocator *buff
     DLOGW("Failed to initialize virtual display");
     delete hwc_display_virtual;
     return status;
+  }
+
+  if (max_lum != -1.0 || min_lum != -1.0) {
+    hwc_display_virtual->SetPanelLuminanceAttributes(min_lum, max_lum);
   }
 
   status = hwc_display_virtual->SetConfig(width, height);
@@ -104,6 +108,9 @@ int HWCDisplayVirtual::Init() {
 int HWCDisplayVirtual::Deinit() {
   int status = 0;
   if (output_buffer_) {
+    if (output_buffer_->acquire_fence_fd >= 0) {
+      close(output_buffer_->acquire_fence_fd);
+    }
     delete output_buffer_;
     output_buffer_ = nullptr;
   }
@@ -195,10 +202,6 @@ HWC2::Error HWCDisplayVirtual::Present(int32_t *out_retire_fence) {
 
   status = HWCDisplay::PostCommitLayerStack(out_retire_fence);
 
-  if (output_buffer_->acquire_fence_fd >= 0) {
-    close(output_buffer_->acquire_fence_fd);
-    output_buffer_->acquire_fence_fd = -1;
-  }
   return status;
 }
 
@@ -215,12 +218,26 @@ int HWCDisplayVirtual::SetConfig(uint32_t width, uint32_t height) {
   return 0;
 }
 
+
+HWC2::Error HWCDisplayVirtual::SetPanelLuminanceAttributes(float min_lum, float max_lum) {
+  DisplayError err = display_intf_->SetPanelLuminanceAttributes(min_lum, max_lum);
+  if (err != kErrorNone) {
+    return HWC2::Error::BadParameter;
+  }
+  return HWC2::Error::None;
+}
+
 HWC2::Error HWCDisplayVirtual::SetOutputBuffer(buffer_handle_t buf, int32_t release_fence) {
   if (buf == nullptr || release_fence == 0) {
     return HWC2::Error::BadParameter;
   }
   const private_handle_t *output_handle = static_cast<const private_handle_t *>(buf);
 
+  // Close the previous acquire fence and update with the latest release fence to avoid fence leak
+  // in case if this function gets invoked multiple times from the client.
+  if (output_buffer_->acquire_fence_fd >= 0) {
+    close(output_buffer_->acquire_fence_fd);
+  }
   // Fill output buffer parameters (width, height, format, plane information, fence)
   output_buffer_->acquire_fence_fd = dup(release_fence);
 
@@ -304,6 +321,10 @@ HWC2::Error HWCDisplayVirtual::GetDisplayType(int32_t *out_type) {
 
   *out_type = HWC2_DISPLAY_TYPE_VIRTUAL;
 
+  return HWC2::Error::None;
+}
+
+HWC2::Error HWCDisplayVirtual::SetColorMode(ColorMode mode) {
   return HWC2::Error::None;
 }
 

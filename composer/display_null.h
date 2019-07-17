@@ -62,6 +62,7 @@ class DisplayNull : public DisplayInterface {
                                                     uint8_t *out_data);
   virtual string Dump() { return ""; }
   virtual bool IsSupportSsppTonemap() { return false; }
+  virtual bool CanSkipValidate() { return true; }
 
   MAKE_NO_OP(TeardownConcurrentWriteback(void))
   MAKE_NO_OP(Commit(LayerStack *))
@@ -93,6 +94,7 @@ class DisplayNull : public DisplayInterface {
   MAKE_NO_OP(SetCursorPosition(int, int))
   MAKE_NO_OP(SetRefreshRate(uint32_t, bool))
   MAKE_NO_OP(GetPanelBrightness(float *))
+  MAKE_NO_OP(GetRefreshRate(uint32_t *))
   MAKE_NO_OP(SetVSyncState(bool))
   MAKE_NO_OP(SetMixerResolution(uint32_t, uint32_t))
   MAKE_NO_OP(SetDetailEnhancerData(const DisplayDetailEnhancerData &))
@@ -110,6 +112,7 @@ class DisplayNull : public DisplayInterface {
   MAKE_NO_OP(GetDynamicDSIClock(uint64_t *bit_clk_rate))
   MAKE_NO_OP(GetSupportedDSIClock(vector<uint64_t> *bitclk_rates))
   MAKE_NO_OP(SetFrameTriggerMode(FrameTriggerMode))
+  MAKE_NO_OP(SetPanelLuminanceAttributes(float min_lum, float max_lum))
 
  protected:
   DisplayConfigVariableInfo default_variable_config_ = {};

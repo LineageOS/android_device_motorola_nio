@@ -34,6 +34,8 @@
 #include <drm/msm_drm.h>
 #include <drm_logger.h>
 #include <errno.h>
+#include <string.h>
+
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -319,6 +321,7 @@ int DRMConnectorManager::GetPossibleEncoders(uint32_t connector_id,
   lock_guard<mutex> lock(lock_);
   return connector_pool_[connector_id]->GetPossibleEncoders(possible_encoders);
 }
+
 
 void DRMConnectorManager::Free(DRMDisplayToken *token) {
   lock_guard<mutex> lock(lock_);
@@ -825,12 +828,17 @@ void DRMConnector::Perform(DRMOps code, drmModeAtomicReq *req, va_list args) {
 void DRMConnector::SetROI(drmModeAtomicReq *req, uint32_t obj_id, uint32_t num_roi,
                           DRMRect *conn_rois) {
 #ifdef SDE_MAX_ROI_V1
-  if (!num_roi || num_roi > SDE_MAX_ROI_V1 ||
-      !prop_mgr_.IsPropertyAvailable(DRMProperty::ROI_V1)) {
+  if (num_roi > SDE_MAX_ROI_V1 || !prop_mgr_.IsPropertyAvailable(DRMProperty::ROI_V1)) {
+    return;
+  }
+  if (!num_roi || !conn_rois) {
+    drmModeAtomicAddProperty(req, obj_id, prop_mgr_.GetPropertyId(DRMProperty::ROI_V1), 0);
+    DRM_LOGD("Connector ROI is set to NULL to indicate full frame update");
     return;
   }
 
   static struct sde_drm_roi_v1 roi_v1 {};
+  memset(&roi_v1, 0, sizeof(roi_v1));
   roi_v1.num_rects = num_roi;
 
   for (uint32_t i = 0; i < num_roi; i++) {
