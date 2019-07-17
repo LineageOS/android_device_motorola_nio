@@ -3000,6 +3000,10 @@ void LocApiV02 :: reportPosition (
                                     locationExtended.gnss_mb_sv_used_ids.bds_b2ai_sv_used_ids_mask
                                             |= (1 << (gnssSvIdUsed - BDS_SV_PRN_MIN));
                                     break;
+                                case GNSS_SIGNAL_BEIDOU_B2AQ:
+                                    locationExtended.gnss_mb_sv_used_ids.bds_b2aq_sv_used_ids_mask
+                                            |= (1 << (gnssSvIdUsed - BDS_SV_PRN_MIN));
+                                    break;
                                 }
                             } else {
                                 locationExtended.measUsageInfo[idx].gnssSignalType =
@@ -4715,11 +4719,8 @@ void LocApiV02::reportGnssMeasurementData(
 {
     LOC_LOGv("entering");
 
-    static bool bGPSreceived = false;
-    static int msInWeek = -1;
-    static bool bAgcIsPresent = false;
-
     static uint32_t prevRefFCount = 0;
+    static bool newMeasProcessed = false;
 
     LOC_LOGd("[SvMeas] nHz (%d, %d), SeqNum: %d, MaxMsgNum: %d, "
              "SvSystem: %d SignalType: %" PRIu64 " MeasValid: %d, #of SV: %d",
@@ -4738,8 +4739,8 @@ void LocApiV02::reportGnssMeasurementData(
             LOC_LOGe("Malloc failed to allocate heap memory for mGnssMeasurements");
             return;
         }
-        memset(mGnssMeasurements, 0, sizeof(GnssMeasurements));
-        mGnssMeasurements->size = sizeof(GnssMeasurements);
+        resetSvMeasurementReport();
+        newMeasProcessed = false;
     }
 
     if (gnss_measurement_report_ptr.seqNum > gnss_measurement_report_ptr.maxMessageNum) {
@@ -4752,22 +4753,21 @@ void LocApiV02::reportGnssMeasurementData(
     if ((gnss_measurement_report_ptr.seqNum == 1) ||
         (gnss_measurement_report_ptr.systemTimeExt_valid &&
          gnss_measurement_report_ptr.systemTimeExt.refFCount != prevRefFCount)) {
+        // we have received some valid info since we last reported when
+        // seq num matches with max seq num
+        if (true == newMeasProcessed) {
+            LOC_LOGe ("report due to seq number jump");
+            reportSvMeasurementInternal();
+            resetSvMeasurementReport();
+            newMeasProcessed = false;
+        }
 
         prevRefFCount = gnss_measurement_report_ptr.systemTimeExt.refFCount;
-        memset(&mGnssMeasurements->gnssSvMeasurementSet, 0, sizeof(GnssSvMeasurementSet));
-        mGnssMeasurements->gnssSvMeasurementSet.size = sizeof(GnssSvMeasurementSet);
-        mGnssMeasurements->gnssSvMeasurementSet.isNhz = false;
-        mGnssMeasurements->gnssSvMeasurementSet.svMeasSetHeader.size = sizeof(GnssSvMeasurementHeader);
         if (gnss_measurement_report_ptr.nHzMeasurement_valid &&
             gnss_measurement_report_ptr.nHzMeasurement) {
             mGnssMeasurements->gnssSvMeasurementSet.isNhz = true;
         }
         mCounter++;
-        bGPSreceived = false;
-        msInWeek = -1;
-        bAgcIsPresent = false;
-        memset(&mGnssMeasurements->gnssMeasNotification, 0, sizeof(GnssMeasurementsNotification));
-        mGnssMeasurements->gnssMeasNotification.size = sizeof(GnssMeasurementsNotification);
     }
 
     Gnss_LocSvSystemEnumType locSvSystemType =
@@ -4776,6 +4776,9 @@ void LocApiV02::reportGnssMeasurementData(
         LOC_LOGi("Unknown sv system");
         return;
     }
+
+    // set up indication that we have processed some new measurement
+    newMeasProcessed = true;
 
     convertGnssMeasurementsHeader(locSvSystemType, gnss_measurement_report_ptr);
     // number of measurements
@@ -4787,7 +4790,7 @@ void LocApiV02::reportGnssMeasurementData(
                      gnss_measurement_report_ptr.system);
 
             if (0 == mGnssMeasurements->gnssMeasNotification.count) {
-                bAgcIsPresent = true;
+                mAgcIsPresent = true;
             }
             for (uint32_t index = 0; index < gnss_measurement_report_ptr.svMeasurement_len &&
                     mGnssMeasurements->gnssMeasNotification.count < GNSS_MEASUREMENTS_MAX;
@@ -4798,7 +4801,7 @@ void LocApiV02::reportGnssMeasurementData(
                      QMI_LOC_MASK_MEAS_STATUS_GNSS_FRESH_MEAS_STAT_BIT_VALID_V02) &&
                     (gnss_measurement_report_ptr.svMeasurement[index].measurementStatus &
                      QMI_LOC_MASK_MEAS_STATUS_GNSS_FRESH_MEAS_VALID_V02)) {
-                    bAgcIsPresent &= convertGnssMeasurements(
+                    mAgcIsPresent &= convertGnssMeasurements(
                         gnss_measurement_report_ptr,
                         index, false);
                     mGnssMeasurements->gnssMeasNotification.count++;
@@ -4828,7 +4831,7 @@ void LocApiV02::reportGnssMeasurementData(
                          QMI_LOC_MASK_MEAS_STATUS_GNSS_FRESH_MEAS_STAT_BIT_VALID_V02) &&
                         (gnss_measurement_report_ptr.extSvMeasurement[index].measurementStatus &
                          QMI_LOC_MASK_MEAS_STATUS_GNSS_FRESH_MEAS_VALID_V02)) {
-                        bAgcIsPresent &= convertGnssMeasurements(
+                        mAgcIsPresent &= convertGnssMeasurements(
                             gnss_measurement_report_ptr,
                             index, true);
                         mGnssMeasurements->gnssMeasNotification.count++;
@@ -4849,18 +4852,28 @@ void LocApiV02::reportGnssMeasurementData(
     }
     // the GPS clock time reading
     if (eQMI_LOC_SV_SYSTEM_GPS_V02 == gnss_measurement_report_ptr.system &&
-        false == bGPSreceived) {
-        bGPSreceived = true;
-        msInWeek = convertGnssClock(mGnssMeasurements->gnssMeasNotification.clock,
-                                    gnss_measurement_report_ptr);
+        false == mGPSreceived) {
+        mGPSreceived = true;
+        mMsInWeek = convertGnssClock(mGnssMeasurements->gnssMeasNotification.clock,
+                                     gnss_measurement_report_ptr);
     }
 
-    if (gnss_measurement_report_ptr.maxMessageNum == gnss_measurement_report_ptr.seqNum
-        && mGnssMeasurements->gnssMeasNotification.count != 0 && true == bGPSreceived) {
+    if (gnss_measurement_report_ptr.maxMessageNum == gnss_measurement_report_ptr.seqNum) {
+        LOC_LOGv("Report the measurements to the upper layers");
+        reportSvMeasurementInternal();
+        // set up flag to indicate that no new info in mGnssMeasurements
+        newMeasProcessed = false;
+    }
+}
+
+
+void LocApiV02 ::reportSvMeasurementInternal() {
+
+    if (mGnssMeasurements) {
         // calling the base
-        if (bAgcIsPresent) {
+        if (mAgcIsPresent) {
             /* If we can get AGC from QMI LOC there is no need to get it from NMEA */
-            msInWeek = -1;
+            mMsInWeek = -1;
         }
         // now remove all the elements in the vector which are not for current epoch
         if (mADRdata.size() > 0) {
@@ -4877,9 +4890,35 @@ void LocApiV02::reportGnssMeasurementData(
                 mADRdata.erase(front, mADRdata.end());
             }
         }
-        LOC_LOGv("Report the measurements to the upper layers");
+
         mGnssMeasurements->gnssSvMeasurementSet.svMeasCount = mGnssMeasurements->gnssMeasNotification.count;
-        LocApiBase::reportGnssMeasurements(*mGnssMeasurements, msInWeek);
+        GnssSvMeasurementHeader &svMeasSetHead =
+            mGnssMeasurements->gnssSvMeasurementSet.svMeasSetHeader;
+
+        // when we received the last sequence, timestamp the packet with AP time
+        struct timespec apTimestamp;
+        if (clock_gettime(CLOCK_BOOTTIME, &apTimestamp)== 0) {
+            svMeasSetHead.apBootTimeStamp.apTimeStamp.tv_sec = apTimestamp.tv_sec;
+            svMeasSetHead.apBootTimeStamp.apTimeStamp.tv_nsec = apTimestamp.tv_nsec;
+
+            // use the time uncertainty configured in gps.conf
+            svMeasSetHead.apBootTimeStamp.apTimeStampUncertaintyMs =
+                    (float)ap_timestamp_uncertainty;
+            svMeasSetHead.flags |= GNSS_SV_MEAS_HEADER_HAS_AP_TIMESTAMP;
+
+            LOC_LOGD("%s:%d QMI_MeasPacketTime  %u (sec)  %u (nsec)",__func__,__LINE__,
+                     svMeasSetHead.apBootTimeStamp.apTimeStamp.tv_sec,
+                     svMeasSetHead.apBootTimeStamp.apTimeStamp.tv_nsec);
+        }
+        else {
+            svMeasSetHead.apBootTimeStamp.apTimeStampUncertaintyMs = FLT_MAX;
+            LOC_LOGE("%s:%d Error in clock_gettime() ",__func__, __LINE__);
+        }
+
+        LOC_LOGd("report %d sv in sv meas",
+                 mGnssMeasurements->gnssMeasNotification.count);
+
+        LocApiBase::reportGnssMeasurements(*mGnssMeasurements, mMsInWeek);
     }
 }
 
@@ -5090,6 +5129,10 @@ void LocApiV02::convertGnssMeasurementsHeader(const Gnss_LocSvSystemEnumType loc
             systemTimeExtPtr = &svMeasSetHead.qzssSystemTimeExt;
             systemTimeFlags = GNSS_SV_MEAS_HEADER_HAS_QZSS_SYSTEM_TIME;
             systemTimeExtFlags = GNSS_SV_MEAS_HEADER_HAS_QZSS_SYSTEM_TIME_EXT;
+            break;
+        case GNSS_LOC_SV_SYSTEM_GLONASS:
+            systemTimeExtPtr = &svMeasSetHead.gloSystemTimeExt;
+            systemTimeExtFlags = GNSS_SV_MEAS_HEADER_HAS_GLO_SYSTEM_TIME_EXT;
             break;
         case GNSS_LOC_SV_SYSTEM_NAVIC:
             systemTimePtr = &svMeasSetHead.navicSystemTime;
@@ -5377,43 +5420,6 @@ bool LocApiV02 :: convertGnssMeasurements(
     measurementData.stateMask = GNSS_MEASUREMENTS_STATE_UNKNOWN_BIT;
     measurementData.receivedSvTimeNs = 0;
     measurementData.receivedSvTimeUncertaintyNs = 0;
-    // deal first with TOD_KNOWN and TOW_KNOWN bits
-    // GLONASS G1
-    if (GNSS_SV_TYPE_GLONASS == measurementData.svType &&
-        (bBandNotAvailable ||
-        (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_GLONASS_G1_V02 == gnssBand))) {
-        if (isGloTimeValid) {
-            measurementData.stateMask |= (GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT |
-                                          GNSS_MEASUREMENTS_STATE_GLO_TOD_KNOWN_BIT);
-        }
-    }
-    if (gnss_measurement_report_ptr.systemTime_valid &&
-        255 != gnss_measurement_report_ptr.systemTime.systemWeek) {
-        // GPS L1
-        if (eQMI_LOC_SV_SYSTEM_GPS_V02 == gnss_measurement_report_ptr.systemTime.system &&
-            (bBandNotAvailable ||
-            (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_GPS_L1CA_V02 == gnssBand))) {
-            measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
-        }
-        // BDS B1 I
-        if (eQMI_LOC_SV_SYSTEM_BDS_V02 == gnss_measurement_report_ptr.systemTime.system &&
-            (bBandNotAvailable ||
-            (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_BEIDOU_B1_I_V02 == gnssBand))) {
-            measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
-        }
-        // GAL E1C
-        if (eQMI_LOC_SV_SYSTEM_GALILEO_V02 == gnss_measurement_report_ptr.systemTime.system &&
-            (bBandNotAvailable ||
-            (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_GALILEO_E1_C_V02 == gnssBand))) {
-            measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
-        }
-        // SBAS
-        if (eQMI_LOC_SV_SYSTEM_SBAS_V02 == gnss_measurement_report_ptr.systemTime.system &&
-            (bBandNotAvailable ||
-            (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_SBAS_L1_CA_V02 == gnssBand))) {
-            measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
-        }
-    }
 
     // Deal with Galileo first since it is special
     uint64_t galSVstateMask = 0;
@@ -5449,6 +5455,43 @@ bool LocApiV02 :: convertGnssMeasurements(
     }
 
     if (validMeasStatus & QMI_LOC_MASK_MEAS_STATUS_MS_VALID_V02) {
+        // deal first with TOD_KNOWN and TOW_KNOWN bits
+        // GLONASS G1
+        if (GNSS_SV_TYPE_GLONASS == measurementData.svType &&
+            (bBandNotAvailable ||
+            (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_GLONASS_G1_V02 == gnssBand))) {
+            if (isGloTimeValid) {
+                measurementData.stateMask |= (GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT |
+                                              GNSS_MEASUREMENTS_STATE_GLO_TOD_KNOWN_BIT);
+            }
+        }
+        if (gnss_measurement_report_ptr.systemTime_valid &&
+            65535 != gnss_measurement_report_ptr.systemTime.systemWeek) {
+            // GPS L1
+            if (eQMI_LOC_SV_SYSTEM_GPS_V02 == gnss_measurement_report_ptr.systemTime.system &&
+                (bBandNotAvailable ||
+                (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_GPS_L1CA_V02 == gnssBand))) {
+                measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
+            }
+            // BDS B1 I
+            if (eQMI_LOC_SV_SYSTEM_BDS_V02 == gnss_measurement_report_ptr.systemTime.system &&
+                (bBandNotAvailable ||
+                (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_BEIDOU_B1_I_V02 == gnssBand))) {
+                measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
+            }
+            // GAL E1C
+            if (eQMI_LOC_SV_SYSTEM_GALILEO_V02 == gnss_measurement_report_ptr.systemTime.system &&
+                (bBandNotAvailable ||
+                (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_GALILEO_E1_C_V02 == gnssBand))) {
+                measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
+            }
+            // SBAS
+            if (eQMI_LOC_SV_SYSTEM_SBAS_V02 == gnss_measurement_report_ptr.systemTime.system &&
+                (bBandNotAvailable ||
+                (QMI_LOC_MASK_GNSS_SIGNAL_TYPE_SBAS_L1_CA_V02 == gnssBand))) {
+                measurementData.stateMask |= GNSS_MEASUREMENTS_STATE_TOW_KNOWN_BIT;
+            }
+        }
         /* sub-frame decode & TOW decode */
         measurementData.stateMask |= (GNSS_MEASUREMENTS_STATE_SUBFRAME_SYNC_BIT |
                                       GNSS_MEASUREMENTS_STATE_TOW_DECODED_BIT |
@@ -5631,7 +5674,6 @@ bool LocApiV02 :: convertGnssMeasurements(
             }
         }
         measurementData.adrStateMask |= GNSS_MEASUREMENTS_ACCUMULATED_DELTA_RANGE_STATE_RESET_BIT;
-        measurementData.adrStateMask |= GNSS_MEASUREMENTS_ACCUMULATED_DELTA_RANGE_STATE_CYCLE_SLIP_BIT;
         if (bFound) {
             LOC_LOGv("Found the carrier phase for this satellite from last epoch");
             if (tempAdrData.validMask & QMI_LOC_SV_CARRIER_PHASE_VALID_V02) {
@@ -5641,9 +5683,7 @@ bool LocApiV02 :: convertGnssMeasurements(
                     (tempAdrData.counter == (mCounter - 1))) {
                     // at this point prior epoch does have carrier phase valid
                     measurementData.adrStateMask &=
-                        ~GNSS_MEASUREMENTS_ACCUMULATED_DELTA_RANGE_STATE_CYCLE_SLIP_BIT;
-                    measurementData.adrStateMask &=
-                        ~GNSS_MEASUREMENTS_ACCUMULATED_DELTA_RANGE_STATE_RESET_BIT;
+                            ~GNSS_MEASUREMENTS_ACCUMULATED_DELTA_RANGE_STATE_RESET_BIT;
                     if (tempAdrData.validMask & QMI_LOC_SV_CYCLESLIP_COUNT_VALID_V02 &&
                         gnss_measurement_info.validMask & QMI_LOC_SV_CYCLESLIP_COUNT_VALID_V02) {
                         LOC_LOGv("cycle slip count is valid for both current and prior epochs");
@@ -8391,7 +8431,7 @@ LocApiV02::startDistanceBasedTracking(uint32_t sessionId,
 void
 LocApiV02::stopDistanceBasedTracking(uint32_t sessionId, LocApiResponse* adapterResponse)
 {
-    sendMsg(new LocApiMsg([this, sessionId] () {
+    sendMsg(new LocApiMsg([this, sessionId, adapterResponse] () {
 
     LOC_LOGD("%s] id %u", __func__, sessionId);
     LocationError err = LOCATION_ERROR_SUCCESS;
@@ -8419,6 +8459,7 @@ LocApiV02::stopDistanceBasedTracking(uint32_t sessionId, LocApiResponse* adapter
               __func__, status, stop_dbt_Ind.status);
     }
 
+    adapterResponse->returnToSender(err);
     }));
 }
 
