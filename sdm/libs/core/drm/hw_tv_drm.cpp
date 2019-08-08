@@ -70,6 +70,7 @@ using sde_drm::DRMPPFeatureInfo;
 using sde_drm::DRMOps;
 using sde_drm::DRMTopology;
 using sde_drm::DRMPowerMode;
+using sde_drm::DRMColorspace;
 
 namespace sdm {
 
@@ -223,6 +224,7 @@ void HWTVDRM::PopulateHWPanelInfo() {
   hw_panel_info_.hdr_plus_enabled = connector_info_.ext_hdr_prop.hdr_plus_supported;
   hw_panel_info_.hdr_metadata_type_one = connector_info_.ext_hdr_prop.hdr_metadata_type_one;
   hw_panel_info_.hdr_eotf = connector_info_.ext_hdr_prop.hdr_eotf;
+  hw_panel_info_.supported_colorspaces = connector_info_.supported_colorspaces;
 
   // Convert the raw luminance values from driver to Candela per meter^2 unit.
   float max_luminance = FLOAT(connector_info_.ext_hdr_prop.hdr_max_luminance);
@@ -262,11 +264,31 @@ DisplayError HWTVDRM::Commit(HWLayers *hw_layers) {
 }
 
 DisplayError HWTVDRM::UpdateHDRMetaData(HWLayers *hw_layers) {
-  const HWHDRLayerInfo &hdr_layer_info = hw_layers->info.hdr_layer_info;
+  // Set colorspace on external DP when DP supports colorspace.
+  // For P3 use case set colorspace only.
+  // For HDR use case set both hdr metadata and colorspace.
+  if (hw_panel_info_.port == kPortDP && hw_panel_info_.supported_colorspaces) {
+    LayerStack *stack = hw_layers->info.stack;
+    sde_drm::DRMColorspace colorspace = sde_drm::DRMColorspace::DEFAULT;
+    if (stack->blend_cs.primaries == ColorPrimaries_DCIP3 &&
+        stack->blend_cs.transfer == Transfer_sRGB) {
+      colorspace = sde_drm::DRMColorspace::DCI_P3_RGB_D65;
+    /* In case of BT2020_YCC, BT2020_RGB is not set based on the layer format. We set it based on
+       the final output of display port controller. Here even though the layer as YUV , it will be
+       color converted to RGB using SSPP and the format going out of DP will be RGB. Hence we
+       should set BT2020_RGB. */
+    } else if (stack->blend_cs.primaries == ColorPrimaries_BT2020) {
+      colorspace = sde_drm::DRMColorspace::BT2020_RGB;
+    }
+    DLOGV_IF(kTagDriverConfig, "Set colorspace = %d", colorspace);
+    drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_COLORSPACE, token_.conn_id, colorspace);
+  }
+
   if (!hw_panel_info_.hdr_enabled) {
     return kErrorNone;
   }
 
+  const HWHDRLayerInfo &hdr_layer_info = hw_layers->info.hdr_layer_info;
   DisplayError error = kErrorNone;
   HWHDRLayerInfo::HDROperation hdr_op = hdr_layer_info.operation;
 

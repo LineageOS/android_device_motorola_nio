@@ -285,7 +285,7 @@ DisplayError DisplayBuiltIn::SetDisplayMode(uint32_t mode) {
 }
 
 DisplayError DisplayBuiltIn::SetPanelBrightness(float brightness) {
-  lock_guard<recursive_mutex> obj(recursive_mutex_);
+  lock_guard<recursive_mutex> obj(brightness_lock_);
 
   if (brightness != -1.0f && !(0.0f <= brightness && brightness <= 1.0f)) {
     DLOGE("Bad brightness value = %f", brightness);
@@ -441,7 +441,7 @@ void DisplayBuiltIn::HwRecovery(const HWRecoveryEvent sdm_event_code) {
 }
 
 DisplayError DisplayBuiltIn::GetPanelBrightness(float *brightness) {
-  lock_guard<recursive_mutex> obj(recursive_mutex_);
+  lock_guard<recursive_mutex> obj(brightness_lock_);
 
   DisplayError err = kErrorNone;
   int level = 0;
@@ -782,6 +782,18 @@ void DisplayBuiltIn::ResetPanel() {
 DisplayError DisplayBuiltIn::GetRefreshRate(uint32_t *refresh_rate) {
   *refresh_rate = current_refresh_rate_;
   return kErrorNone;
+}
+
+DisplayError DisplayBuiltIn::SetBLScale(uint32_t level) {
+  lock_guard<recursive_mutex> obj(recursive_mutex_);
+
+  DisplayError err = hw_intf_->SetBLScale(level);
+  if (err) {
+    DLOGE("Failed to set backlight scale to level %d", level);
+  } else {
+    DLOGI_IF(kTagDisplay, "Setting backlight scale to level %d", level);
+  }
+  return err;
 }
 
 }  // namespace sdm

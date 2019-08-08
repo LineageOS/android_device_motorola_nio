@@ -792,7 +792,7 @@ void HWDeviceDRM::GetHWDisplayPortAndMode() {
       interface_str_ = "Virtual";
       break;
     case DRM_MODE_CONNECTOR_DisplayPort:
-      // TODO(user): Add when available
+      hw_panel_info_.port = kPortDP;
       interface_str_ = "DisplayPort";
       break;
   }
@@ -830,13 +830,22 @@ DisplayError HWDeviceDRM::SetDisplayAttributes(uint32_t index) {
     return kErrorParameters;
   }
 
+  uint32_t mode_flag = 0;
   drmModeModeInfo to_set = connector_info_.modes[index].mode;
   uint64_t current_bit_clk = connector_info_.modes[current_mode_index_].bit_clk_rate;
+
+  if (to_set.flags & DRM_MODE_FLAG_CMD_MODE_PANEL) {
+    mode_flag = DRM_MODE_FLAG_CMD_MODE_PANEL;
+  } else if (to_set.flags & DRM_MODE_FLAG_VID_MODE_PANEL) {
+    mode_flag = DRM_MODE_FLAG_VID_MODE_PANEL;
+  }
+
   for (uint32_t mode_index = 0; mode_index < connector_info_.modes.size(); mode_index++) {
     if ((to_set.vdisplay == connector_info_.modes[mode_index].mode.vdisplay) &&
         (to_set.hdisplay == connector_info_.modes[mode_index].mode.hdisplay) &&
         (to_set.vrefresh == connector_info_.modes[mode_index].mode.vrefresh) &&
-        (current_bit_clk == connector_info_.modes[mode_index].bit_clk_rate)) {
+        (current_bit_clk == connector_info_.modes[mode_index].bit_clk_rate) &&
+        (mode_flag & connector_info_.modes[mode_index].mode.flags)) {
       index = mode_index;
       break;
     }
@@ -929,7 +938,7 @@ DisplayError HWDeviceDRM::Doze(const HWQosData &qos_data, int *release_fence) {
 
   if (!first_cycle_) {
     pending_doze_ = true;
-    return kErrorNone;
+    return kErrorDeferred;
   }
 
   SetQOSData(qos_data);
@@ -1179,7 +1188,6 @@ void HWDeviceDRM::SetupAtomic(HWLayers *hw_layers, bool validate) {
       if ((current_mode.vdisplay == connector_info_.modes[mode_index].mode.vdisplay) &&
          (current_mode.hdisplay == connector_info_.modes[mode_index].mode.hdisplay) &&
          (current_mode.vrefresh == connector_info_.modes[mode_index].mode.vrefresh) &&
-         (current_bit_clk == connector_info_.modes[mode_index].bit_clk_rate) &&
          (panel_mode_changed_ & connector_info_.modes[mode_index].mode.flags)) {
         current_mode = connector_info_.modes[mode_index].mode;
         if ((current_mode.flags & DRM_MODE_FLAG_VID_MODE_PANEL) && !validate) {
@@ -1487,6 +1495,7 @@ DisplayError HWDeviceDRM::AtomicCommit(HWLayers *hw_layers) {
 
 DisplayError HWDeviceDRM::Flush(HWLayers *hw_layers) {
   ClearSolidfillStages();
+  ResetROI();
   int ret = NullCommit(secure_display_active_ /* synchronous */, false /* retain_planes*/);
   if (ret) {
     DLOGE("failed with error %d", ret);
@@ -1693,12 +1702,10 @@ DisplayError HWDeviceDRM::SetDisplayMode(const HWDisplayMode hw_display_mode) {
   }
 
   drmModeModeInfo current_mode = connector_info_.modes[current_mode_index_].mode;
-  uint64_t current_bit_clk = connector_info_.modes[current_mode_index_].bit_clk_rate;
   for (uint32_t mode_index = 0; mode_index < connector_info_.modes.size(); mode_index++) {
     if ((current_mode.vdisplay == connector_info_.modes[mode_index].mode.vdisplay) &&
         (current_mode.hdisplay == connector_info_.modes[mode_index].mode.hdisplay) &&
         (current_mode.vrefresh == connector_info_.modes[mode_index].mode.vrefresh) &&
-        (current_bit_clk == connector_info_.modes[mode_index].bit_clk_rate) &&
         (mode_flag & connector_info_.modes[mode_index].mode.flags)) {
       panel_mode_changed_ = mode_flag;
       synchronous_commit_ = true;
