@@ -32,6 +32,7 @@
 
 #define HWC2_INCLUDE_STRINGIFICATION
 #define HWC2_USE_CPP11
+#include <utils/locker.h>
 #include <hardware/hwcomposer2.h>
 #undef HWC2_INCLUDE_STRINGIFICATION
 #undef HWC2_USE_CPP11
@@ -44,7 +45,11 @@ class HWCCallbacks {
   static const int kNumPluggable = 4;
   static const int kNumVirtual = 4;
   // Add 1 primary display which can be either a builtin or pluggable.
-  static const int kNumDisplays = 1 + kNumBuiltIn + kNumPluggable + kNumVirtual;
+  // Async powermode update requires dummy hwc displays.
+  // Limit dummy displays to builtin/pluggable type for now.
+  static const int kNumRealDisplays = 1 + kNumBuiltIn + kNumPluggable + kNumVirtual;
+  static const int kNumDisplays = 1 + kNumBuiltIn + kNumPluggable + kNumVirtual +
+                                    1 + kNumBuiltIn + kNumPluggable;
 
   HWC2::Error Hotplug(hwc2_display_t display, HWC2::Connection state);
   HWC2::Error Refresh(hwc2_display_t display);
@@ -59,6 +64,10 @@ class HWCCallbacks {
   bool VsyncCallbackRegistered() { return (vsync_ != nullptr && vsync_data_ != nullptr); }
   bool NeedsRefresh(hwc2_display_t display) { return pending_refresh_.test(UINT32(display)); }
   void ResetRefresh(hwc2_display_t display) { pending_refresh_.reset(UINT32(display)); }
+  bool IsClientConnected() {
+    SCOPE_LOCK(callbacks_lock_);
+    return client_connected_;
+  }
 
  private:
   hwc2_callback_data_t hotplug_data_ = nullptr;
@@ -70,6 +79,9 @@ class HWCCallbacks {
   HWC2_PFN_VSYNC vsync_ = nullptr;
   hwc2_display_t vsync_source_ = HWC_DISPLAY_PRIMARY;   // hw vsync is active on this display
   std::bitset<kNumDisplays> pending_refresh_;         // Displays waiting to get refreshed
+
+  Locker callbacks_lock_;
+  bool client_connected_ = false;
 };
 
 }  // namespace sdm

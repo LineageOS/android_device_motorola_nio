@@ -105,8 +105,9 @@ DisplayError DisplayBase::Init() {
 
   error = Debug::GetMixerResolution(&mixer_attributes_.width, &mixer_attributes_.height);
   if (error == kErrorNone) {
-    hw_intf_->SetMixerAttributes(mixer_attributes_);
-    custom_mixer_resolution_ = true;
+    if (hw_intf_->SetMixerAttributes(mixer_attributes_) == kErrorNone) {
+      custom_mixer_resolution_ = true;
+    }
   }
 
   error = hw_intf_->GetMixerAttributes(&mixer_attributes_);
@@ -203,6 +204,7 @@ DisplayError DisplayBase::Deinit() {
 DisplayError DisplayBase::BuildLayerStackStats(LayerStack *layer_stack) {
   std::vector<Layer *> &layers = layer_stack->layers;
   HWLayersInfo &hw_layers_info = hw_layers_.info;
+  hw_layers_info.app_layer_count = 0;
 
   hw_layers_info.stack = layer_stack;
 
@@ -317,7 +319,9 @@ DisplayError DisplayBase::Prepare(LayerStack *layer_stack) {
   }
 
   hw_layers_.updates_mask.set(kUpdateResources);
+  comp_manager_->GenerateROI(display_comp_ctx_, &hw_layers_);
   comp_manager_->PrePrepare(display_comp_ctx_, &hw_layers_);
+
   while (true) {
     error = comp_manager_->Prepare(display_comp_ctx_, &hw_layers_);
     if (error != kErrorNone) {

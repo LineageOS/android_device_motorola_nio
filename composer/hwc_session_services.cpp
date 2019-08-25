@@ -248,7 +248,7 @@ int32_t HWCSession::SetActiveConfigIndex(int disp_id, uint32_t config) {
   if (hwc_display_[disp_idx]) {
     error = hwc_display_[disp_idx]->SetActiveDisplayConfig(config);
     if (!error) {
-      Refresh(0);
+      callbacks_.Refresh(0);
     }
   }
 
@@ -344,7 +344,7 @@ Return<int32_t> HWCSession::minHdcpEncryptionLevelChanged(IDisplayConfig::Displa
 
 Return<int32_t> HWCSession::refreshScreen() {
   SEQUENCE_WAIT_SCOPE_LOCK(locker_[HWC_DISPLAY_PRIMARY]);
-  Refresh(HWC_DISPLAY_PRIMARY);
+  callbacks_.Refresh(HWC_DISPLAY_PRIMARY);
 
   return 0;
 }
@@ -382,7 +382,7 @@ int32_t HWCSession::ControlPartialUpdate(int disp_id, bool enable) {
   }
 
   // Todo(user): Unlock it before sending events to client. It may cause deadlocks in future.
-  Refresh(HWC_DISPLAY_PRIMARY);
+  callbacks_.Refresh(HWC_DISPLAY_PRIMARY);
 
   // Wait until partial update control is complete
   int32_t error = locker_[disp_idx].WaitFinite(kCommitDoneTimeoutMs);
@@ -493,7 +493,7 @@ Return<int32_t> HWCSession::setCameraLaunchStatus(uint32_t on) {
   }
 
   // trigger invalidate to apply new bw caps.
-  Refresh(0);
+  callbacks_.Refresh(0);
 
   return 0;
 }
@@ -555,7 +555,7 @@ Return<int32_t> HWCSession::controlIdlePowerCollapse(bool enable, bool synchrono
         if (err != kErrorNone) {
           return (err == kErrorNotSupported) ? 0 : -EINVAL;
         }
-        Refresh(active_builtin_disp_id);
+        callbacks_.Refresh(active_builtin_disp_id);
         int32_t error = locker_[active_builtin_disp_id].WaitFinite(kCommitDoneTimeoutMs);
         if (error == ETIMEDOUT) {
           DLOGE("Timed out!! Next frame commit done event not received!!");
@@ -629,12 +629,61 @@ Return<int32_t> HWCSession::updateVSyncSourceOnPowerModeDoze() {
   return 0;
 }
 
-Return<int32_t> HWCSession::setPowerMode(uint32_t disp_id, PowerMode power_mode) {
-  return 0;
+Return<bool> HWCSession::isPowerModeOverrideSupported(uint32_t disp_id) {
+  if (!async_powermode_ || (disp_id > HWCCallbacks::kNumRealDisplays)) {
+    return false;
+  }
+
+  return true;
 }
 
-Return<bool> HWCSession::isPowerModeOverrideSupported(uint32_t disp_id) {
-  return false;
+Return<int32_t> HWCSession::setPowerMode(uint32_t disp_id, PowerMode power_mode) {
+  SCOPE_LOCK(display_config_locker_);
+
+  if (!isPowerModeOverrideSupported(disp_id)) {
+    return 0;
+  }
+
+  DLOGI("disp_id: %d power_mode: %d", disp_id, power_mode);
+  HWCDisplay::HWCLayerStack stack = {};
+  hwc2_display_t dummy_disp_id = map_hwc_display_.at(disp_id);
+
+  {
+    // Power state transition start.
+    Locker::ScopeLock lock_power(power_state_[disp_id]);
+    Locker::ScopeLock lock_primary(locker_[disp_id]);
+    Locker::ScopeLock lock_dummy(locker_[dummy_disp_id]);
+
+    power_state_transition_[disp_id] = true;
+    // Pass on the complete stack to dummy display.
+    hwc_display_[disp_id]->GetLayerStack(&stack);
+    // Update the same stack onto dummy display.
+    hwc_display_[dummy_disp_id]->SetLayerStack(&stack);
+    hwc_display_[dummy_disp_id]->UpdatePowerMode(hwc_display_[disp_id]->GetCurrentPowerMode());
+  }
+
+  {
+    SCOPE_LOCK(locker_[disp_id]);
+    auto mode = static_cast<HWC2::PowerMode>(power_mode);
+    hwc_display_[disp_id]->SetPowerMode(mode, false /* teardown */);
+  }
+
+  {
+    // Power state transition end.
+    Locker::ScopeLock lock_power(power_state_[disp_id]);
+    Locker::ScopeLock lock_primary(locker_[disp_id]);
+    Locker::ScopeLock lock_dummy(locker_[dummy_disp_id]);
+    // Pass on the layer stack to real display.
+    hwc_display_[dummy_disp_id]->GetLayerStack(&stack);
+    // Update the same stack onto real display.
+    hwc_display_[disp_id]->SetLayerStack(&stack);
+    // Read display has got layerstack. Update the fences.
+    hwc_display_[disp_id]->PostPowerMode();
+
+    power_state_transition_[disp_id] = false;
+  }
+
+  return 0;
 }
 
 Return<bool> HWCSession::isHDRSupported(uint32_t disp_id) {
@@ -909,7 +958,7 @@ void HWCSession::CWB::ProcessRequests() {
     }
 
     if (!status) {
-      hwc_session_->Refresh(HWC_DISPLAY_PRIMARY);
+      hwc_session_->callbacks_.Refresh(HWC_DISPLAY_PRIMARY);
 
       std::unique_lock<std::mutex> lock(mutex_);
       cv_.wait(lock);
