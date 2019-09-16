@@ -303,6 +303,19 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/privapp-permissions-hotword.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-hotword.xml
 
+# IMS
+PRODUCT_PACKAGES += \
+    ims-moto-libs
+
+PRODUCT_BOOT_JARS += \
+    ims-moto-libs \
+    moto-ims-ext \
+    moto-telephony
+
+PRODUCT_SYSTEM_SERVER_JARS += \
+    moto-ims-ext \
+    moto-telephony
+
 # IPACM
 PRODUCT_PACKAGES += \
     ipacm \

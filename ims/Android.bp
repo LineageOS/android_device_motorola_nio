@@ -1,0 +1,9 @@
+java_library {
+    name: "ims-moto-libs",
+    installable: true,
+    static_libs: [
+        "ims-ext-common",
+        "qti-telephony-utils",
+        "android.hidl.manager-V1.0-java",
+    ],
+}
