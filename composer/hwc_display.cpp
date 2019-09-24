@@ -819,8 +819,13 @@ void HWCDisplay::BuildLayerStack() {
     layer_stack_.layers.push_back(layer);
   }
 
+  // If layer stack needs Client composition, HWC display gets into InternalValidate state. If
+  // validation gets reset by any other thread in this state, enforce Geometry change to ensure
+  // that Client target gets composed by SF.
+  bool enforce_geometry_change = (validate_state_ == kInternalValidate) && !validated_;
+
   // TODO(user): Set correctly when SDM supports geometry_changes as bitmask
-  layer_stack_.flags.geometry_changed = UINT32(geometry_changes_ > 0);
+  layer_stack_.flags.geometry_changed = UINT32(geometry_changes_ > 0) || enforce_geometry_change;
   layer_stack_.flags.config_changed = !validated_;
 
   // Append client target to the layer stack
@@ -1316,7 +1321,7 @@ HWC2::Error HWCDisplay::PrepareLayerStack(uint32_t *out_num_types, uint32_t *out
       WaitOnPreviousFence();
       MarkLayersForGPUBypass();
     } else {
-      DLOGE("Prepare failed. Error = %d", error);
+      DLOGW("Prepare failed. Error = %d", error);
       // To prevent surfaceflinger infinite wait, flush the previous frame during Commit()
       // so that previous buffer and fences are released, and override the error.
       flush_ = true;
