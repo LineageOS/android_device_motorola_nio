@@ -228,6 +228,10 @@ DisplayError DisplayBuiltIn::Commit(LayerStack *layer_stack) {
     ControlPartialUpdate(true /* enable */, &pending);
   }
 
+  if (dpps_pu_nofiy_pending_) {
+    dpps_pu_nofiy_pending_ = false;
+    dpps_pu_lock_.Broadcast();
+  }
   dpps_info_.Init(this, hw_panel_info_.panel_name);
 
   return error;
@@ -397,6 +401,11 @@ DisplayError DisplayBuiltIn::SetRefreshRate(uint32_t refresh_rate, bool final_ra
       handle_idle_timeout_ = false;
       return error;
     }
+
+    error = comp_manager_->CheckEnforceSplit(display_comp_ctx_, refresh_rate);
+    if (error != kErrorNone) {
+      return error;
+    }
   }
 
   // On success, set current refresh rate to new refresh rate
@@ -562,7 +571,8 @@ DisplayError DisplayBuiltIn::DppsProcessOps(enum DppsOps op, void *payload, size
     case kDppsScreenRefresh:
       event_handler_->Refresh();
       break;
-    case kDppsPartialUpdate:
+    case kDppsPartialUpdate: {
+      int ret;
       if (!payload) {
         DLOGE("Invalid payload parameter for op %d", op);
         error = kErrorParameters;
@@ -570,7 +580,19 @@ DisplayError DisplayBuiltIn::DppsProcessOps(enum DppsOps op, void *payload, size
       }
       enable = *(reinterpret_cast<bool *>(payload));
       ControlPartialUpdate(enable, &pending);
+      event_handler_->HandleEvent(kInvalidateDisplay);
+      event_handler_->Refresh();
+      {
+         lock_guard<recursive_mutex> obj(recursive_mutex_);
+         dpps_pu_nofiy_pending_ = true;
+      }
+      ret = dpps_pu_lock_.WaitFinite(kPuTimeOutMs);
+      if (ret) {
+        DLOGE("failed to %s partial update ret %d", ((enable) ? "enable" : "disable"), ret);
+        error = kErrorTimeOut;
+      }
       break;
+    }
     case kDppsRequestCommit:
       if (!payload) {
         DLOGE("Invalid payload parameter for op %d", op);

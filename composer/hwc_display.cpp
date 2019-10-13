@@ -388,9 +388,9 @@ void HWCColorMode::PopulateColorModes() {
         if (display_intf_->IsSupportSsppTonemap()) {
           color_mode_map_[ColorMode::DISPLAY_P3][render_intent][kHdrType] = mode_string;
         } else if (pic_quality == kStandard) {
-          color_mode_map_[ColorMode::BT2100_PQ][RenderIntent::TONE_MAP_COLORIMETRIC]
+          color_mode_map_[ColorMode::BT2100_PQ][render_intent]
                          [kHdrType] = mode_string;
-          color_mode_map_[ColorMode::BT2100_HLG][RenderIntent::TONE_MAP_COLORIMETRIC]
+          color_mode_map_[ColorMode::BT2100_HLG][render_intent]
                          [kHdrType] = mode_string;
         }
       } else if (color_gamut == kBt2020) {
@@ -413,40 +413,6 @@ void HWCColorMode::PopulateColorModes() {
       }
     }
   }
-}
-
-HWC2::Error HWCColorMode::ApplyDefaultColorMode() {
-  auto color_mode = ColorMode::NATIVE;
-  if (color_mode_map_.size() == 1U) {
-    color_mode = color_mode_map_.begin()->first;
-  } else if (color_mode_map_.size() > 1U) {
-    std::string default_color_mode;
-    bool found = false;
-    DisplayError error = display_intf_->GetDefaultColorMode(&default_color_mode);
-    if (error == kErrorNone) {
-      // get the default mode corresponding android_color_mode_t
-      for (auto &it_mode : color_mode_map_) {
-        for (auto &it : it_mode.second) {
-          for (auto &it_range : it.second) {
-            if (it_range.second == default_color_mode) {
-              found = true;
-              break;
-            }
-          }
-        }
-        if (found) {
-          color_mode = it_mode.first;
-          break;
-        }
-      }
-    }
-
-    // return the first color mode we encounter if not found
-    if (!found) {
-      color_mode = color_mode_map_.begin()->first;
-    }
-  }
-  return SetColorModeWithRenderIntent(color_mode, RenderIntent::COLORIMETRIC);
 }
 
 void HWCColorMode::Dump(std::ostringstream* os) {
@@ -611,6 +577,9 @@ int HWCDisplay::Deinit() {
     delete hwc_layer;
   }
 
+  // Close fbt release fence.
+  close(fbt_release_fence_);
+
   if (color_mode_) {
     color_mode_->DeInit();
     delete color_mode_;
@@ -640,7 +609,7 @@ HWC2::Error HWCDisplay::CreateLayer(hwc2_layer_t *out_layer_id) {
 HWCLayer *HWCDisplay::GetHWCLayer(hwc2_layer_t layer_id) {
   const auto map_layer = layer_map_.find(layer_id);
   if (map_layer == layer_map_.end()) {
-    DLOGE("[%" PRIu64 "] GetLayer(%" PRIu64 ") failed: no such layer", id_, layer_id);
+    DLOGW("[%" PRIu64 "] GetLayer(%" PRIu64 ") failed: no such layer", id_, layer_id);
     return nullptr;
   } else {
     return map_layer->second;
@@ -650,7 +619,7 @@ HWCLayer *HWCDisplay::GetHWCLayer(hwc2_layer_t layer_id) {
 HWC2::Error HWCDisplay::DestroyLayer(hwc2_layer_t layer_id) {
   const auto map_layer = layer_map_.find(layer_id);
   if (map_layer == layer_map_.end()) {
-    DLOGE("[%" PRIu64 "] destroyLayer(%" PRIu64 ") failed: no such layer", id_, layer_id);
+    DLOGW("[%" PRIu64 "] destroyLayer(%" PRIu64 ") failed: no such layer", id_, layer_id);
     return HWC2::Error::BadLayer;
   }
   const auto layer = map_layer->second;
@@ -858,7 +827,7 @@ void HWCDisplay::BuildSolidFillStack() {
 HWC2::Error HWCDisplay::SetLayerZOrder(hwc2_layer_t layer_id, uint32_t z) {
   const auto map_layer = layer_map_.find(layer_id);
   if (map_layer == layer_map_.end()) {
-    DLOGE("[%" PRIu64 "] updateLayerZ failed to find layer", id_);
+    DLOGW("[%" PRIu64 "] updateLayerZ failed to find layer", id_);
     return HWC2::Error::BadLayer;
   }
 
@@ -1273,6 +1242,7 @@ DisplayError HWCDisplay::HandleEvent(DisplayEvent event) {
       validated_ = false;
       break;
     }
+    case kInvalidateDisplay:
     case kThermalEvent:
     case kPanelDeadEvent: {
       SEQUENCE_WAIT_SCOPE_LOCK(HWCSession::locker_[id_]);
