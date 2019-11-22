@@ -449,7 +449,7 @@ typedef uint32_t GnssAdditionalSystemInfoMask;
 #define QZSS_SV_PRN_MIN     193
 #define QZSS_SV_PRN_MAX     197
 #define BDS_SV_PRN_MIN      201
-#define BDS_SV_PRN_MAX      235
+#define BDS_SV_PRN_MAX      237
 #define GAL_SV_PRN_MIN      301
 #define GAL_SV_PRN_MAX      336
 #define NAVIC_SV_PRN_MIN    401
@@ -2222,6 +2222,13 @@ typedef void (*LocAgpsOpenResultCb)(bool isSuccess, AGpsExtType agpsType, const 
         AGpsBearerType bearerType, void* userDataPtr);
 
 typedef void (*LocAgpsCloseResultCb)(bool isSuccess, AGpsExtType agpsType, void* userDataPtr);
+
+enum PowerStateType {
+    POWER_STATE_UNKNOWN = 0,
+    POWER_STATE_SUSPEND = 1,
+    POWER_STATE_RESUME  = 2,
+    POWER_STATE_SHUTDOWN = 3
+};
 
 /* Shared resources of LocIpc */
 #define LOC_IPC_HAL                    "/dev/socket/location/socket_hal"
