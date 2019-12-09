@@ -63,6 +63,7 @@ DisplayError CompManager::Init(const HWResourceInfo &hw_res_info,
   hw_res_info_ = hw_res_info;
   buffer_allocator_ = buffer_allocator;
   extension_intf_ = extension_intf;
+  sync_handler_ = buffer_sync_handler;
 
   return error;
 }
@@ -96,8 +97,9 @@ DisplayError CompManager::RegisterDisplay(int32_t display_id, DisplayType type,
   }
 
   Strategy *&strategy = display_comp_ctx->strategy;
-  strategy = new Strategy(extension_intf_, buffer_allocator_, display_id, type, hw_res_info_,
-                          hw_panel_info, mixer_attributes, display_attributes, fb_config);
+  strategy = new Strategy(extension_intf_, buffer_allocator_, sync_handler_, display_id, type,
+                          hw_res_info_, hw_panel_info, mixer_attributes, display_attributes,
+                          fb_config);
   if (!strategy) {
     DLOGE("Unable to create strategy");
     delete display_comp_ctx;
@@ -348,8 +350,6 @@ DisplayError CompManager::Prepare(Handle display_ctx, HWLayers *hw_layers) {
     return error;
   }
 
-  error = resource_intf_->Stop(display_resource_ctx, hw_layers);
-
   return error;
 }
 
@@ -419,11 +419,14 @@ DisplayError CompManager::PostCommit(Handle display_ctx, HWLayers *hw_layers) {
   display_comp_ctx->idle_fallback = false;
   display_comp_ctx->first_cycle_ = false;
 
+  Handle &display_resource_ctx = display_comp_ctx->display_resource_ctx;
+  error = resource_intf_->Stop(display_resource_ctx, hw_layers);
+
   DLOGV_IF(kTagCompManager, "Registered displays [%s], display %d-%d",
            StringDisplayList(registered_displays_), display_comp_ctx->display_id,
            display_comp_ctx->display_type);
 
-  return kErrorNone;
+  return error;
 }
 
 void CompManager::Purge(Handle display_ctx) {
