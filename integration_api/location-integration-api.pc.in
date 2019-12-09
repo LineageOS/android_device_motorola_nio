@@ -1,4 +1,4 @@
-/* Copyright (c) 2011,2013,2016, The Linux Foundation. All rights reserved
+/* Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,45 +26,13 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LOC_SYNC_REQ_H
-#define LOC_SYNC_REQ_H
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-#include <stdbool.h>
-#include <stdint.h>
-#include "loc_api_v02_client.h"
-
-#define LOC_ENGINE_SYNC_REQUEST_TIMEOUT       (1000) // 1 second
-#define LOC_ENGINE_SYNC_REQUEST_LONG_TIMEOUT  (5000) // 5 seconds
-
-/* Init function */
-extern void loc_sync_req_init();
-
-
-/* Process Loc API indications to wake up blocked user threads */
-extern void loc_sync_process_ind(
-      locClientHandleType     client_handle,     /* handle of the client */
-      uint32_t                ind_id ,      /* respInd id */
-      void                    *ind_payload_ptr, /* payload              */
-      uint32_t                ind_payload_size  /* payload size */
-);
-
-/* Thread safe synchronous request,  using Loc API status return code */
-extern locClientStatusEnumType loc_sync_send_req
-(
-      locClientHandleType       client_handle,
-      uint32_t                  req_id,        /* req id */
-      locClientReqUnionType     req_payload,
-      uint32_t                  timeout_msec,
-      uint32_t                  ind_id,  //ind ID to block for, usually the same as req_id */
-      void                      *ind_payload_ptr /* can be NULL*/
-);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LOC_SYNC_REQ_H */
+Name: location-integration-api
+Description: location integration api library
+Version: @VERSION@
+Libs: -L${libdir} -llocation_integration_api
+Cflags: -I${includedir} -I${includedir}/location-integration-api
