@@ -502,6 +502,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.usb@1.1-service-qti
 
+# VNDK
+PRODUCT_PRODUCT_VNDK_VERSION := current
+
 # Wifi
 PRODUCT_PACKAGES += \
     android.hardware.wifi@1.0-service \
