@@ -58,6 +58,8 @@ class DisplayBuiltIn : public DisplayBase, HWEventHandler, DppsPropIntf {
   DisplayBuiltIn(int32_t display_id, DisplayEventHandler *event_handler,
                  HWInfoInterface *hw_info_intf, BufferSyncHandler *buffer_sync_handler,
                  BufferAllocator *buffer_allocator, CompManager *comp_manager);
+  virtual ~DisplayBuiltIn();
+
   virtual DisplayError Init();
   virtual DisplayError Deinit();
   virtual DisplayError Prepare(LayerStack *layer_stack);
@@ -83,6 +85,7 @@ class DisplayBuiltIn : public DisplayBase, HWEventHandler, DppsPropIntf {
   virtual DisplayError GetSupportedDSIClock(std::vector<uint64_t> *bitclk_rates);
   virtual DisplayError SetFrameTriggerMode(FrameTriggerMode mode);
   virtual DisplayError SetBLScale(uint32_t level);
+  virtual DisplayError GetQSyncMode(QSyncMode *qsync_mode);
 
   // Implement the HWEventHandlers
   virtual DisplayError VSync(int64_t timestamp);
@@ -123,6 +126,7 @@ class DisplayBuiltIn : public DisplayBase, HWEventHandler, DppsPropIntf {
   Locker dpps_pu_lock_;
   bool dpps_pu_nofiy_pending_ = false;
   bool first_cycle_ = true;
+  int previous_retire_fence_ = -1;
 };
 
 }  // namespace sdm

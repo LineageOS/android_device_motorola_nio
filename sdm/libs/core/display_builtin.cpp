@@ -54,9 +54,12 @@ DisplayBuiltIn::DisplayBuiltIn(int32_t display_id, DisplayEventHandler *event_ha
   : DisplayBase(display_id, kBuiltIn, event_handler, kDeviceBuiltIn, buffer_sync_handler,
                 buffer_allocator, comp_manager, hw_info_intf) {}
 
+DisplayBuiltIn::~DisplayBuiltIn() {
+  CloseFd(&previous_retire_fence_);
+}
+
 DisplayError DisplayBuiltIn::Init() {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
-  int32_t disable_defer_power_state = 0;
 
   DisplayError error = HWInterface::Create(display_id_, kBuiltIn, hw_info_intf_,
                                            buffer_sync_handler_, buffer_allocator_, &hw_intf_);
@@ -111,11 +114,6 @@ DisplayError DisplayBuiltIn::Init() {
   }
 
   current_refresh_rate_ = hw_panel_info_.max_fps;
-
-  Debug::GetProperty(DISABLE_DEFER_POWER_STATE, &disable_defer_power_state);
-  defer_power_state_ = !disable_defer_power_state;
-
-  DLOGI("defer_power_state %d", defer_power_state_);
 
   return error;
 }
@@ -213,6 +211,16 @@ DisplayError DisplayBuiltIn::Commit(LayerStack *layer_stack) {
     }
   }
 
+  if (vsync_enable_) {
+    DTRACE_BEGIN("RegisterVsync");
+    // wait for previous frame's retire fence to signal.
+    buffer_sync_handler_->SyncWait(previous_retire_fence_);
+
+    // Register for vsync and then commit the frame.
+    hw_events_intf_->SetEventState(HWEvent::VSYNC, true);
+    DTRACE_END();
+  }
+
   error = DisplayBase::Commit(layer_stack);
   if (error != kErrorNone) {
     return error;
@@ -259,6 +267,9 @@ DisplayError DisplayBuiltIn::Commit(LayerStack *layer_stack) {
 
   first_cycle_ = false;
 
+  CloseFd(&previous_retire_fence_);
+  previous_retire_fence_ = Sys::dup_(layer_stack->retire_fence_fd);
+
   return error;
 }
 
@@ -274,6 +285,10 @@ DisplayError DisplayBuiltIn::SetDisplayState(DisplayState state, bool teardown,
   // Set vsync enable state to false, as driver disables vsync during display power off.
   if (state == kStateOff) {
     vsync_enable_ = false;
+  }
+
+  if (pending_doze_ || pending_power_on_) {
+    event_handler_->Refresh();
   }
 
   return kErrorNone;
@@ -626,7 +641,7 @@ DisplayError DisplayBuiltIn::DppsProcessOps(enum DppsOps op, void *payload, size
       }
       ret = dpps_pu_lock_.WaitFinite(kPuTimeOutMs);
       if (ret) {
-        DLOGE("failed to %s partial update ret %d", ((enable) ? "enable" : "disable"), ret);
+        DLOGW("failed to %s partial update ret %d", ((enable) ? "enable" : "disable"), ret);
         error = kErrorTimeOut;
       }
       break;
@@ -766,6 +781,11 @@ DisplayError DisplayBuiltIn::HandleSecureEvent(SecureEvent secure_event, LayerSt
   }
   comp_manager_->HandleSecureEvent(display_comp_ctx_, secure_event);
 
+  return kErrorNone;
+}
+
+DisplayError DisplayBuiltIn::GetQSyncMode(QSyncMode *qsync_mode) {
+  *qsync_mode = qsync_mode_;
   return kErrorNone;
 }
 
