@@ -1630,6 +1630,10 @@ void DisplayBase::CommitLayerParams(LayerStack *layer_stack) {
     }
   }
 
+  if (layer_stack->elapse_timestamp) {
+    hw_layers_.elapse_timestamp = layer_stack->elapse_timestamp;
+  }
+
   return;
 }
 
@@ -2071,6 +2075,13 @@ DisplayError DisplayBase::HandlePendingPowerState(int32_t retire_fence) {
 
 bool DisplayBase::CheckResourceState() {
   return comp_manager_->CheckResourceState(display_comp_ctx_);
+}
+DisplayError DisplayBase::colorSamplingOn() {
+  return kErrorNone;
+}
+
+DisplayError DisplayBase::colorSamplingOff() {
+  return kErrorNone;
 }
 
 bool DisplayBase::GameEnhanceSupported() {
