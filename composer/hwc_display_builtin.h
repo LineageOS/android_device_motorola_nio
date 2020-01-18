@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -54,7 +54,7 @@ struct LayerStitchGetInstanceContext : public SyncTask<LayerStitchTaskCode>::Tas
   LayerBuffer *output_buffer = NULL;
 };
 
-struct LayerStitchStitchContext : public SyncTask<LayerStitchTaskCode>::TaskContext {
+struct LayerStitchContext : public SyncTask<LayerStitchTaskCode>::TaskContext {
   const private_handle_t* src_hnd = nullptr;
   const private_handle_t* dst_hnd = nullptr;
   GLRect src_rect = {};
@@ -131,6 +131,7 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   virtual int Deinit();
   virtual bool IsQsyncCallbackNeeded(bool *qsync_enabled, int32_t *refresh_rate,
                                      int32_t *qsync_refresh_rate);
+  virtual int PostInit();
 
   virtual HWC2::Error SetDisplayedContentSamplingEnabledVndService(bool enabled);
   virtual HWC2::Error SetDisplayedContentSamplingEnabled(int32_t enabled, uint8_t component_mask,
@@ -167,6 +168,7 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   void InitStitchTarget();
   bool AllocateStitchBuffer();
   void CacheAvrStatus();
+  void PostCommitStitchLayers();
 
   // SyncTask methods.
   void OnTask(const LayerStitchTaskCode &task_code,
@@ -193,7 +195,7 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   bool frame_capture_buffer_queued_ = false;
   int frame_capture_status_ = -EAGAIN;
   bool is_primary_ = false;
-  bool disable_layer_stitch_ = false;
+  bool disable_layer_stitch_ = true;
   HWCLayer* stitch_target_ = nullptr;
   SyncTask<LayerStitchTaskCode> layer_stitch_task_;
   GLLayerStitch* gl_layer_stitch_ = nullptr;

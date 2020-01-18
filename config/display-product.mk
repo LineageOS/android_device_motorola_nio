@@ -70,6 +70,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     vendor.gralloc.disable_ubwc=0 \
     vendor.display.disable_scaler=0 \
     vendor.display.disable_excl_rect=0 \
+    vendor.display.disable_excl_rect_partial_fb=1 \
     vendor.display.comp_mask=0 \
     vendor.display.enable_posted_start_dyn=1 \
     vendor.display.enable_optimize_refresh=1 \
@@ -83,7 +84,8 @@ else
 PRODUCT_PROPERTY_OVERRIDES += \
     vendor.display.disable_rotator_ubwc=1 \
     vendor.display.normal_noc_efficiency_factor=0.85 \
-    vendor.display.camera_noc_efficiency_factor=0.70
+    vendor.display.camera_noc_efficiency_factor=0.70 \
+    vendor.display.disable_layer_stitch=0
 endif
 
 ifeq ($(TARGET_BOARD_PLATFORM),kona)

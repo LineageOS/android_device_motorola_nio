@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright 2015 The Android Open Source Project
@@ -41,6 +41,7 @@
 #include "hwc_callbacks.h"
 #include "hwc_display_event_handler.h"
 #include "hwc_layers.h"
+#include "hwc_buffer_sync_handler.h"
 
 using android::hardware::graphics::common::V1_2::ColorMode;
 using android::hardware::graphics::common::V1_1::Dataspace;
@@ -50,9 +51,6 @@ using android::hardware::graphics::common::V1_2::Hdr;
 namespace sdm {
 
 class HWCToneMapper;
-
-/* max customer extended render intent */
-#define MAX_EXTENDED_RENDER_INTENT    0x1ff
 
 // Subclasses set this to their type. This has to be different from DisplayType.
 // This is to avoid RTTI and dynamic_cast
@@ -382,6 +380,7 @@ class HWCDisplay : public DisplayEventHandler {
                                      int32_t *qsync_refresh_rate) {
     return false;
   }
+  virtual int PostInit() { return 0; }
 
   virtual HWC2::Error SetDisplayedContentSamplingEnabledVndService(bool enabled);
   virtual HWC2::Error SetDisplayedContentSamplingEnabled(int32_t enabled, uint8_t component_mask,
@@ -481,6 +480,9 @@ class HWCDisplay : public DisplayEventHandler {
   bool client_connected_ = true;
   bool pending_config_ = false;
   bool has_client_composition_ = false;
+  HWCBufferSyncHandler buffer_sync_handler_ = {};
+  LayerRect window_rect_ = {};
+  bool windowed_display_ = true;
 
  private:
   void DumpInputBuffers(void);
@@ -502,6 +504,7 @@ class HWCDisplay : public DisplayEventHandler {
   hwc2_config_t pending_config_index_ = 0;
   bool game_supported_ = false;
   uint64_t elapse_timestamp_ = 0;
+  int async_power_mode_ = 0;
 };
 
 inline int HWCDisplay::Perform(uint32_t operation, ...) {
