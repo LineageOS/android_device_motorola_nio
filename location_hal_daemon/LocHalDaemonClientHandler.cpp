@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -139,6 +139,15 @@ void LocHalDaemonClientHandler::updateSubscription(uint32_t mask) {
         mCallbacks.gnssDataCb = nullptr;
     }
 
+    // measurements
+    if (mSubscriptionMask & E_LOC_CB_GNSS_MEAS_BIT) {
+        mCallbacks.gnssMeasurementsCb = [this](GnssMeasurementsNotification notification) {
+            onGnssMeasurementsCb(notification);
+        };
+    } else {
+        mCallbacks.gnssMeasurementsCb = nullptr;
+    }
+
     // system info
     if (mSubscriptionMask & E_LOC_CB_SYSTEM_INFO_BIT) {
         mCallbacks.locationSystemInfoCb = [this](LocationSystemInfo notification) {
@@ -149,7 +158,6 @@ void LocHalDaemonClientHandler::updateSubscription(uint32_t mask) {
     }
 
     // following callbacks are not supported
-    mCallbacks.gnssMeasurementsCb = nullptr;
     mCallbacks.gnssNiCb = nullptr;
     mCallbacks.geofenceStatusCb = nullptr;
 
@@ -362,22 +370,29 @@ void LocHalDaemonClientHandler::cleanup() {
     // please do not attempt to hold the lock, as the caller of this function
     // already holds the lock
 
+    // set the ptr to null to prevent further sending out message to the
+    // remote client that is no longer reachable
+    mIpcSender = nullptr;
+
     // check whether this is client from external AP,
-    // mName for client on external ap is of format "serviceid.instanceid"
+    // mName for client on external ap is fully-qualified path name ending with
+    // "serviceid.instanceid"
     if (strncmp(mName.c_str(), EAP_LOC_CLIENT_DIR,
                 sizeof(EAP_LOC_CLIENT_DIR)-1) == 0 ) {
-        char fileName[MAX_SOCKET_PATHNAME_LENGTH];
-        snprintf (fileName, sizeof(fileName), "%s%s%s",
-                  EAP_LOC_CLIENT_DIR, LOC_CLIENT_NAME_PREFIX, mName.c_str());
-        LOC_LOGv("removed file name %s", fileName);
-        if (0 != remove(fileName)) {
-            LOC_LOGe("<-- failed to remove file %s", fileName);
+        LOC_LOGv("removed file %s", mName.c_str());
+        if (0 != remove(mName.c_str())) {
+            LOC_LOGe("<-- failed to remove file %s", mName.c_str());
         }
     }
 
     if (mLocationApi) {
         mLocationApi->destroy([this]() {onLocationApiDestroyCompleteCb();});
         mLocationApi = nullptr;
+    } else {
+        // For location integration api client handler, it does not
+        // instantiate LocationApi interface and can be freed right away
+        LOC_LOGe("delete LocHalDaemonClientHandler");
+        delete this;
     }
 }
 
@@ -862,6 +877,17 @@ void LocHalDaemonClientHandler::onGnssMeasurementsCb(GnssMeasurementsNotificatio
 
     std::lock_guard<std::mutex> lock(LocationApiService::mMutex);
     LOC_LOGd("--< onGnssMeasurementsCb");
+
+    if ((nullptr != mIpcSender) && (mSubscriptionMask & E_LOC_CB_GNSS_MEAS_BIT)) {
+        LocAPIMeasIndMsg msg(SERVICE_NAME, notification);
+        LOC_LOGv("Sending meas message");
+        int rc = sendMessage(msg);
+        // purge this client if failed
+        if (!rc) {
+            LOC_LOGe("failed rc=%d purging client=%s", rc, mName.c_str());
+            mService->deleteClientbyName(mName);
+        }
+    }
 }
 
 void LocHalDaemonClientHandler::onLocationSystemInfoCb(LocationSystemInfo notification) {
