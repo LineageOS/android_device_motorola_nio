@@ -349,7 +349,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.surface_flinger.set_idle_timer_ms=250 \
-    ro.surface_flinger.use_smart_90_for_video=true
+    ro.surface_flinger.use_content_detection_for_refresh_rate=true
 
 # Recovery is enabled, logging is disabled
 PRODUCT_PROPERTY_OVERRIDES += \
