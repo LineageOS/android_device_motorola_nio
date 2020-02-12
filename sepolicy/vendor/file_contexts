@@ -63,5 +63,8 @@
 /sys/devices/virtual/misc/[^*]+/wakeup[0-9]+(/.*)?              u:object_r:sysfs_wakeup:s0
 /sys/devices/virtual/fastrpc/adsprpc-smd/wakeup[0-9]+(/.*)?     u:object_r:sysfs_wakeup:s0
 
+# Data files
+/data/per_boot(/.*)?                                                 u:object_r:per_boot_file:s0
+
 # Fingerprint
 /(mnt/vendor/persist|persist)/fps(/.*)?                 u:object_r:vendor_persist_fps_file:s0
