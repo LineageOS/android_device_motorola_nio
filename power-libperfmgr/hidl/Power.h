@@ -27,7 +27,7 @@
 #include <perfmgr/HintManager.h>
 
 #include "CameraMode.h"
-#include "InteractionHandler.h"
+#include "disp-power/InteractionHandler.h"
 
 namespace android {
 namespace hardware {
