@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -132,13 +132,15 @@ int GLLayerStitchImpl::CreateContext(bool secure) {
 
 int GLLayerStitchImpl::Blit(const private_handle_t *src_hnd, const private_handle_t *dst_hnd,
                             const GLRect &src_rect, const GLRect &dst_rect,
-                            int src_acquire_fence_fd, int dst_acquire_fence_fd,
-                            int *release_fence_fd) {
+                            const GLRect &scissor_rect, int src_acquire_fence_fd,
+                            int dst_acquire_fence_fd, int *release_fence_fd) {
   DTRACE_SCOPED();
   // eglMakeCurrent attaches rendering context to rendering surface.
   MakeCurrent(&ctx_);
 
   SetProgram(ctx_.program_id);
+
+  ClearWithTransparency(scissor_rect);
 
   SetSourceBuffer(src_hnd);
   SetDestinationBuffer(dst_hnd, dst_rect);
@@ -170,6 +172,15 @@ int GLLayerStitchImpl::Deinit() {
   DestroyContext(&ctx_);
 
   return 0;
+}
+
+void GLLayerStitchImpl::ClearWithTransparency(const GLRect &scissor_rect) {
+  DTRACE_SCOPED();
+  GL(glScissor(scissor_rect.left, scissor_rect.top, scissor_rect.right - scissor_rect.left,
+               scissor_rect.bottom - scissor_rect.top));
+  GL(glEnable(GL_SCISSOR_TEST));
+  GL(glClearColor(0, 0, 0, 0));
+  GL(glClear(GL_COLOR_BUFFER_BIT));
 }
 
 GLLayerStitchImpl::~GLLayerStitchImpl() {}

@@ -292,7 +292,8 @@ HWC2::Error HWCDisplayBuiltIn::CommitStitchLayers() {
     Layer *stitch_layer = stitch_target_->GetSDMLayer();
     LayerBuffer &output_buffer = stitch_layer->input_buffer;
     ctx.dst_hnd = reinterpret_cast<const private_handle_t *>(output_buffer.buffer_id);
-    SetRect(layer->stitch_dst_rect, &ctx.dst_rect);
+    SetRect(layer->stitch_info.dst_rect, &ctx.dst_rect);
+    SetRect(layer->stitch_info.slice_rect, &ctx.scissor_rect);
     ctx.src_acquire_fence_fd = input_buffer.acquire_fence_fd;
 
     layer_stitch_task_.PerformTask(LayerStitchTaskCode::kCodeStitch, &ctx);
@@ -1267,8 +1268,8 @@ void HWCDisplayBuiltIn::OnTask(const LayerStitchTaskCode &task_code,
         DTRACE_SCOPED();
         LayerStitchContext* ctx = reinterpret_cast<LayerStitchContext*>(task_context);
         gl_layer_stitch_->Blit(ctx->src_hnd, ctx->dst_hnd, ctx->src_rect, ctx->dst_rect,
-                               ctx->src_acquire_fence_fd, ctx->dst_acquire_fence_fd,
-                               &(ctx->release_fence_fd));
+                               ctx->scissor_rect, ctx->src_acquire_fence_fd,
+                               ctx->dst_acquire_fence_fd, &(ctx->release_fence_fd));
       }
       break;
     case LayerStitchTaskCode::kCodeDestroyInstance: {
