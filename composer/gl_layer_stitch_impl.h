@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -42,7 +42,7 @@ class GLLayerStitchImpl : public GLLayerStitch, public GLCommon {
   explicit GLLayerStitchImpl(bool secure);
   virtual ~GLLayerStitchImpl();
   virtual int Blit(const private_handle_t *src_hnd, const private_handle_t *dst_hnd,
-                   const GLRect &src_rect, const GLRect &dst_rect,
+                   const GLRect &src_rect, const GLRect &dst_rect, const GLRect &scissor_rect,
                    int src_acquire_fence_fd, int dst_acquire_fence_fd, int *release_fence_fd);
   virtual int CreateContext(bool secure);
   virtual int Init();
@@ -50,6 +50,8 @@ class GLLayerStitchImpl : public GLLayerStitch, public GLCommon {
  private:
   bool secure_ = false;
   GLContext ctx_;
+
+  void ClearWithTransparency(const GLRect &scissor_rect);
 };
 
 }  // namespace sdm

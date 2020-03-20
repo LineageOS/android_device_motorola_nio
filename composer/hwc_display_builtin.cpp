@@ -131,7 +131,7 @@ int HWCDisplayBuiltIn::Init() {
   HWCDebugHandler::Get()->GetProperty(ENABLE_OPTIMIZE_REFRESH, &optimize_refresh);
   enable_optimize_refresh_ = (optimize_refresh == 1);
   if (enable_optimize_refresh_) {
-    DLOGI("Drop redundant drawcycles %d", id_);
+    DLOGI("Drop redundant drawcycles %" PRIu64 , id_);
   }
 
   is_primary_ = display_intf_->IsPrimaryDisplay();
@@ -141,7 +141,7 @@ int HWCDisplayBuiltIn::Init() {
     HWCDebugHandler::Get()->GetProperty(ENABLE_BW_LIMITS, &enable_bw_limits);
     enable_bw_limits_ = (enable_bw_limits == 1);
     if (enable_bw_limits_) {
-      DLOGI("Enable BW Limits %d", id_);
+      DLOGI("Enable BW Limits %" PRIu64, id_);
     }
     windowed_display_ = Debug::GetWindowRect(&window_rect_.left, &window_rect_.top,
                       &window_rect_.right, &window_rect_.bottom) != kErrorUndefined;
@@ -292,7 +292,8 @@ HWC2::Error HWCDisplayBuiltIn::CommitStitchLayers() {
     Layer *stitch_layer = stitch_target_->GetSDMLayer();
     LayerBuffer &output_buffer = stitch_layer->input_buffer;
     ctx.dst_hnd = reinterpret_cast<const private_handle_t *>(output_buffer.buffer_id);
-    SetRect(layer->stitch_dst_rect, &ctx.dst_rect);
+    SetRect(layer->stitch_info.dst_rect, &ctx.dst_rect);
+    SetRect(layer->stitch_info.slice_rect, &ctx.scissor_rect);
     ctx.src_acquire_fence_fd = input_buffer.acquire_fence_fd;
 
     layer_stitch_task_.PerformTask(LayerStitchTaskCode::kCodeStitch, &ctx);
@@ -806,7 +807,7 @@ int HWCDisplayBuiltIn::HandleSecureSession(const std::bitset<kSecureMax> &secure
       return err;
     }
 
-    DLOGI("SecureDisplay state changed from %d to %d for display %d-%d",
+    DLOGI("SecureDisplay state changed from %d to %d for display %" PRIu64 "-%d",
           active_secure_sessions_.test(kSecureDisplay), secure_sessions.test(kSecureDisplay),
           id_, type_);
   }
@@ -1132,7 +1133,7 @@ DisplayError HWCDisplayBuiltIn::SetDynamicDSIClock(uint64_t bitclk) {
   DisablePartialUpdateOneFrame();
   DisplayError error = display_intf_->SetDynamicDSIClock(bitclk);
   if (error != kErrorNone) {
-    DLOGE(" failed: Clk: %llu Error: %d", bitclk, error);
+    DLOGE(" failed: Clk: %" PRIu64 " Error: %d", bitclk, error);
     return error;
   }
 
@@ -1267,8 +1268,8 @@ void HWCDisplayBuiltIn::OnTask(const LayerStitchTaskCode &task_code,
         DTRACE_SCOPED();
         LayerStitchContext* ctx = reinterpret_cast<LayerStitchContext*>(task_context);
         gl_layer_stitch_->Blit(ctx->src_hnd, ctx->dst_hnd, ctx->src_rect, ctx->dst_rect,
-                               ctx->src_acquire_fence_fd, ctx->dst_acquire_fence_fd,
-                               &(ctx->release_fence_fd));
+                               ctx->scissor_rect, ctx->src_acquire_fence_fd,
+                               ctx->dst_acquire_fence_fd, &(ctx->release_fence_fd));
       }
       break;
     case LayerStitchTaskCode::kCodeDestroyInstance: {
