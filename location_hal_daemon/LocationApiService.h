@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -146,6 +146,7 @@ private:
     // Location control API callback
     void onControlResponseCallback(LocationError err, uint32_t id);
     void onControlCollectiveResponseCallback(size_t count, LocationError *errs, uint32_t *ids);
+    void onGnssConfigCallback(uint32_t sessionId, const GnssConfig& config);
     void onGnssEnergyConsumedCb(uint64_t totalEnergyConsumedSinceFirstBoot);
 
     // Location configuration API requests
@@ -158,6 +159,13 @@ private:
     void configAidingDataDeletion(
             LocConfigAidingDataDeletionReqMsg* pMsg);
     void configLeverArm(const LocConfigLeverArmReqMsg* pMsg);
+    void configRobustLocation(const LocConfigRobustLocationReqMsg* pMsg);
+
+    // Location configuration API get/read requests
+    void getGnssConfig(const LocAPIMsgHeader* pReqMsg,
+                       GnssConfigFlagsBits configFlag);
+
+    // Location configuration API util routines
     void addConfigRequestToMap(uint32_t sessionId,
                                const LocAPIMsgHeader* pMsg);
 

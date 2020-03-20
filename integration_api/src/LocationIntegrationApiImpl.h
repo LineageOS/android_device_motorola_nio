@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -66,6 +66,12 @@ typedef struct {
     GnssSvIdConfig   svIdConfig;
 } SVConfigInfo;
 
+typedef struct {
+    bool isValid;
+    bool enable;
+    bool enableForE911;
+} RobustLocationConfigInfo;
+
 class IpcListener;
 
 class LocationIntegrationApiImpl : public ILocationControlAPI {
@@ -88,10 +94,13 @@ public:
             bool enable, float tuncThreshold, uint32_t energyBudget) override;
     virtual uint32_t configPositionAssistedClockEstimator(bool enable) override;
     virtual uint32_t configLeverArm(const LeverArmConfigInfo& configInfo) override;
+    virtual uint32_t configRobustLocation(bool enable, bool enableForE911) override;
 
     // rest of ILocationController API that are not used in integration API
     virtual uint32_t* gnssUpdateConfig(GnssConfig config) override;
     virtual uint32_t gnssDeleteAidingData(GnssAidingData& data) override;
+
+    uint32_t getRobustLocationConfig();
 
 private:
     ~LocationIntegrationApiImpl();
@@ -105,8 +114,9 @@ private:
 
     void addConfigReq(LocConfigTypeEnum configType);
     void flushConfigReqs();
-    void invokeConfigRespCb(LocConfigTypeEnum configType,
-                            LocIntegrationResponse response);
+    void processConfigRespCb(const LocAPIGenericRespMsg* pRespMsg);
+    void processGetRobustLocationConfigRespCb(
+            const LocConfigGetRobustLocationConfigRespMsg* pRespMsg);
 
     // internal session parameter
     static mutex             mMutex;
@@ -124,6 +134,7 @@ private:
     PaceConfigInfo           mPaceConfigInfo;
     SVConfigInfo             mSVConfigInfo;
     LeverArmConfigInfo       mLeverArmConfigInfo;
+    RobustLocationConfigInfo mRobustLocationConfigInfo;
 
     LocConfigReqCntMap       mConfigReqCntMap;
     LocIntegrationCbs        mIntegrationCbs;
