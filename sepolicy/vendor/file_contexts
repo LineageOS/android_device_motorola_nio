@@ -12,7 +12,7 @@
 
 # HAL Services
 /(vendor|system/vendor)/bin/hw/android\.hardware\.light@2\.0-service\.motorola_lito    u:object_r:hal_light_default_exec:s0
-/(vendor|system/vendor)/bin/hw/android\.hardware\.power@1\.3-service\.lito-libperfmgr  u:object_r:hal_power_default_exec:s0
+/(vendor|system/vendor)/bin/hw/android\.hardware\.power-service\.sm7250-libperfmgr     u:object_r:hal_power_default_exec:s0
 /(vendor|system/vendor)/bin/hw/motorola\.hardware\.audio\.adspd@1\.0-service           u:object_r:hal_audio_default_exec:s0
 /(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay@2\.0-service-sysfs\.motorola_lito    u:object_r:hal_lineage_livedisplay_sysfs_exec:s0
 
