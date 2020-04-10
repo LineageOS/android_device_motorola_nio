@@ -65,6 +65,7 @@ class GLCommon {
   virtual int WaitOnInputFence(int in_fence_fd);
   virtual int CreateOutputFence();
   virtual void ClearCache();
+  virtual void SetRealTimePriority();
 
  protected:
   virtual ~GLCommon() { }
