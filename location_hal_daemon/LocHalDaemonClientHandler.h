@@ -32,7 +32,13 @@
 #include <queue>
 #include <mutex>
 #include <log_util.h>
-#include <unordered_map>
+#include <loc_pla.h>
+
+#ifdef NO_UNORDERED_SET_OR_MAP
+    #include <map>
+#else
+    #include <unordered_map>
+#endif
 
 #include <LocationAPI.h>
 #include <LocIpc.h>
@@ -137,7 +143,6 @@ private:
     void onGnssNmeaCb(GnssNmeaNotification);
     void onGnssDataCb(GnssDataNotification gnssDataNotification);
     void onGnssMeasurementsCb(GnssMeasurementsNotification gnssMeasurementsNotification);
-    void onGnssSvPolynomialCb(GnssSvPolynomial gnssSvPolynomialNotification);
     void onLocationSystemInfoCb(LocationSystemInfo);
     void onLocationApiDestroyCompleteCb();
 
