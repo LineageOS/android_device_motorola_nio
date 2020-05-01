@@ -294,35 +294,36 @@ HWC2::Error HWCDisplayBuiltIn::CommitStitchLayers() {
     return HWC2::Error::None;
   }
 
+  LayerStitchContext ctx = {};
   for (auto &layer : layer_stack_.layers) {
     LayerComposition &composition = layer->composition;
     if (composition != kCompositionStitch) {
       continue;
     }
 
-    LayerStitchContext ctx = {};
+    StitchParams params = {};
     // Stitch target doesn't have an input fence.
     // Render all layers at specified destination.
     LayerBuffer &input_buffer = layer->input_buffer;
-    ctx.src_hnd = reinterpret_cast<const private_handle_t *>(input_buffer.buffer_id);
+    params.src_hnd = reinterpret_cast<const private_handle_t *>(input_buffer.buffer_id);
     Layer *stitch_layer = stitch_target_->GetSDMLayer();
     LayerBuffer &output_buffer = stitch_layer->input_buffer;
-    ctx.dst_hnd = reinterpret_cast<const private_handle_t *>(output_buffer.buffer_id);
-    SetRect(layer->stitch_info.dst_rect, &ctx.dst_rect);
-    SetRect(layer->stitch_info.slice_rect, &ctx.scissor_rect);
-    ctx.src_acquire_fence_fd = input_buffer.acquire_fence_fd;
+    params.dst_hnd = reinterpret_cast<const private_handle_t *>(output_buffer.buffer_id);
+    SetRect(layer->stitch_info.dst_rect, &params.dst_rect);
+    SetRect(layer->stitch_info.slice_rect, &params.scissor_rect);
+    params.src_acquire_fence_fd = input_buffer.acquire_fence_fd;
 
-    layer_stitch_task_.PerformTask(LayerStitchTaskCode::kCodeStitch, &ctx);
-
-    // Merge with current fence and close previous one.
-    int acquire_fence = -1;
-    buffer_sync_handler_.SyncMerge(output_buffer.acquire_fence_fd, ctx.release_fence_fd,
-                                   &acquire_fence);
-    CloseFd(&output_buffer.acquire_fence_fd);
-    CloseFd(&ctx.release_fence_fd);
-
-    output_buffer.acquire_fence_fd = acquire_fence;
+    ctx.stitch_params.push_back(params);
   }
+
+  if (!ctx.stitch_params.size()) {
+    // No layers marked for stitch.
+    return HWC2::Error::None;
+  }
+
+  layer_stitch_task_.PerformTask(LayerStitchTaskCode::kCodeStitch, &ctx);
+  // Set release fence.
+  output_buffer_.acquire_fence_fd = ctx.release_fence_fd;
 
   return HWC2::Error::None;
 }
@@ -1326,9 +1327,7 @@ void HWCDisplayBuiltIn::OnTask(const LayerStitchTaskCode &task_code,
     case LayerStitchTaskCode::kCodeStitch: {
         DTRACE_SCOPED();
         LayerStitchContext* ctx = reinterpret_cast<LayerStitchContext*>(task_context);
-        gl_layer_stitch_->Blit(ctx->src_hnd, ctx->dst_hnd, ctx->src_rect, ctx->dst_rect,
-                               ctx->scissor_rect, ctx->src_acquire_fence_fd,
-                               ctx->dst_acquire_fence_fd, &(ctx->release_fence_fd));
+        gl_layer_stitch_->Blit(ctx->stitch_params, &(ctx->release_fence_fd));
       }
       break;
     case LayerStitchTaskCode::kCodeDestroyInstance: {
