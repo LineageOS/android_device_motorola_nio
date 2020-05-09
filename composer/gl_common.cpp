@@ -27,6 +27,9 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <vector>
+#include <string>
+
 #include "gl_common.h"
 
 #define __CLASS__ "GLCommon"
@@ -97,26 +100,35 @@ void GLCommon::SetSourceBuffer(const private_handle_t *src_hnd) {
   }
 }
 
-void GLCommon::SetDestinationBuffer(const private_handle_t *dst_hnd, const GLRect &dst_rect) {
+void GLCommon::SetDestinationBuffer(const private_handle_t *dst_hnd) {
   DTRACE_SCOPED();
+  if (dst_hnd_ == dst_hnd) {
+    return;
+  }
   EGLImageBuffer *dst_buffer = image_wrapper_.wrap(reinterpret_cast<const void *>(dst_hnd));
 
   if (dst_buffer) {
     GL(glBindFramebuffer(GL_FRAMEBUFFER, dst_buffer->getFramebuffer()));
-    float width = dst_rect.right - dst_rect.left;
-    float height = dst_rect.bottom - dst_rect.top;
-    GL(glViewport(dst_rect.left, dst_rect.top, width, height));
   }
+
+  // Same buffer gets reprogrammed. Avoid repeated setting.
+  dst_hnd_ = dst_hnd;
 }
 
-int GLCommon::WaitOnInputFence(int in_fence_fd) {
+int GLCommon::WaitOnInputFence(const std::vector<int> &in_fence_fds) {
   DTRACE_SCOPED();
-  EGLint attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID, in_fence_fd, EGL_NONE};
+
+  int merged_fd = GetMergedFd(in_fence_fds, "Acquire_fence", true);
+  if (merged_fd == -1) {
+    return 0;
+  }
+
+  EGLint attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID, merged_fd, EGL_NONE};
   EGLSyncKHR sync = eglCreateSyncKHR(eglGetCurrentDisplay(), EGL_SYNC_NATIVE_FENCE_ANDROID,
                                      attribs);
 
   if (sync == EGL_NO_SYNC_KHR) {
-    DLOGE("Failed to create sync from source fd: %d", in_fence_fd);
+    DLOGE("Failed to create sync from source fd: %d", merged_fd);
     return -1;
   } else {
     EGL(eglWaitSyncKHR(eglGetCurrentDisplay(), sync, 0));
@@ -173,6 +185,39 @@ void GLCommon::SetRealTimePriority() {
   if (sched_setscheduler(0, SCHED_FIFO | SCHED_RESET_ON_FORK, &param) != 0) {
     DLOGE("Couldn't set SCHED_FIFO: %d", errno);
   }
+}
+
+void GLCommon::SetViewport(const GLRect &dst_rect) {
+  DTRACE_SCOPED();
+  float width = dst_rect.right - dst_rect.left;
+  float height = dst_rect.bottom - dst_rect.top;
+  GL(glViewport(dst_rect.left, dst_rect.top, width, height));
+}
+
+int GLCommon::GetMergedFd(const std::vector<int> &fence_fds, const std::string &desc,
+                          bool ignore_signaled) {
+  DTRACE_SCOPED();
+  int merged_fd = -1;
+  for (auto &fence_fd : fence_fds) {
+    if (fence_fd == -1) {
+      continue;
+    }
+
+    // Fence got signaled.
+    if (ignore_signaled && (sync_wait(fence_fd, 0) >= 0)) {
+      continue;
+    }
+
+    if (merged_fd == -1) {
+      merged_fd = dup(fence_fd);
+    } else {
+      int temp = merged_fd;
+      merged_fd = sync_merge(desc.c_str(), fence_fd, merged_fd);
+      close(temp);
+    }
+  }
+
+  return merged_fd;
 }
 
 }  // namespace sdm

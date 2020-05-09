@@ -27,6 +27,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <vector>
+
 #include "gl_layer_stitch_impl.h"
 
 #define __CLASS__ "GLLayerStitchImpl"
@@ -71,6 +73,10 @@ const char *kConvertRenderRGBShader = ""
   "{                                                                     \n"
   "    color = texture(u_sTexture, uv);                                  \n"
   "}                                                                     \n";
+
+static bool IsValid(const GLRect &rect) {
+  return ((rect.right - rect.left) && (rect.bottom - rect.top));
+}
 
 int GLLayerStitchImpl::CreateContext(bool secure) {
   ctx_.egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -128,41 +134,58 @@ int GLLayerStitchImpl::CreateContext(bool secure) {
   ctx_.program_id = LoadProgram(1, &kVertexShader1, count, fragment_shaders);
 
   SetRealTimePriority();
+  InitContext();
 
   return 0;
 }
 
-int GLLayerStitchImpl::Blit(const private_handle_t *src_hnd, const private_handle_t *dst_hnd,
-                            const GLRect &src_rect, const GLRect &dst_rect,
-                            const GLRect &scissor_rect, int src_acquire_fence_fd,
-                            int dst_acquire_fence_fd, int *release_fence_fd) {
+int GLLayerStitchImpl::Blit(const std::vector<StitchParams> &stitch_params, int *release_fence_fd) {
   DTRACE_SCOPED();
-  // eglMakeCurrent attaches rendering context to rendering surface.
-  MakeCurrent(&ctx_);
 
-  SetProgram(ctx_.program_id);
+  std::vector<int> acquire_fences;
+  std::vector<int> release_fences;
+  bool can_batch = !NeedsGLScissor(stitch_params);
+  for (auto &info : stitch_params) {
+    SetSourceBuffer(info.src_hnd);
+    SetDestinationBuffer(info.dst_hnd);
+    SetViewport(info.dst_rect);
+    ClearWithTransparency(info.scissor_rect);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
-  ClearWithTransparency(scissor_rect);
+    acquire_fences.push_back(info.src_acquire_fence_fd);
 
-  SetSourceBuffer(src_hnd);
-  SetDestinationBuffer(dst_hnd, dst_rect);
-
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, kFullScreenVertices);
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, kFullScreenTexCoords);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-
-  // Dst. is always guaranteed to be signaled.
-  int in_fence_fd = dup(src_acquire_fence_fd);
-  if (in_fence_fd >= 0) {
-    WaitOnInputFence(in_fence_fd);
+    if (!can_batch) {
+      // Trigger flush and cache release fence.
+      WaitOnInputFence(acquire_fences);
+      release_fences.push_back(CreateOutputFence());
+      acquire_fences = {};
+    }
   }
 
-  // Create output fence for client to wait on.
-  *release_fence_fd = CreateOutputFence();
+  if (can_batch) {
+    // Create output fence for client to wait on.
+    WaitOnInputFence(acquire_fences);
+    *release_fence_fd = CreateOutputFence();
+  } else {
+    // Merge all fd's and return one.
+    *release_fence_fd = GetMergedFd(release_fences, __CLASS__, false);
+    // Close all intermediate fences.
+    for (auto &fence : release_fences) {
+      close(fence);
+    }
+  }
 
   return 0;
+}
+
+int GLLayerStitchImpl::NeedsGLScissor(const std::vector<StitchParams> &stitch_params) {
+  for (auto &info : stitch_params) {
+    if (IsValid(info.scissor_rect)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 int GLLayerStitchImpl::Init() {
@@ -177,12 +200,31 @@ int GLLayerStitchImpl::Deinit() {
 }
 
 void GLLayerStitchImpl::ClearWithTransparency(const GLRect &scissor_rect) {
+  if (!IsValid(scissor_rect)) {
+    // Disable scissor.
+    GL(glDisable(GL_SCISSOR_TEST));
+    return;
+  }
+
   DTRACE_SCOPED();
-  GL(glScissor(scissor_rect.left, scissor_rect.top, scissor_rect.right - scissor_rect.left,
-               scissor_rect.bottom - scissor_rect.top));
+  // Enable scissor test.
   GL(glEnable(GL_SCISSOR_TEST));
   GL(glClearColor(0, 0, 0, 0));
   GL(glClear(GL_COLOR_BUFFER_BIT));
+  GL(glScissor(scissor_rect.left, scissor_rect.top, scissor_rect.right - scissor_rect.left,
+               scissor_rect.bottom - scissor_rect.top));
+}
+
+void GLLayerStitchImpl::InitContext() {
+  // eglMakeCurrent attaches rendering context to rendering surface.
+  MakeCurrent(&ctx_);
+  SetProgram(ctx_.program_id);
+  SetRealTimePriority();
+  // Set vertices.
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, kFullScreenVertices);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, kFullScreenTexCoords);
 }
 
 GLLayerStitchImpl::~GLLayerStitchImpl() {}

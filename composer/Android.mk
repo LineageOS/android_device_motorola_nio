@@ -1,4 +1,11 @@
 LOCAL_PATH := $(call my-dir)
+
+ifeq ($(shell if [ "$(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)" = bengal_32 -o \
+                   "$(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)" = bengal_32go ] ; \
+                    then printf "true" ; else printf "false" ; fi),true)
+  DISPLAY_CONFIG_VERSION := DISPLAY_CONFIG_VERSION_OPTIMAL
+endif
+
 include $(LOCAL_PATH)/../common.mk
 include $(CLEAR_VARS)
 
@@ -84,6 +91,14 @@ LOCAL_SRC_FILES               := QtiComposer.cpp QtiComposerClient.cpp service.c
                                  gl_layer_stitch_impl.cpp
 
 LOCAL_INIT_RC                 := vendor.qti.hardware.display.composer-service.rc
-LOCAL_VINTF_FRAGMENTS         := vendor.qti.hardware.display.composer-service.xml
+ifneq ($(TARGET_HAS_LOW_RAM),true)
+  ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX),bengal_32)
+    LOCAL_VINTF_FRAGMENTS         := vendor.qti.hardware.display.composer-service-32bit.xml
+  else
+    LOCAL_VINTF_FRAGMENTS         := vendor.qti.hardware.display.composer-service.xml
+  endif
+else
+LOCAL_VINTF_FRAGMENTS         := vendor.qti.hardware.display.composer-service-low-ram.xml
+endif
 
 include $(BUILD_EXECUTABLE)
