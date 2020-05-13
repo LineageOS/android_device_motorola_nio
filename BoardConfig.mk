@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+
 BOARD_VENDOR := motorola
 
 DEVICE_PATH := device/motorola/nio
