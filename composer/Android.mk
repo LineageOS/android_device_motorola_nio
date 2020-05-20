@@ -61,6 +61,10 @@ LOCAL_SHARED_LIBRARIES        += vendor.display.config@1.14
 LOCAL_SHARED_LIBRARIES        += vendor.display.config@1.15
 endif
 
+ifeq ($(TARGET_USES_FOD_ZPOS), true)
+LOCAL_CFLAGS                  += -DFOD_ZPOS
+endif
+
 LOCAL_SRC_FILES               := QtiComposer.cpp QtiComposerClient.cpp service.cpp \
                                  QtiComposerHandleImporter.cpp \
                                  hwc_session.cpp \
