@@ -186,6 +186,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     media.settings.xml=/vendor/etc/media_profiles_vendor.xml \
     debug.stagefright.ccodec=1 \
+    debug.stagefright.omx_default_rank=0 \
     persist.vendor.media.recorder.bt709=true
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
