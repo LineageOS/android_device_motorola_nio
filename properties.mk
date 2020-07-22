@@ -181,6 +181,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.dbg.vt_avail_ovr=1  \
     persist.dbg.wfc_avail_ovr=1
 
+# Incremental FS
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.incremental.enable=1
+
 # Keymaster 4.0 - TDES support
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.hardware.keystore_desede=true
