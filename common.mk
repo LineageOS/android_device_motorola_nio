@@ -503,6 +503,7 @@ PRODUCT_PACKAGES += \
     android.hardware.usb@1.1-service-qti
 
 # VNDK
+PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := strict
 PRODUCT_PRODUCT_VNDK_VERSION := current
 
 # Wifi
