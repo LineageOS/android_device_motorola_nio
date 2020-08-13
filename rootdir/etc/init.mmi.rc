@@ -22,7 +22,7 @@ on init
     chmod 0640 /proc/driver/mmi_annotate
 
     # report max frequency to unity tasks.
-    write /proc/sys/kernel/sched_lib_name "libunity.so"
+    write /proc/sys/kernel/sched_lib_name "UnityMain,libunity.so"
     write /proc/sys/kernel/sched_lib_mask_force 255
 
 on early-init && property:ro.bootmode=mot-factory
