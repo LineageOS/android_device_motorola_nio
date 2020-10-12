@@ -219,7 +219,7 @@ PRODUCT_PACKAGES += \
     init.qti.ims.sh \
     init.recovery.qcom.rc \
     init.target.rc \
-    ueventd.rc
+    ueventd.qcom.rc
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
