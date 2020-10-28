@@ -166,6 +166,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.sf.force_brightness_capability=1 \
     debug.sf.enable_gl_backpressure=1 \
     ro.opengles.version=196610 \
+    ro.gfx.driver.1=com.qualcomm.qti.gpudrivers.lito.api30 \
     vendor.display.enable_default_color_mode=1 \
     vendor.gralloc.disable_ubwc=0
 
