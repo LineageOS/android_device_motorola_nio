@@ -215,7 +215,6 @@ TARGET_RECOVERY_FSTAB := $(VENDOR_PATH)/rootdir/etc/fstab.qcom
 
 # RIL
 ENABLE_VENDOR_RIL_SERVICE := true
-TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
 TARGET_RIL_VARIANT := caf
 
 # Security patch level
