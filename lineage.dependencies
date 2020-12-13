@@ -2,9 +2,5 @@
   {
     "repository": "android_kernel_motorola_sm7250",
     "target_path": "kernel/motorola/sm7250"
-  },
-  {
-    "repository": "android_device_motorola_common",
-    "target_path": "device/motorola/common"
   }
 ]
