@@ -42,4 +42,4 @@ start_sensors()
     fi
 }
 
-#start_sensors
+start_sensors

@@ -1,0 +1,136 @@
+on early-init && property:ro.bootmode=mot-factory
+   insmod /vendor/lib/modules/moto_f_usbnet.ko
+
+on early-init
+   exec_background u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules mmi_annotate mmi_info tzlog_dump watchdog_cpu_ctx mmi_sys_temp qpnp-power-on-mmi slg5bm43670.ko qpnp-smbcharger-mmi.ko
+
+on mmi-priority
+   # Only high priority MMI DLKMs loaded here
+   # For instance, sensor_class referenced from several DLKMs
+   # and needs to load first. Touchscreen might need extra time
+   # to perform firmware update if necessary
+   setprop vendor.mmi_init.stage priority
+   exec_background u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules aw8695.ko
+   exec_background u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules sensors_class.ko sx933x_sar.ko touchscreen_mmi.ko
+
+on fs
+   # Majority of MMI DLKMs should be in this group
+   setprop vendor.mmi_init.stage common
+   exec_background u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules stmvl53l1.ko cci_intf.ko watchdogtest cirrus_irq-madera arizona-ldo1 arizona-micsupp gpio-madera madera-pinctrl cirrus_cs35l41 cirrus_cs35l41-spi cirrus_cs47l35 cirrus_madera-core cirrus_madera extcon-madera cirrus_wm_adsp
+   exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules st21nfc.ko goodix_v1430_mmi.ko goodix_v1430_update_mmi.ko goodix_v1430_ts_tools_mmi.ko goodix_fod_mmi.ko sec_mmi.ko synaptics_i2c.ko synaptics_core_module.ko synaptics_device.ko synaptics_diagnostics.ko synaptics_recovery.ko synaptics_reflash.ko synaptics_testing.ko
+   setprop vendor.mmi_init.modules_loaded 1
+
+   #insmod /vendor/lib/modules/goodix_v1430_mmi.ko
+   #insmod /vendor/lib/modules/goodix_v1430_update_mmi.ko
+   #insmod /vendor/lib/modules/goodix_v1430_ts_tools_mmi.ko
+   #insmod /vendor/lib/modules/goodix_fod_mmi.ko
+   #insmod /vendor/lib/modules/sec_mmi.ko
+   #insmod /vendor/lib/modules/synaptics_i2c.ko
+   #insmod /vendor/lib/modules/synaptics_core_module.ko
+   #insmod /vendor/lib/modules/synaptics_device.ko
+   #insmod /vendor/lib/modules/synaptics_diagnostics.ko
+   #insmod /vendor/lib/modules/synaptics_recovery.ko
+   #insmod /vendor/lib/modules/synaptics_reflash.ko
+   #insmod /vendor/lib/modules/synaptics_testing.ko
+   #insmod /vendor/lib/modules/stmvl53l1.ko
+   #insmod /vendor/lib/modules/st21nfc.ko
+   #insmod /vendor/lib/modules/aw8695.ko
+   #insmod /vendor/lib/modules/cci_intf.ko
+
+   #insmod /vendor/lib/modules/mmi_info.ko
+   #insmod /vendor/lib/modules/mmi_annotate.ko
+   #insmod /vendor/lib/modules/mmi_sys_temp.ko
+
+   #insmod /vendor/lib/modules/qpnp-smbcharger-mmi.ko
+
+   #insmod /vendor/lib/modules/qpnp-power-on-mmi.ko
+   #insmod /vendor/lib/modules/tzlog_dump.ko
+   #insmod /vendor/lib/modules/watchdog_cpu_ctx.ko
+
+   #exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules qpnp-power-on-mmi watchdogtest cirrus_irq-madera arizona-ldo1 arizona-micsupp gpio-madera madera-pinctrl cirrus_cs35l41 cirrus_cs35l41-spi cirrus_cs47l35 cirrus_madera-core cirrus_madera extcon-madera cirrus_wm_adsp
+
+on fs && property:ro.build.type=userdebug
+   insmod /vendor/lib/modules/mmi_sigprint.ko
+
+on post-fs
+   # Change ownership and permision of st nfc device
+   wait_for_prop vendor.mmi_init.modules_loaded 1
+   chown nfc nfc /dev/st21nfc
+   chmod 0660 /dev/st21nfc
+   start stflashtool
+
+on post-fs-data
+   # Load DLKM that can afford being loaded later
+   setprop vendor.mmi_init.stage late
+   #start vendor.mmi_modules
+   #wait_for_prop init.svc.vendor.mmi_modules stopped
+   setprop vendor.mmi_init.stage complete
+
+on early-boot
+   # Goodix fingerprint
+   chown system system /dev/goodix_fp
+   chmod 0664 /dev/goodix_fp
+   mkdir /data/vendor/gf_data 0770 system system
+   mkdir /mnt/vendor/persist/goodix 0770 system system
+
+on boot
+   # change permission for capsensor
+   chown system system /sys/class/capsense/reset
+   chown system system /sys/class/capsense/int_state
+   chown system system /sys/class/capsense/headset
+   # Change ownership for capsensor
+   chown root input /sys/class/sensors/Moto\ CapSense\ Ch0/enable
+   chown root input /sys/class/sensors/Moto\ CapSense\ Ch0/poll_delay
+   chown root input /sys/class/sensors/Moto\ CapSense\ Ch1/enable
+   chown root input /sys/class/sensors/Moto\ CapSense\ Ch1/poll_delay
+   # Touch grip suppression control
+   chown system system /sys/class/touchscreen/primary/suppression
+   chmod 0660 /sys/class/touchscreen/primary/suppression
+   chown system system /sys/class/touchscreen/primary/pill_region
+   chmod 0660 /sys/class/touchscreen/primary/pill_region
+   chown system system /sys/class/touchscreen/primary/hold_distance
+   chmod 0660 /sys/class/touchscreen/primary/hold_distance
+   chown system system /sys/class/touchscreen/primary/gs_distance
+   chmod 0660 /sys/class/touchscreen/primary/gs_distance
+
+service vendor.mmi_modules /vendor/bin/init.mmi.modules.sh
+    user root
+    oneshot
+    disabled
+
+service capsense_reset /system/vendor/bin/capsense_reset
+   class core
+   user system
+   group system input
+   disabled
+
+on property:sys.boot_completed=1
+    start capsense_reset
+
+service vendor.motpsd /vendor/bin/motpsd
+    class late_start
+    user root
+
+service vendor.vl53l1_daemon /vendor/bin/vl53l1_daemon
+    class late_start
+    user root
+    group root
+    socket vl53l1_daemon stream 660 root system
+
+service vendor.mmi-laser-sh /vendor/bin/init.mmi.laser.sh
+    class core
+    user root
+    oneshot
+
+service stflashtool /vendor/bin/STFlashTool -c /vendor/etc/st21nfc_conf.txt -P vendor.nfc.fw_status
+	class late_start
+	group nfc
+	user nfc
+	oneshot
+
+# Turn on led to indicate device on in factory mode
+on property:ro.bootmode=mot-factory
+    write /sys/class/leds/charging/brightness 255
+
+on property:ro.build.type=userdebug
+    start vendor.touchRec

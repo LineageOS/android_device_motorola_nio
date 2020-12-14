@@ -1,0 +1,11 @@
+# Charge only mode configuration
+import /vendor/etc/init/hw/init.mmi.charge_only.rc
+
+on early-init
+    exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules exfat
+
+on property:ro.build.type=userdebug
+    setprop persist.vendor.qg.log_level 1
+#Enable qpnp-qg debug_mask
+#QG_DEBUG_PON | QG_DEBUG_STATUS | QG_DEBUG_IRQ | QG_DEBUG_PM | QG_DEBUG_ESR
+    write /sys/kernel/debug/qgauge/debug_mask 0x8A9

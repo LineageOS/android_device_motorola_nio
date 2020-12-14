@@ -188,15 +188,17 @@ PRODUCT_PACKAGES += \
 # Common init scripts
 PRODUCT_PACKAGES += \
     fstab.qcom \
-    coredump.sh \
-    ftm_power_config.sh \
     init.class_main.sh \
     init.crda.sh \
     init.mdm.sh \
-    init.msm.usb.configfs.rc \
-    init.oem.debug.rc \
-    init.oem.engineermode.sh \
-    init.oem.rc \
+    init.mmi.chipset.rc \
+    init.mmi.laser.sh \
+    init.mmi.overlay.rc \
+    init.mmi.rc \
+    init.mmi.touch.sh \
+    init.mmi.usb.rc \
+    init.mmi.usb.sh \
+    init.oem.hw.sh \
     init.qcom.class_core.sh \
     init.qcom.coex.sh \
     init.qcom.crashdata.sh \
@@ -208,16 +210,11 @@ PRODUCT_PACKAGES += \
     init.qcom.sdio.sh \
     init.qcom.sensors.sh \
     init.qcom.sh \
-    init.qcom.usb.rc \
-    init.qcom.usb.sh \
     init.qti.fm.sh \
     init.qti.ims.sh \
     init.recovery.qcom.rc \
     init.target.rc \
-    kmemleak.sh \
-    ueventd.rc \
-    vendor.oem_ftm.rc \
-    vendor.oem_ftm_svc_disable.rc
+    ueventd.rc
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
