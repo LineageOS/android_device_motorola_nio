@@ -192,7 +192,6 @@ PRODUCT_PACKAGES += \
     init.mdm.sh \
     init.mmi.chipset.rc \
     init.mmi.laser.sh \
-    init.mmi.overlay.rc \
     init.mmi.rc \
     init.mmi.touch.sh \
     init.mmi.usb.rc \
