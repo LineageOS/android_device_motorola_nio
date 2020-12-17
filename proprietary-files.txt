@@ -939,11 +939,11 @@ vendor/radio/qcril_database/upgrade/7_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/8_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/9_version_qcrildb.sql
 
-# Telephony (qti-telephony-common)
-product/framework/qti-telephony-common.jar
+# Radio - Telephony (qti-telephony-common)
+product/framework/qti-telephony-common.jar|96154b2576114dd566bbc99a2d9af612de8849df
 
 # Radio - IMS (APK)
--product/priv-app/ims/ims.apk
+-product/priv-app/ims/ims.apk|d25e4324fc021325eb7882c55583c5587c51b4a0
 
 # Radio - IMS
 -product/app/uceShimService/uceShimService.apk
