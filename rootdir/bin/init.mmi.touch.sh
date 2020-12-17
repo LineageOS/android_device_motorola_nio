@@ -190,9 +190,9 @@ setup_permissions()
 			  samsung)	key_path="/sys/devices/virtual/sec/sec_ts/"
 						key_files=$(ls $key_path 2>/dev/null)
 						# Set optional permissions to LSI touch tests
-						[ -f $touch_path/size ] && chown root:vendor_tcmd $touch_path/size
-						[ -f $touch_path/address ] && chown root:vendor_tcmd $touch_path/address
-						[ -f $touch_path/write ] && chown root:vendor_tcmd $touch_path/write
+						[ -f $touch_path/size ] && chown root:oem_5004 $touch_path/size
+						[ -f $touch_path/address ] && chown root:oem_5004 $touch_path/address
+						[ -f $touch_path/write ] && chown root:oem_5004 $touch_path/write
 						;;
 			synaptics)	key_path=$touch_path
 						key_files=$(prepend f54 `ls $touch_path/f54/ 2>/dev/null`)
@@ -215,14 +215,14 @@ setup_permissions()
 		done
 	fi
 	# Set permissions to enable factory touch tests
-	chown root:vendor_tcmd $touch_path/drv_irq
-	chown root:vendor_tcmd $touch_path/hw_irqstat
-	chown root:vendor_tcmd $touch_path/reset
+	chown root:oem_5004 $touch_path/drv_irq
+	chown root:oem_5004 $touch_path/hw_irqstat
+	chown root:oem_5004 $touch_path/reset
 
 	# Set permissions to allow Bug2Go access to touch statistics
 	chown root:log $touch_path/stats
 	# Erase is optional
-	[ -f $touch_path/erase_all ] && chown root:vendor_tcmd $touch_path/erase_all
+	[ -f $touch_path/erase_all ] && chown root:oem_5004 $touch_path/erase_all
 }
 
 read_touch_property()

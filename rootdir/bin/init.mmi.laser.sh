@@ -71,7 +71,7 @@ fi
 # Load calibration data
 calib_data_file=/mnt/vendor/persist/camera/focus/cal_data
 if [ -f $calib_data_file ]; then
-	chown root:vendor_tcmd $calib_data_file
+	chown root:oem_5004 $calib_data_file
 	chmod 660 $calib_data_file
 	if [ -z "$laser_calib_file" ]; then
 		error_and_leave 4 "'$laser_calib_file'"
