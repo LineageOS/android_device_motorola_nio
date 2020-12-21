@@ -196,7 +196,6 @@ PRODUCT_PACKAGES += \
     init.crda.sh \
     init.mdm.sh \
     init.mmi.chipset.rc \
-    init.mmi.laser.sh \
     init.mmi.rc \
     init.mmi.touch.sh \
     init.mmi.usb.rc \
