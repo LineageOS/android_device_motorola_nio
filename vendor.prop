@@ -1,16 +1,12 @@
 # Audio
-aaudio.hw_burst_min_usec=2000
-aaudio.mmap_exclusive_policy=2
-aaudio.mmap_policy=2
 af.fast_track_multiplier=2
 audio.deep_buffer.media=true
 audio.offload.video=true
-persist.vendor.audio.fluence.speaker=true
+persist.vendor.audio.dualmic.config=endfire
 persist.vendor.audio.fluence.voicecall=true
-persist.vendor.audio.fluence.voicerec=true
-persist.vendor.audio.ras.enabled=false
-persist.vendor.audio.voicecall.speaker.stereo=true
-ro.af.client_heap_size_kbyte=7168
+persist.vendor.audio.fluence.voicecomm=true
+persist.vendor.audio.fluence.voicerec=false
+persist.vendor.audio.fluence.speaker=false
 ro.vendor.audio.sdk.fluencetype=fluence
 ro.vendor.audio.sdk.ssr=false
 vendor.audio.adm.buffering.ms=2
@@ -40,14 +36,13 @@ vendor.audio_hal.period_size=192
 vendor.voice.path.for.pcm.voip=true
 
 # Bluetooth
-persist.bluetooth.a2dp_offload.disabled=false
-persist.bluetooth.a2dp_offload.cap=sbc-aac-aptx-aptxhd-ldac
-persist.vendor.bt.a2dp_offload_cap=sbc-aptx-aptxtws-aptxhd-aac-ldac
-persist.vendor.bt.aac_frm_ctl.enabled=true
 persist.vendor.qcom.bluetooth.enable.splita2dp=true
 persist.vendor.qcom.bluetooth.a2dp_offload_cap=sbc-aptx-aptxtws-aptxhd-aac-ldac
 ro.bluetooth.a2dp_offload.supported=true
 vendor.qcom.bluetooth.soc=cherokee
+
+# Camera
+persist.vendor.camera.expose.aux=1
 
 # Crypto
 ro.crypto.allow_encrypt_override=true
@@ -61,48 +56,47 @@ dalvik.vm.heapstartsize=8m
 dalvik.vm.heaptargetutilization=0.75
 
 # Display
-ro.vendor.display.ad.hdr_calib_data=/vendor/etc/hdr_config.cfg
-ro.vendor.display.ad.sdr_calib_data=/vendor/etc/sdr_config.cfg
-ro.vendor.display.ad=1
-ro.vendor.display.cabl=2
-ro.vendor.display.sensortype=2
-persist.vendor.color.matrix=2
-vendor.display.comp_mask=0
-vendor.display.dataspace_saturation_matrix=1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0
-vendor.display.disable_decimation=1
-vendor.display.disable_excl_rect=0
-vendor.display.disable_hw_recovery=0
-vendor.display.disable_hw_recovery_dump=1
-vendor.display.disable_inline_rotator=1
 vendor.display.disable_scaler=0
-vendor.display.enable_null_display=0
+vendor.display.disable_excl_rect=0
+vendor.display.disable_excl_rect_partial_fb=1
+vendor.display.comp_mask=0
+vendor.display.enable_posted_start_dyn=1
+vendor.display.enable_optimize_refresh=1
+vendor.display.use_smooth_motion=1
+vendor.display.disable_offline_rotator=1
+vendor.display.disable_hw_recovery_dump=1
+
+# DPM
+persist.vendor.dpm.feature=1
 
 # DRM
 drm.service.enabled=true
 
-# Fingerprint
-persist.vendor.qfp=true
-persist.vendor.qfp.enable_fd=1
-
 # FRP
-ro.frp.pst=/dev/block/bootdevice/by-name/config
-
-# Gatekeeper
-vendor.gatekeeper.disable_spu=true
-
-# GPS
-persist.backup.ntpServer=0.pool.ntp.org
+ro.frp.pst=/dev/block/bootdevice/by-name/frp
 
 # Graphics
 debug.egl.hw=0
 debug.mdpcomp.logs=0
 debug.sf.hw=0
 debug.sf.latch_unsignaled=1
+debug.sf.high_fps_late_app_phase_offset_ns=1000000
 persist.demo.hdmirotationlock=false
 persist.sys.sf.color_saturation=1.0
+persist.sys.sf.native_mode=1
+persist.sys.sf.force_brightness_capability=1
+debug.sf.enable_gl_backpressure=1
+ro.surface_flinger.set_idle_timer_ms=500
+ro.surface_flinger.set_touch_timer_ms=2000
+ro.surface_flinger.use_smart_90_for_video=true
 ro.opengles.version=196610
 vendor.display.enable_default_color_mode=1
 vendor.gralloc.disable_ubwc=0
+ro.surface_flinger.has_wide_color_display=true
+ro.surface_flinger.has_HDR_display=true
+ro.surface_flinger.use_color_management=true
+ro.surface_flinger.wcg_composition_dataspace=143261696
+ro.surface_flinger.protected_contents=true
 
 # IMS
 persist.dbg.volte_avail_ovr=1
@@ -112,36 +106,58 @@ persist.dbg.wfc_avail_ovr=1
 # Keystore
 ro.hardware.keystore_desede=true
 
-# NFC
-ro.camera.notify_nfc=1
-ro.hardware.nfc_nci=nqx.default
-ro.vendor.nfc.notify_tp=1
+# Media
+media.settings.xml=/vendor/etc/media_profiles_vendor.xml
+debug.stagefright.ccodec=1
+persist.vendor.media.recorder.bt709=true
+
+# Netflix
+ro.netflix.bsp_rev=Q7250-19133-1
 
 # PASR
 vendor.power.pasr.enabled=true
 
 # Perf
 ro.vendor.extension_library=libqti-perfd-client.so
-ro.vendor.scroll.preobtain.enable=false
 
 # Qualcomm System Daemon
 persist.vendor.qcomsysd.enabled=1
 
 # Radio
+ro.vendor.build.vendorprefix=/vendor
+ro.vendor.radio.imei.sv=11
 persist.radio.multisim.config=dsds
 persist.vendor.data.iwlan.enable=true
-persist.vendor.radio.5g_mode_pref=0
-persist.vendor.radio.apm_sim_not_pwdn=1
-persist.vendor.radio.arfcn_test_mode=3
-persist.vendor.radio.bar_fake_gcell=1
 persist.vendor.radio.custom_ecc=1
 persist.vendor.radio.data_con_rprt=1
 persist.vendor.radio.data_ltd_sys_ind=1
-persist.vendor.radio.efssync=true
+persist.vendor.radio.no_wait_for_card=1
+persist.vendor.radio.dfr_mode_set=1
+persist.vendor.radio.oem_ind_to_both=0
+persist.vendor.radio.qcril_uim_vcc_feature=1
+persist.vendor.radio.0x9e_not_callname=1
+persist.vendor.radio.mt_sms_ack=30
+persist.vendor.radio.force_get_pref=1
+persist.vendor.radio.is_wps_enabled=true
+persist.vendor.radio.eri64_as_home=1
+persist.vendor.radio.add_power_save=1
+persist.vendor.radio.msgtunnel.start=true
+persist.vendor.radio.lte_vrte_ltd=1
+persist.vendor.radio.sw_mbn_update=0
+persist.vendor.radio.sar_sensor=1
+persist.vendor.radio.fi_supported=0
+persist.vendor.radio.rat_on=other
+persist.vendor.radio.hidl_dev_service=1
+persist.vendor.lte.pco_supported=true
 persist.vendor.radio.enableadvancedscan=true
-persist.vendor.radio.force_on_dc=true
-persist.vendor.radio.ignore_dom_time=10
-persist.vendor.radio.procedure_bytes=SKIP
-persist.vendor.radio.rat_on=combine
+persist.vendor.radio.apm_sim_not_pwdn=1
 persist.vendor.radio.sib16_support=1
-persist.vendor.radio.uicc_se_enabled=false
+persist.vendor.radio.procedure_bytes=SKIP
+persist.vendor.radio.snapshot_timer=22
+persist.vendor.radio.snapshot_enabled=1
+persist.vendor.radio.aosp_usr_pref_sel=true
+persist.vendor.radio.flexmap_type=none
+persist.vendor.radio.enable_temp_dds=true
+
+# Unlock
+ro.oem_unlock_supported=1
