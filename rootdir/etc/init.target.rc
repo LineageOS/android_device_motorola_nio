@@ -95,21 +95,6 @@ on boot
 #Load WLAN driver
     insmod /vendor/lib/modules/qca_cld3_wlan.ko
 
-on property:vendor.display.lcd_density=560
-   setprop dalvik.vm.heapgrowthlimit 256m
-
-on property:vendor.display.lcd_density=640
-   setprop dalvik.vm.heapgrowthlimit 512m
-
-on property:vendor.display.lcd_density=480
-   setprop dalvik.vm.heapgrowthlimit 128m
-
-on property:vendor.display.lcd_density=240
-   setprop dalvik.vm.heapgrowthlimit 96m
-
-on property:vendor.display.lcd_density=160
-   setprop dalvik.vm.heapgrowthlimit 96m
-
 on boot && property:persist.vendor.usb.controller.default=*
     setprop vendor.usb.controller ${persist.vendor.usb.controller.default}
 
@@ -140,11 +125,6 @@ service vendor.per_proxy /vendor/bin/pm-proxy
     group system
     disabled
 
-service vendor.mdm_helper /vendor/bin/mdm_helper
-    class core
-    group system wakelock
-    disabled
-
 service vendor.mdm_launcher /vendor/bin/sh /vendor/bin/init.mdm.sh
     class core
     oneshot
@@ -154,13 +134,3 @@ on property:init.svc.vendor.per_mgr=running
 
 on property:sys.shutdown.requested=*
     stop vendor.per_proxy
-
-on property:vold.decrypt=trigger_restart_framework
-   start vendor.wlan_logging
-
-service vendor.wlan_logging /system/vendor/bin/cnss_diag -q -f -t HELIUM
-   class main
-   user system
-   group system wifi inet sdcard_rw media_rw diag
-   oneshot
-   disabled
