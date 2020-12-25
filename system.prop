@@ -4,6 +4,7 @@ persist.vendor.audio.hac.enable=false
 ro.audio.monitorRotation=true
 
 # Bluetooth
+ro.bluetooth.library_name=libbluetooth_qti.so
 vendor.bluetooth.soc=cherokee
 
 # CNE
