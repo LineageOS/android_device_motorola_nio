@@ -315,10 +315,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.light@2.0-service.motorola_lito
 
-# LineageActions
-PRODUCT_PACKAGES += \
-    LineageActions
-
 # LiveDisplay
 PRODUCT_PACKAGES += \
     vendor.lineage.livedisplay@2.0-service-sdm \
@@ -359,6 +355,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libchrome \
     libchrome.vendor
+
+# MotoActions
+PRODUCT_PACKAGES += \
+    MotoActions
 
 # Net
 PRODUCT_PACKAGES += \
