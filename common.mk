@@ -159,8 +159,8 @@ PRODUCT_PACKAGES += \
     android.hardware.boot@1.0-impl:64 \
     android.hardware.boot@1.0-service \
     android.hardware.boot@1.0-impl.recovery \
-    bootctrl.lito \
-    bootctrl.lito.recovery
+    bootctrl.qcom \
+    bootctrl.qcom.recovery
 
 PRODUCT_PACKAGES_DEBUG += \
     bootctl
