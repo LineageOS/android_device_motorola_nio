@@ -64,6 +64,13 @@ on post-fs
 
 on late-fs
     wait_for_prop hwservicemanager.ready true
+
+    # Start services for bootanim
+    start surfaceflinger
+    start bootanim
+    start vendor.qti.hardware.display.composer
+    start vendor.qti.hardware.display.allocator
+
     exec_start wait_for_keymaster
     mount_all /vendor/etc/fstab.qcom --late
     # Boot time fs tune
