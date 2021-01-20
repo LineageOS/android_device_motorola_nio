@@ -434,8 +434,7 @@ PRODUCT_PACKAGES += \
     libsensorndkbridge
 
 # Soong namespaces
-PRODUCT_SOONG_NAMESPACES += \
-    $(LOCAL_PATH)
+QCOM_SOONG_NAMESPACE := $(LOCAL_PATH)
 
 # Telephony
 PRODUCT_PACKAGES += \
