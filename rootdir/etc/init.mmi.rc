@@ -306,9 +306,6 @@ on boot
    chown audio audio /sys/kernel/aov/register
    chown audio audio /sys/kernel/aov/event
 
-   # Quiet binder logs
-   write /sys/module/binder/parameters/debug_mask 0x5
-
    # Clear cooldown state
    mkdir /mnt/vendor/persist/chargeonly 0770 system system
    write /mnt/vendor/persist/chargeonly/cooldown n

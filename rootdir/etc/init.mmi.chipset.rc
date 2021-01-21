@@ -6,6 +6,3 @@ on early-init
 
 on property:ro.build.type=userdebug
     setprop persist.vendor.qg.log_level 1
-#Enable qpnp-qg debug_mask
-#QG_DEBUG_PON | QG_DEBUG_STATUS | QG_DEBUG_IRQ | QG_DEBUG_PM | QG_DEBUG_ESR
-    write /sys/kernel/debug/qgauge/debug_mask 0x8A9
