@@ -1,0 +1,8 @@
+# Motorola
+type moto_boot_prop, property_type;
+
+# AOV
+type vendor_aov_prop, property_type;
+
+# Power
+type power_prop, property_type;

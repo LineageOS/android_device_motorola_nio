@@ -1,0 +1,10 @@
+get_prop(rild, moto_boot_prop)
+get_prop(rild, vendor_radio_prop)
+allow rild fwk_sensor_hwservice:hwservice_manager find;
+allow rild input_device:chr_file { r_file_perms ioctl };
+allow rild input_device:dir { open read search };
+allow rild proc_moto_boot:file r_file_perms;
+allow rild cutback_data_file:dir { ioctl read write getattr lock add_name remove_name search open };
+allow rild cutback_data_file:file { ioctl read write getattr lock append map open };
+allow rild cutback_data_file:sock_file { write unlink };
+allow rild cutback_socket:sock_file { ioctl read write create getattr setattr lock append map unlink rename open };

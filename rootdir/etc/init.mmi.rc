@@ -76,8 +76,8 @@ on post-fs && property:ro.vendor.hw.modem_super_image=yes
 
 on post-fs && property:ro.vendor.hw.fsg_super_image=yes
     umount /vendor/fsg
-    mount ext4 /dev/block/bootdevice/by-name/fsg${ro.boot.slot_suffix} /vendor/super_fsg ro nosuid nodev context=u:object_r:fsg_file:s0
-    mount ext4 loop@/vendor/super_fsg/${ro.vendor.hw.fsg_mount_file} /vendor/fsg ro nosuid nodev context=u:object_r:fsg_file:s0
+    mount ext4 /dev/block/bootdevice/by-name/fsg${ro.boot.slot_suffix} /vendor/super_fsg ro nosuid nodev context=u:object_r:fsg_firmware_file:s0
+    mount ext4 loop@/vendor/super_fsg/${ro.vendor.hw.fsg_mount_file} /vendor/fsg ro nosuid nodev context=u:object_r:fsg_firmware_file:s0
 
 on post-fs
     mkdir /mnt/vendor/persist/camera 0755 oem_5004 oem_5004

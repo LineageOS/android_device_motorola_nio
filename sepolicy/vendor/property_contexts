@@ -1,0 +1,43 @@
+# Radio
+vendor.ril.                u:object_r:vendor_radio_prop:s0
+
+# USB
+vendor.rmnet_vnd.rps_mask  u:object_r:vendor_usb_prop:s0
+
+# Motorola
+ro.boot.adb_early          u:object_r:moto_boot_prop:s0
+ro.boot.secure_hardware    u:object_r:moto_boot_prop:s0
+ro.boot.radio              u:object_r:moto_boot_prop:s0
+ro.boot.device             u:object_r:moto_boot_prop:s0
+ro.boot.dualsim            u:object_r:moto_boot_prop:s0
+ro.boot.hardware.sku       u:object_r:moto_boot_prop:s0
+ro.boot.carrier            u:object_r:moto_boot_prop:s0
+ro.boot.cid                u:object_r:moto_boot_prop:s0
+ro.boot.fsg-id             u:object_r:moto_boot_prop:s0
+ro.boot.hwrev              u:object_r:moto_boot_prop:s0
+ro.boot.powerup_reason     u:object_r:moto_boot_prop:s0
+ro.boot.bl_state           u:object_r:moto_boot_prop:s0
+ro.boot.revision           u:object_r:moto_boot_prop:s0
+ro.radio.imei.sv           u:object_r:moto_boot_prop:s0
+ro.vendor.hw.              u:object_r:moto_boot_prop:s0
+ro.vendor.boot.radio       u:object_r:moto_boot_prop:s0
+ro.vendor.boot.hwrev       u:object_r:moto_boot_prop:s0
+ro.vendor.bootreason       u:object_r:moto_boot_prop:s0
+ro.vendor.boot.powerup_reason   u:object_r:moto_boot_prop:s0
+ro.vendor.boot.bl_state    u:object_r:moto_boot_prop:s0
+ro.vendor.boot.serialno    u:object_r:moto_boot_prop:s0
+ro.vendor.carrier          u:object_r:moto_boot_prop:s0
+ro.vendor.boot.cid         u:object_r:moto_boot_prop:s0
+ro.vendor.fsg-id           u:object_r:moto_boot_prop:s0
+ro.vendor.zygote           u:object_r:moto_boot_prop:s0
+vendor.boot_completed      u:object_r:moto_boot_prop:s0
+
+# AOV
+vendor.hw.aov.             u:object_r:vendor_aov_prop:s0
+
+# Power
+vendor.powerhal.state      u:object_r:power_prop:s0
+vendor.powerhal.audio      u:object_r:power_prop:s0
+vendor.powerhal.lpm        u:object_r:power_prop:s0
+vendor.powerhal.init       u:object_r:power_prop:s0
+vendor.powerhal.rendering  u:object_r:power_prop:s0

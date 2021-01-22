@@ -1,0 +1,2 @@
+allow hal_light_default sysfs_msm_subsys:dir search;
+allow hal_light_default sysfs_msm_subsys:file rw_file_perms;
