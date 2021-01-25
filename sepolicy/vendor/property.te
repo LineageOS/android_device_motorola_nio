@@ -6,3 +6,6 @@ type vendor_aov_prop, property_type;
 
 # Power
 type power_prop, property_type;
+
+# FM Radio
+type vendor_fm_prop, property_type;
