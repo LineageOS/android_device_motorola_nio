@@ -312,11 +312,19 @@ on boot
    chown system system /mnt/vendor/persist/chargeonly/cooldown
    chmod 0660 /mnt/vendor/persist/chargeonly/cooldown
 
+on late-fs-charger
+    class_start early_hal
+    wait_for_prop hwservicemanager.ready true
+    exec_start wait_for_keymaster
+    mount_all /vendor/etc/fstab.qcom --late
+    # Boot time fs tune
+    write /sys/block/dm-9/queue/read_ahead_kb 2048
+
 on charger
     trigger early-fs
     trigger fs
     trigger post-fs
-    trigger late-fs
+    trigger late-fs-charger
     trigger post-fs-data
     trigger moto-charger
     class_stop main
@@ -376,6 +384,7 @@ on property:vendor.hw.touch.status="ready"
 service vendor.charge_only_mode /vendor/bin/charge_only_mode
     user root
     group graphics system input
+    capabilities SYS_BOOT
     disabled
 
 service vendor.thermal-com /vendor/bin/thermal-engine --minimode
