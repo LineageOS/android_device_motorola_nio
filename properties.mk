@@ -266,7 +266,7 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     persist.sys.fflag.override.settings_network_and_internet_v2=true \
     persist.vendor.data.mode=concurrent \
     ril.subscription.types=NV,RUIM \
-    ro.telephony.default_network=22,22 \
+    ro.telephony.default_network=27,10 \
     ro.vendor.use_data_netmgrd=true \
     telephony.lteOnCdmaDevice=1,1
 
