@@ -143,7 +143,7 @@ Only the three quirks included above are recognized at this point:
             <Limit name="blocks-per-second" min="36" max="979200" />
             <Limit name="bitrate" range="1-100000000" />
             <Limit name="frame-rate" range="1-240" />
-            <Limit name="concurrent-instances" max="15" />
+            <Limit name="concurrent-instances" max="16" />
             <Limit name="quality" range="0-100" default="80" />
             <Feature name="bitrate-modes" value="VBR,CBR" />
             <Limit name="performance-point-4096x2304" value="24" />
@@ -158,7 +158,7 @@ Only the three quirks included above are recognized at this point:
            <Quirk name="requires-loaded-to-idle-after-allocation" />
            <Limit name="size" min="512x512" max="512x512" />
            <Limit name="frame-rate" range="1-20" />
-           <Limit name="concurrent-instances" max="15" />
+           <Limit name="concurrent-instances" max="16" />
            <Limit name="quality" range="0-100" default="80" />
            <Feature name="bitrate-modes" value="CQ" />
            <Limit name="performance-point-512x512" value="2025" />
@@ -177,7 +177,7 @@ Only the three quirks included above are recognized at this point:
             <Limit name="performance-point-3840x2160" value="30" />
             <Limit name="performance-point-1920x1080" value="120" />
             <Limit name="performance-point-1280x720" value="240" />
-            <Limit name="concurrent-instances" max="15" />
+            <Limit name="concurrent-instances" max="16" />
         </MediaCodec>
         <MediaCodec name="OMX.qcom.video.encoder.vp8" type="video/x-vnd.on2.vp8" >
             <Quirk name="requires-allocate-on-input-ports" />
@@ -189,7 +189,7 @@ Only the three quirks included above are recognized at this point:
             <Limit name="blocks-per-second" min="36" max="489600" />
             <Limit name="bitrate" range="1-40000000" />
             <Limit name="frame-rate" range="1-120" />
-            <Limit name="concurrent-instances" max="15" />
+            <Limit name="concurrent-instances" max="16" />
             <Limit name="performance-point-1920x1080" value="60" />
             <Limit name="performance-point-1280x720" value="120" />
         </MediaCodec>
@@ -246,7 +246,7 @@ Only the three quirks included above are recognized at this point:
             <Limit name="bitrate" range="1-100000000" />
             <Limit name="frame-rate" range="1-240" />
             <Feature name="adaptive-playback" />
-            <Limit name="concurrent-instances" max="15" />
+            <Limit name="concurrent-instances" max="16" />
             <Limit name="performance-point-4096x2304" value="24" />
             <Limit name="performance-point-3840x2160" value="30" />
             <Limit name="performance-point-1920x1080" value="120" />
@@ -278,7 +278,7 @@ Only the three quirks included above are recognized at this point:
             <Limit name="bitrate" range="1-40000000" />
             <Limit name="frame-rate" range="1-30" />
             <Feature name="adaptive-playback" />
-            <Limit name="concurrent-instances" max="15" />
+            <Limit name="concurrent-instances" max="16" />
             <Limit name="performance-point-1920x1080" value="30"/>
         </MediaCodec>
         <MediaCodec name="OMX.qcom.video.decoder.mpeg2.secure" type="video/mpeg2" >
@@ -305,7 +305,7 @@ Only the three quirks included above are recognized at this point:
             <Limit name="bitrate" range="1-100000000" />
             <Limit name="frame-rate" range="1-240" />
             <Feature name="adaptive-playback" />
-            <Limit name="concurrent-instances" max="15" />
+            <Limit name="concurrent-instances" max="16" />
             <Limit name="performance-point-4096x2304" value="24" />
             <Limit name="performance-point-3840x2160" value="30" />
             <Limit name="performance-point-1920x1080" value="120" />
@@ -337,7 +337,7 @@ Only the three quirks included above are recognized at this point:
             <Limit name="bitrate" range="1-100000000" />
             <Limit name="frame-rate" range="1-120" />
             <Feature name="adaptive-playback" />
-            <Limit name="concurrent-instances" max="15" />
+            <Limit name="concurrent-instances" max="16" />
             <Limit name="performance-point-1920x1080" value="60" />
             <Limit name="performance-point-1280x720" value="120" />
         </MediaCodec>

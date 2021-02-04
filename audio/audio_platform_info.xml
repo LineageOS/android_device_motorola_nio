@@ -97,6 +97,8 @@
 	<device name="SND_DEVICE_OUT_VOICE_SPEAKER" backend="speaker" interface="SEN_MI2S_RX"/>
 	<device name="SND_DEVICE_OUT_SPEAKER_REVERSE" backend="speaker" interface="SEN_MI2S_RX"/>
 	<device name="SND_DEVICE_OUT_SPEAKER_SAFE" backend="speaker" interface="SEN_MI2S_RX"/>
+	<device name="SND_DEVICE_OUT_SPEAKER_LEFT" backend="speaker" interface="SEN_MI2S_RX"/>
+	<device name="SND_DEVICE_OUT_SPEAKER_RIGHT" backend="speaker" interface="SEN_MI2S_RX"/>
 	<device name="SND_DEVICE_OUT_VOLTE_NB_SPEAKER" backend="speaker" interface="SEN_MI2S_RX"/>
 	<device name="SND_DEVICE_OUT_SPEAKER_AND_HEADPHONES" interface="SEN_MI2S_RX"/>
 	<device name="SND_DEVICE_OUT_SPEAKER_SAFE_AND_HEADPHONES" interface="SEN_MI2S_RX"/>
