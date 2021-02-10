@@ -8,5 +8,5 @@ allow capsense_reset kmsg_device:chr_file rw_file_perms;
 allow capsense_reset input_device:dir r_dir_perms;
 allow capsense_reset input_device:chr_file r_file_perms;
 
-allow capsense_reset sysfs_sensors:dir r_dir_perms;
-allow capsense_reset sysfs_sensors:file rw_file_perms;
+allow capsense_reset vendor_sysfs_sensors:dir r_dir_perms;
+allow capsense_reset vendor_sysfs_sensors:file rw_file_perms;

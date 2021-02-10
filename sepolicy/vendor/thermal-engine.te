@@ -1,5 +1,0 @@
-r_dir_file(thermal-engine, sysfs_battery_supply)
-r_dir_file(thermal-engine, sysfs_msm_subsys)
-get_prop(thermal-engine, moto_boot_prop)
-allow thermal-engine { proc_stat proc_loadavg }:file r_file_perms;
-allow thermal-engine thermal_device:chr_file { rw_file_perms ioctl };

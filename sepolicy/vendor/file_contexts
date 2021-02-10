@@ -1,9 +1,9 @@
 # A/B partitions.
-/dev/block/platform/soc/1d84000\.ufshc/sd[df]                u:object_r:gpt_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/fsg_[ab]      u:object_r:modem_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/logo_[ab]     u:object_r:custom_ab_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/prov_[ab]     u:object_r:custom_ab_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/storsec_[ab]  u:object_r:custom_ab_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/sd[df]                u:object_r:vendor_gpt_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/fsg_[ab]      u:object_r:vendor_modem_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/logo_[ab]     u:object_r:vendor_custom_ab_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/prov_[ab]     u:object_r:vendor_custom_ab_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/storsec_[ab]  u:object_r:vendor_custom_ab_block_device:s0
 
 # Partition Mountpoints
 /(vendor|system/vendor)/fsg          u:object_r:fsg_firmware_file:s0
@@ -17,8 +17,8 @@
 /(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay@2\.0-service-sysfs\.motorola_lito    u:object_r:hal_lineage_livedisplay_sysfs_exec:s0
 
 # Vendor init scripts
-/(vendor|system/vendor)/bin/init\.mmi\.(touch|laser|usb)\.sh               u:object_r:qti_init_shell_exec:s0
-/(vendor|system/vendor)/bin/init\.oem\.hw\.sh                              u:object_r:qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/init\.mmi\.(touch|laser|usb)\.sh               u:object_r:vendor_qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/init\.oem\.hw\.sh                              u:object_r:vendor_qti_init_shell_exec:s0
 
 # Capsense
 /(vendor|system/vendor)/bin/capsense_reset                                 u:object_r:capsense_reset_exec:s0
@@ -41,9 +41,9 @@
 /(vendor|system/vendor)/bin/vl53l1_daemon               u:object_r:vl53l1_exec:s0
 /dev/laser                                              u:object_r:vl53l1_device:s0
 /data/vendor/misc/imager                                u:object_r:vendor_camera_data_file:s0
-/sys/devices/virtual/input/input[0-9]+/xtalk	        	u:object_r:sysfs_laser:s0
-/sys/devices/virtual/input/input[0-9]+/offset	        	u:object_r:sysfs_laser:s0
-/sys/devices/virtual/input/input[0-9]+/calibration_data	u:object_r:sysfs_laser:s0
+/sys/devices/virtual/input/input[0-9]+/xtalk	        	u:object_r:vendor_sysfs_laser:s0
+/sys/devices/virtual/input/input[0-9]+/offset	        	u:object_r:vendor_sysfs_laser:s0
+/sys/devices/virtual/input/input[0-9]+/calibration_data	u:object_r:vendor_sysfs_laser:s0
 
 # Thermal
 /dev/mmi_sys_temp                                       u:object_r:thermal_device:s0

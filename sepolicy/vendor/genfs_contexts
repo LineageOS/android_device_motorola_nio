@@ -1,5 +1,5 @@
 # Capsense
-genfscon sysfs /class/capsense                            u:object_r:sysfs_sensors:s0
+genfscon sysfs /class/capsense                            u:object_r:vendor_sysfs_sensors:s0
 
 # ADSPD
 genfscon sysfs /kernel/aov                                                                  u:object_r:sysfs_adspd:s0
@@ -9,9 +9,9 @@ genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-00/c440000.q
 # PowerHal
 genfscon sysfs /devices/platform/soc/ae00000.qcom,mdss_mdp                      u:object_r:sysfs_msm_subsys:s0
 genfscon sysfs /devices/platform/soc/1d84000.ufshc/clkgate_enable               u:object_r:sysfs_scsi_devices_0000:s0
-genfscon sysfs /devices/virtual/input/input5/dt-gesture/enable                  u:object_r:sysfs_sensors:s0
-genfscon sysfs /devices/virtual/input/input6/dt-gesture/enable                  u:object_r:sysfs_sensors:s0
-genfscon sysfs /devices/virtual/input/input7/dt-gesture/enable                  u:object_r:sysfs_sensors:s0
+genfscon sysfs /devices/virtual/input/input5/dt-gesture/enable                  u:object_r:vendor_sysfs_sensors:s0
+genfscon sysfs /devices/virtual/input/input6/dt-gesture/enable                  u:object_r:vendor_sysfs_sensors:s0
+genfscon sysfs /devices/virtual/input/input7/dt-gesture/enable                  u:object_r:vendor_sysfs_sensors:s0
 genfscon proc /sys/kernel/sched_lib_name                                        u:object_r:proc_sched_lib_mask_cpuinfo:s0
 genfscon proc /sys/kernel/sched_lib_mask_force                                  u:object_r:proc_sched_lib_mask_cpuinfo:s0
 
@@ -31,8 +31,8 @@ genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-02/c440000.q
 genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-02/c440000.qcom,spmi:qcom,pm7250b@2:qcom,qpnp-smb5/power_supply     u:object_r:sysfs_battery_supply:s0
 
 # VL53L1
-genfscon sysfs /devices/virtual/laser/stmvl53l1                                 u:object_r:sysfs_laser:s0
-genfscon sysfs /module/stmvl53l1                                                u:object_r:sysfs_laser:s0
+genfscon sysfs /devices/virtual/laser/stmvl53l1                                 u:object_r:vendor_sysfs_laser:s0
+genfscon sysfs /module/stmvl53l1                                                u:object_r:vendor_sysfs_laser:s0
 
 # Motorola
 genfscon proc /bootinfo                                                         u:object_r:proc_moto_boot:s0
