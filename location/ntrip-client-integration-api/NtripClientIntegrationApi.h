@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, 2018 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -24,28 +24,36 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LOC_API_V02_LOG_H
-#define LOC_API_V02_LOG_H
+#ifndef NTRIP_CLIENT_INTEGRATION_API_H
+#define NTRIP_CLIENT_INTEGRATION_API_H
 
-#include <loc_log.h>
-#include <loc_api_v02_client.h>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-const char* loc_get_v02_event_name(uint32_t event);
-const char* loc_get_v02_client_status_name(locClientStatusEnumType status);
-const char* loc_get_v02_qmi_status_name(qmiLocStatusEnumT_v02 status);
-const char* loc_get_v02_qmi_reg_mk_status_name(qmiLocRegisterMasterClientStatusEnumT_v02 status);
-
+#include <functional>
 
 #ifdef __cplusplus
-}
+extern "C" {
 #endif
 
-#endif /* LOC_API_V02_LOG_H */
+/** @fn
+    @brief
+    CorrectionDataCb is for receiving correction data from NTRIP client.
+*/
+typedef std::function<void(uint8_t *correctionData, uint32_t lengthInBytes)>
+        CorrectionDataCb;
+
+/** @brief API to start streaming for correction data.
+PPE service shall call this API when it is ready to start receiving correction data.
+*/
+void startCorrectionDataStreaming(CorrectionDataCb corrDataCb);
+
+/** @brief API to stop streaming for correction data.
+PPE service shall call this API when it wants to stop receiving correction data.
+*/
+void stopCorrectionDataStreaming();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif //NTRIP_CLIENT_INTEGRATION_API_H

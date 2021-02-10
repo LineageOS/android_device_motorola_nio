@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2016, 2018-2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2016, 2018-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -343,6 +343,11 @@ static const locClientEventIndTableStructT locClientEventIndTable[]= {
   { QMI_LOC_LOCATION_REQUEST_NOTIFICATION_IND_V02,
     sizeof(qmiLocLocationRequestNotificationIndMsgT_v02),
     QMI_LOC_LOCATION_REQUEST_NOTIFICATION_IND_V02},
+
+  // XTRA config query request
+  { QMI_LOC_EVENT_QUERY_XTRA_INFO_REQ_IND_V02,
+    sizeof(qmiLocEventQueryXtraInfoReqIndMsgT_v02),
+    QMI_LOC_EVENT_MASK_QUERY_XTRA_INFO_V02},
 };
 
 /* table to relate the respInd Id with its size */
@@ -763,6 +768,27 @@ static const locClientRespIndTableStructT locClientRespIndTable[]= {
 
    { QMI_LOC_GET_ROBUST_LOCATION_CONFIG_IND_V02,
      sizeof(qmiLocGetRobustLocationConfigIndMsgT_v02) },
+
+   { QMI_LOC_INJECT_ENV_AIDING_IND_V02,
+     sizeof(qmiLocGenReqStatusIndMsgT_v02) },
+
+   { QMI_LOC_SET_MIN_GPS_WEEK_NUMBER_IND_V02,
+     sizeof(qmiLocGenReqStatusIndMsgT_v02) },
+
+   { QMI_LOC_GET_MIN_GPS_WEEK_NUMBER_IND_V02,
+     sizeof(qmiLocGetMinGpsWeekNumberIndMsgT_v02) },
+
+   { QMI_LOC_SET_PARAMETER_IND_V02,
+     sizeof(qmiLocGenReqStatusIndMsgT_v02) },
+
+   { QMI_LOC_GET_PARAMETER_IND_V02,
+     sizeof(qmiLocGetParameterIndMsgT_v02) },
+
+   { QMI_LOC_SET_MULTIBAND_CONFIG_IND_V02,
+     sizeof(qmiLocGenReqStatusIndMsgT_v02) },
+
+   { QMI_LOC_GET_MULTIBAND_CONFIG_IND_V02,
+     sizeof(qmiLocGetMultibandConfigIndMsgT_v02) },
 };
 
 
@@ -1828,6 +1854,36 @@ bool validateRequest(
         break;
     }
 
+    case QMI_LOC_INJECT_ENV_AIDING_REQ_V02:
+    {
+        *pOutLen = sizeof(qmiLocEventInjectEnvAidingReqMsgT_v02);
+        break;
+    }
+
+    case QMI_LOC_SET_MIN_GPS_WEEK_NUMBER_REQ_V02:
+    {
+        *pOutLen = sizeof(qmiLocSetMinGpsWeekNumberReqMsgT_v02);
+        break;
+    }
+
+    case QMI_LOC_SET_PARAMETER_REQ_V02:
+    {
+        *pOutLen = sizeof(qmiLocSetParameterReqMsgT_v02);
+        break;
+    }
+
+    case QMI_LOC_GET_PARAMETER_REQ_V02:
+    {
+        *pOutLen = sizeof(qmiLocGetParameterReqMsgT_v02);
+        break;
+    }
+
+    case QMI_LOC_SET_MULTIBAND_CONFIG_REQ_V02:
+    {
+        *pOutLen = sizeof(qmiLocSetMultibandConfigReqMsgT_v02);
+        break;
+    }
+
     // ALL requests with no payload
     case QMI_LOC_GET_SERVICE_REVISION_REQ_V02:
     case QMI_LOC_GET_FIX_CRITERIA_REQ_V02:
@@ -1852,6 +1908,8 @@ bool validateRequest(
     case QMI_LOC_GET_BLACKLIST_SV_REQ_V02:
     case QMI_LOC_GET_CONSTELLATION_CONTROL_REQ_V02:
     case QMI_LOC_GET_ROBUST_LOCATION_CONFIG_REQ_V02:
+    case QMI_LOC_GET_MIN_GPS_WEEK_NUMBER_REQ_V02:
+    case QMI_LOC_GET_MULTIBAND_CONFIG_REQ_V02:
     {
       noPayloadFlag = true;
       break;
@@ -1886,7 +1944,7 @@ static locClientStatusEnumType locClientQmiCtrlPointInit(
     locClientCallbackDataType *pLocClientCbData,
     int instanceId)
 {
-  qmi_client_type clnt, notifier;
+  qmi_client_type clnt, notifier = nullptr;
   bool notifierInitFlag = false;
   locClientStatusEnumType status = eLOC_CLIENT_SUCCESS;
   // os_params must stay in the same scope as notifier
@@ -1895,7 +1953,7 @@ static locClientStatusEnumType locClientQmiCtrlPointInit(
   // used when notifier is released.
   qmi_client_os_params os_params;
   // instances of this service
-  qmi_service_info serviceInfo;
+  qmi_service_info serviceInfo = {};
 
   do
   {
@@ -2053,6 +2111,7 @@ locClientStatusEnumType locClientOpenInstance (
       status = eLOC_CLIENT_FAILURE_INTERNAL;
       break;
     }
+    memset(pCallbackData, 0, sizeof(locClientCallbackDataType));
 
     /* Initialize the QMI control point; this function will block
      * until a service is up or a timeout occurs. If the connection to

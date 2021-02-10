@@ -1,11 +1,11 @@
-# configure.ac -- Autoconf script for gps location-client-api
+# configure.ac -- Autoconf script for ntrip-client
 #
 # Process this file with autoconf to produce a configure script
 
 # Requires autoconf tool later than 2.61
 AC_PREREQ(2.61)
-# Initialize the location_client_api package version 1.0.0
-AC_INIT([location-client-api],1.0.0)
+# Initialize the ntrip client package version 1.0.0
+AC_INIT([ntrip-client-integration-api-testlib],1.0.0)
 # Does not strictly follow GNU Coding standards
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 # Disables auto rebuilding of configure, Makefile.ins
@@ -33,15 +33,6 @@ PKG_CHECK_MODULES([GPSUTILS], [gps-utils])
 AC_SUBST([GPSUTILS_CFLAGS])
 AC_SUBST([GPSUTILS_LIBS])
 
-
-AC_ARG_WITH([external_ap],
-    AC_HELP_STRING([--with-external_ap=@<:@dir@:>@],
-        [Using External Application Processor]),
-    [],
-    with_external_ap=no)
-
-AM_CONDITIONAL(USE_EXTERNAL_AP, test "x${with_external_ap}" = "xyes")
-
 AC_ARG_WITH([glib],
       AC_HELP_STRING([--with-glib],
          [enable glib, building HLOS systems which use glib]))
@@ -61,9 +52,10 @@ fi
 
 AM_CONDITIONAL(USE_GLIB, test "x${with_glib}" = "xyes")
 
+
 AC_CONFIG_FILES([ \
         Makefile \
-        location-client-api.pc
+        ntrip-client-integration-api-testlib.pc
         ])
 
 AC_OUTPUT

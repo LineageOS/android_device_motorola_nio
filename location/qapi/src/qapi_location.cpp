@@ -39,6 +39,7 @@
 #include <LocTimer.h>
 
 using namespace std;
+using namespace loc_util;
 using namespace location_client;
 using Runnable = std::function<void()>;
 
@@ -236,14 +237,72 @@ static void location_tracking_callback(
     qLocation.altitude = location.altitude;
 // TODO
 //    qLocation.altitudeMeanSeaLevel = location.altitudeMeanSeaLevel;
-    qLocation.flags &= ~QAPI_LOCATION_HAS_ALTITUDE_MSL_BIT;
     qLocation.speed = location.speed;
     qLocation.bearing = location.bearing;
     qLocation.accuracy = location.horizontalAccuracy;
     qLocation.flags = location.flags;
+    qLocation.flags &= ~QAPI_LOCATION_HAS_ALTITUDE_MSL_BIT;
     qLocation.verticalAccuracy = location.verticalAccuracy;
     qLocation.speedAccuracy = location.speedAccuracy;
     qLocation.bearingAccuracy = location.bearingAccuracy;
+
+    print_qLocation_array(&qLocation, 1);
+    if (bIsSingleShot) {
+        LOC_LOGd("Invoking Singleshot Callback");
+        if (qLocationCallbacks.singleShotCb) {
+            qLocationCallbacks.singleShotCb(qLocation, QAPI_LOCATION_ERROR_SUCCESS);
+        } else {
+            LOC_LOGe("No singleshot cb registered");
+        }
+    } else {
+        LOC_LOGd("Invoking Tracking Callback");
+        if (qLocationCallbacks.trackingCb) {
+            qLocationCallbacks.trackingCb(qLocation);
+        }
+        else {
+            LOC_LOGe("No tracking cb registered");
+        }
+    }
+}
+
+static void gnss_location_tracking_callback(
+    GnssLocation gnsslocation)
+{
+    qapi_Location_t qLocation = {};
+    bool bIsSingleShot = false;
+
+    // first check if location is valid
+    if (0 == gnsslocation.flags) {
+        LOC_LOGd("Ignore invalid location");
+        return;
+    }
+
+    if (mTimer.isStarted()) {
+        LOC_LOGd("Timer was started, meaning this is singleshot");
+        if (nullptr != pLocClientApi) {
+            LOC_LOGd("Stop singleshot session");
+            pLocClientApi->stopPositionSession();
+        }
+        LOC_LOGd("Stop singleshot timer");
+        mTimer.stop();
+        bIsSingleShot = true;
+    }
+    qLocation.size = sizeof(qapi_Location_t);
+    qLocation.timestamp = gnsslocation.timestamp;
+    qLocation.latitude = gnsslocation.latitude;
+    qLocation.longitude = gnsslocation.longitude;
+    qLocation.altitude = gnsslocation.altitude;
+    qLocation.altitudeMeanSeaLevel = gnsslocation.altitudeMeanSeaLevel;
+    qLocation.speed = gnsslocation.speed;
+    qLocation.bearing = gnsslocation.bearing;
+    qLocation.accuracy = gnsslocation.horizontalAccuracy;
+    qLocation.flags = gnsslocation.flags;
+    if (gnsslocation.gnssInfoFlags & GNSS_LOCATION_INFO_ALTITUDE_MEAN_SEA_LEVEL_BIT) {
+        qLocation.flags |= QAPI_LOCATION_HAS_ALTITUDE_MSL_BIT;
+    }
+    qLocation.verticalAccuracy = gnsslocation.verticalAccuracy;
+    qLocation.speedAccuracy = gnsslocation.speedAccuracy;
+    qLocation.bearingAccuracy = gnsslocation.bearingAccuracy;
 
     print_qLocation_array(&qLocation, 1);
     if (bIsSingleShot) {
@@ -271,25 +330,25 @@ static void loc_passive_capabilities_callback(
 }
 
 static void loc_passive_tracking_callback(
-    Location location)
+    GnssLocation gnsslocation)
 {
     qCacheLocation.size = sizeof(qapi_Location_t);
-    qCacheLocation.timestamp = location.timestamp;
-    qCacheLocation.latitude = location.latitude;
-    qCacheLocation.longitude = location.longitude;
-    qCacheLocation.altitude = location.altitude;
-    // TODO
-    //    qCacheLocation.altitudeMeanSeaLevel = location.altitudeMeanSeaLevel;
-    qCacheLocation.flags &= ~QAPI_LOCATION_HAS_ALTITUDE_MSL_BIT;
-
-    qCacheLocation.speed = location.speed;
-    qCacheLocation.bearing = location.bearing;
-    qCacheLocation.accuracy = location.horizontalAccuracy;
-    qCacheLocation.flags = location.flags;
+    qCacheLocation.timestamp = gnsslocation.timestamp;
+    qCacheLocation.latitude = gnsslocation.latitude;
+    qCacheLocation.longitude = gnsslocation.longitude;
+    qCacheLocation.altitude = gnsslocation.altitude;
+    qCacheLocation.altitudeMeanSeaLevel = gnsslocation.altitudeMeanSeaLevel;
+    qCacheLocation.speed = gnsslocation.speed;
+    qCacheLocation.bearing = gnsslocation.bearing;
+    qCacheLocation.accuracy = gnsslocation.horizontalAccuracy;
+    qCacheLocation.flags = gnsslocation.flags;
+    if (gnsslocation.gnssInfoFlags & GNSS_LOCATION_INFO_ALTITUDE_MEAN_SEA_LEVEL_BIT) {
+        qCacheLocation.flags |= QAPI_LOCATION_HAS_ALTITUDE_MSL_BIT;
+    }
     qCacheLocation.flags |= QAPI_LOCATION_IS_BEST_AVAIL_POS_BIT;
-    qCacheLocation.verticalAccuracy = location.verticalAccuracy;
-    qCacheLocation.speedAccuracy = location.speedAccuracy;
-    qCacheLocation.bearingAccuracy = location.bearingAccuracy;
+    qCacheLocation.verticalAccuracy = gnsslocation.verticalAccuracy;
+    qCacheLocation.speedAccuracy = gnsslocation.speedAccuracy;
+    qCacheLocation.bearingAccuracy = gnsslocation.bearingAccuracy;
 
     print_qLocation_array(&qCacheLocation, 1);
 }
@@ -300,18 +359,18 @@ static void loc_passive_response_callback(
     LOC_LOGv("loc_passive_response_callback!");
 }
 
-struct ClientCallbacks {
+struct MyClientCallbacks {
     CapabilitiesCb capabilitycb;
     ResponseCb responsecb;
     CollectiveResponseCb collectivecb;
     LocationCb locationcb;
 };
 
-static ClientCallbacks gLocationCallbacks = {
+static MyClientCallbacks gLocationCallbacks = {
     location_capabilities_callback,
     location_response_callback,
     location_collective_response_callback,
-    location_tracking_callback
+    location_tracking_callback,
 };
 
 #define LOC_PATH_QAPI_CONF_STR      "/etc/qapi.conf"
@@ -347,10 +406,9 @@ extern "C" {
         LOC_LOGd("gDebug=%u LOC_PATH_GPS_CONF=%s", gDebug, LOC_PATH_GPS_CONF);
 
         UTIL_READ_CONF(LOC_PATH_QAPI_CONF, gQapiConfigTable);
-        LOC_LOGd("gSingleshotTimeout=%u LOC_PATH_QAPI_CONF=%s",
-                gSingleshotTimeout, LOC_PATH_QAPI_CONF);
+        LOC_LOGd("gSingleshotTimeout=%u LOC_PATH_QAPI_CONF=%s", gSingleshotTimeout, LOC_PATH_QAPI_CONF);
 
-        ClientCallbacks locationCallbacks = gLocationCallbacks;
+        MyClientCallbacks locationCallbacks = gLocationCallbacks;
 
         LOC_LOGd("qapi_Loc_Init! pCallbacks %p"
             "cap %p res %p col %p trk %p",
@@ -407,10 +465,14 @@ extern "C" {
                 bool ret;
                 memset(&qCacheLocation, 0, sizeof(qCacheLocation));
                 qCacheLocation.flags |= QAPI_LOCATION_IS_BEST_AVAIL_POS_BIT;
+
+                GnssReportCbs gnnsReportCbs;
+                memset(&gnnsReportCbs, 0, sizeof(gnnsReportCbs));
+                gnnsReportCbs.gnssLocationCallback = loc_passive_tracking_callback;
+
                 ret = pLocPassiveClientApi->startPositionSession(
                                     0,  // both 0 means passive listener
-                                    0,  // both 0 means passive listener
-                                    loc_passive_tracking_callback,
+                                    gnnsReportCbs,
                                     loc_passive_response_callback);
                 if (!ret) {
                     retVal = QAPI_LOCATION_ERROR_GENERAL_FAILURE;
@@ -624,12 +686,15 @@ extern "C" {
             LOC_LOGd("qapi_Loc_Get_Single_Shot! powerLevel=%d",
                      powerLevel);
 
+            GnssReportCbs gnnsReportCbs;
+            memset(&gnnsReportCbs, 0, sizeof(gnnsReportCbs));
+            gnnsReportCbs.gnssLocationCallback = gnss_location_tracking_callback;
+
             if (nullptr != pLocClientApi) {
                 bool ret;
                 ret = pLocClientApi->startPositionSession(
                         1000,
-                        0,
-                        location_tracking_callback,
+                        gnnsReportCbs,
                         location_response_callback);
                 if (!ret) {
                     retVal = QAPI_LOCATION_ERROR_GENERAL_FAILURE;

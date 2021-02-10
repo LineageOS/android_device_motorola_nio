@@ -927,7 +927,8 @@ enum loc_api_adapter_err defaultSllSetNMEATypesSync(uint32_t typesMask, void *co
     Default Implantation of set LPP Configuration command;
     to indicate the command is not supported.
 */
-enum loc_api_adapter_err defaultSllSetLPPConfigSync(GnssConfigLppProfile profile, void *context) {
+enum loc_api_adapter_err defaultSllSetLPPConfigSync(GnssConfigLppProfileMask profileMask,
+        void *context) {
     SLL_DEFAULT_IMPL();
 }
 
@@ -1008,7 +1009,7 @@ enum loc_api_adapter_err defaultSllConvertSuplVersion(const uint32_t suplVersion
     to indicate the command is not supported.
 */
 enum loc_api_adapter_err defaultSllConvertLppProfile(const uint32_t lppProfile,
-        GnssConfigLppProfile *gnssLppProfile, void *context) {
+        GnssConfigLppProfileMask *gnssLppProfileMask, void *context) {
     SLL_DEFAULT_IMPL();
 }
 
@@ -1752,62 +1753,6 @@ SynergyLocApi::setServerSync(unsigned int ip, int port, LocServerType type) {
 
 
 /**
-   This API to Inject XTRA data, this module breaks down the XTRA
-   file into "chunks" and injects them one at a time
-
-   @param char* data[Input]    XTRA Data Buffer
-   @param int length[Input]    XTRA Data Buffer length
-
-   @return
-        enum loc_api_adapter_err.
-
-   @dependencies
-       None.
-*/
-enum loc_api_adapter_err SynergyLocApi::setXtraData(char* data, int length) {
-
-    enum loc_api_adapter_err rtv = LOC_API_ADAPTER_ERR_SUCCESS;
-
-    if ((nullptr != sllReqIf) && (nullptr != sllReqIf->sllSetXtraData)) {
-        rtv = sllReqIf->sllSetXtraData(data, length, ((void *)this));
-        if (LOC_API_ADAPTER_ERR_SUCCESS != rtv) {
-             LOC_LOGe ("Error: %d", rtv);
-        }
-    } else {
-        rtv = LOC_API_ADAPTER_ERR_UNSUPPORTED;
-    }
-
-    return rtv;
-}
-
-/**
-   This API request the Xtra Server Url
-
-   @param
-        none
-
-   @return
-        enum loc_api_adapter_err.
-
-   @dependencies
-       None.
-*/
-enum loc_api_adapter_err SynergyLocApi::requestXtraServer() {
-    enum loc_api_adapter_err rtv = LOC_API_ADAPTER_ERR_SUCCESS;
-
-    if ((nullptr != sllReqIf) && (nullptr != sllReqIf->sllRequestXtraServer)) {
-        rtv= sllReqIf->sllRequestXtraServer((void *)this);
-        if (LOC_API_ADAPTER_ERR_SUCCESS != rtv) {
-             LOC_LOGe ("Error: %d", rtv);
-        }
-    } else {
-        rtv = LOC_API_ADAPTER_ERR_UNSUPPORTED;
-    }
-
-    return rtv;
-}
-
-/**
    This API request to OPEN ATL Status
 
    @param handle[Input]     ATL Connection handle
@@ -1936,7 +1881,7 @@ enum loc_api_adapter_err SynergyLocApi::setNMEATypesSync(uint32_t typesMask) {
 /**
    set the configuration for LTE positioning profile (LPP).
 
-   @param GnssConfigLppProfile[Input]    Configur LPP Profile.
+   @param GnssConfigLppProfileMask[Input]    Configur LPP Profile.
 
    @return
         LocationError
@@ -1945,7 +1890,7 @@ enum loc_api_adapter_err SynergyLocApi::setNMEATypesSync(uint32_t typesMask) {
        None.
 */
 LocationError
-SynergyLocApi::setLPPConfigSync(GnssConfigLppProfile profile) {
+SynergyLocApi::setLPPConfigSync(GnssConfigLppProfileMask profileMask) {
 
     LocationError err = LOCATION_ERROR_GENERAL_FAILURE;
 
@@ -1953,7 +1898,7 @@ SynergyLocApi::setLPPConfigSync(GnssConfigLppProfile profile) {
 
     if ((nullptr != sllReqIf) && (nullptr != sllReqIf->sllSetLPPConfigSync)) {
 
-        rtv = sllReqIf->sllSetLPPConfigSync(profile, ((void *)this));
+        rtv = sllReqIf->sllSetLPPConfigSync(profileMask, ((void *)this));
         if (LOC_API_ADAPTER_ERR_SUCCESS == rtv) {
             err = LOCATION_ERROR_SUCCESS;
         }
@@ -2316,36 +2261,6 @@ SynergyLocApi::setXtraVersionCheckSync(uint32_t check) {
 
 
 /**
-   Check XTRA Version Check
-
-   @param LocDerEncodedCertificate[Input]   AGPS Certificate Buffer
-   @param numberOfCerts[Input]              Number of AGPS Certificates
-   @param slotBitMask[Input]                Bit mask of Certificates
-
-   @return
-        None.
-
-   @dependencies
-       None.
-*/
-void SynergyLocApi::installAGpsCert(const LocDerEncodedCertificate* pData,
-                                  size_t numberOfCerts,
-                                  uint32_t slotBitMask) {
-
-    enum loc_api_adapter_err rtv = LOC_API_ADAPTER_ERR_SUCCESS;
-
-    if ((nullptr != sllReqIf) && (nullptr != sllReqIf->sllInstallAGpsCert)) {
-        rtv = sllReqIf->sllInstallAGpsCert(pData, numberOfCerts, slotBitMask, ((void *)this));
-        if (LOC_API_ADAPTER_ERR_SUCCESS != rtv) {
-            LOC_LOGe ("Error: %d", rtv);
-        }
-    } else {
-        rtv = LOC_API_ADAPTER_ERR_UNSUPPORTED;
-    }
-}
-
-
-/**
    Set Constrained Tunc Mode
 
    @param enabled[Input]                     Enabled OR Disabled
@@ -2398,6 +2313,7 @@ void SynergyLocApi::setConstrainedTuncMode(bool enabled,
 void SynergyLocApi::setPositionAssistedClockEstimatorMode(bool enabled,
                                                           LocApiResponse* adapterResponse) {
     sendMsg(new LocApiMsg([this, enabled, adapterResponse] () {
+
     LocationError err = LOCATION_ERROR_GENERAL_FAILURE;
     enum loc_api_adapter_err rtv = LOC_API_ADAPTER_ERR_SUCCESS;
 
@@ -2414,6 +2330,7 @@ void SynergyLocApi::setPositionAssistedClockEstimatorMode(bool enabled,
     if (adapterResponse != NULL) {
             adapterResponse->returnToSender(err);
         }
+
     }));
 }
 
@@ -2430,7 +2347,9 @@ void SynergyLocApi::setPositionAssistedClockEstimatorMode(bool enabled,
    @dependencies
         None.
 */
-LocationError SynergyLocApi::getGnssEnergyConsumed() {
+void SynergyLocApi::getGnssEnergyConsumed() {
+
+    sendMsg(new LocApiMsg([this] {
 
     LocationError err = LOCATION_ERROR_GENERAL_FAILURE;
     enum loc_api_adapter_err rtv = LOC_API_ADAPTER_ERR_SUCCESS;
@@ -2443,7 +2362,8 @@ LocationError SynergyLocApi::getGnssEnergyConsumed() {
     } else {
         err = LOCATION_ERROR_NOT_SUPPORTED;
     }
-    return err;
+
+    }));
 }
 
 
@@ -2472,34 +2392,6 @@ SynergyLocApi::convertSuplVersion(const uint32_t suplVersion) {
     }
 
     return configSuplVersion;
-}
-
-
-/**
-    Convert LPP Profile vesrion in GNSS LPP profile format
-
-    @param lppProfile[Input]     LPP Profile Version
-
-
-    @return
-        GnssConfigLppProfile.
-
-    @dependencies
-        None.
-*/
-GnssConfigLppProfile
-SynergyLocApi::convertLppProfile(const uint32_t lppProfile) {
-    GnssConfigLppProfile configLppProfile = GNSS_CONFIG_LPP_PROFILE_RRLP_ON_LTE;
-    enum loc_api_adapter_err rtv = LOC_API_ADAPTER_ERR_SUCCESS;
-
-    if ((nullptr != sllReqIf) && (nullptr != sllReqIf->sllConvertLppProfile)) {
-        rtv = sllReqIf->sllConvertLppProfile(lppProfile, &configLppProfile, (void *)this);
-        if (LOC_API_ADAPTER_ERR_SUCCESS != rtv) {
-            configLppProfile = GNSS_CONFIG_LPP_PROFILE_RRLP_ON_LTE;
-        }
-    }
-
-    return configLppProfile;
 }
 
 
@@ -2575,9 +2467,14 @@ LocationError
 SynergyLocApi::setBlacklistSvSync(const GnssSvIdConfig& config) {
 
     LocationError rtv = LOCATION_ERROR_SUCCESS;
+    enum loc_api_adapter_err adapRtv = LOC_API_ADAPTER_ERR_SUCCESS;
 
     if ((nullptr != sllReqIf) && (nullptr != sllReqIf->sllSetBlacklistSv)) {
-        setBlacklistSv(config);
+        adapRtv = sllReqIf->sllSetBlacklistSv(config, ((void *)this));
+        if (LOC_API_ADAPTER_ERR_SUCCESS != adapRtv) {
+           LOC_LOGe ("Error: %d", adapRtv);
+           rtv = LOCATION_ERROR_GENERAL_FAILURE;
+        }
     } else {
         rtv = LOCATION_ERROR_NOT_SUPPORTED;
     }
@@ -2599,15 +2496,11 @@ SynergyLocApi::setBlacklistSvSync(const GnssSvIdConfig& config) {
         None.
 */
 void
-SynergyLocApi::setBlacklistSv(const GnssSvIdConfig& config) {
-    sendMsg(new LocApiMsg([this, config] () {
-        enum loc_api_adapter_err rtv = LOC_API_ADAPTER_ERR_SUCCESS;
-
-        if ((nullptr != sllReqIf) && (nullptr != sllReqIf->sllSetBlacklistSv)) {
-            rtv = sllReqIf->sllSetBlacklistSv(config, ((void *)this));
-            if (LOC_API_ADAPTER_ERR_SUCCESS != rtv) {
-               LOC_LOGe ("Error: %d", rtv);
-            }
+SynergyLocApi::setBlacklistSv(const GnssSvIdConfig& config, LocApiResponse* adapterResponse) {
+    sendMsg(new LocApiMsg([this, config, adapterResponse] () {
+        LocationError err = setBlacklistSvSync(config);
+        if (adapterResponse) {
+            adapterResponse->returnToSender(err);
         }
     }));
 }
@@ -2733,7 +2626,6 @@ SynergyLocApi::resetConstellationControl(LocApiResponse *adapterResponse) {
         }
     }));
 }
-
 
 void
 SynergyLocApi::startTimeBasedTracking(const TrackingOptions& options,

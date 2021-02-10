@@ -71,6 +71,61 @@ typedef struct
     uint8_t cycleSlipCount;
 } adrData;
 
+typedef uint64_t GpsSvMeasHeaderFlags;
+#define BIAS_GPSL1_VALID                0x00000001
+#define BIAS_GPSL1_UNC_VALID            0x00000002
+#define BIAS_GPSL1_GPSL5_VALID          0x00000004
+#define BIAS_GPSL1_GPSL5_UNC_VALID      0x00000008
+#define BIAS_GPSL1_GLOG1_VALID          0x00000010
+#define BIAS_GPSL1_GLOG1_UNC_VALID      0x00000020
+#define BIAS_GPSL1_GALE1_VALID          0x00000040
+#define BIAS_GPSL1_GALE1_UNC_VALID      0x00000080
+#define BIAS_GPSL1_BDSB1_VALID          0x00000100
+#define BIAS_GPSL1_BDSB1_UNC_VALID      0x00000200
+#define BIAS_GPSL1_NAVIC_VALID          0x00000400
+#define BIAS_GPSL1_NAVIC_UNC_VALID      0x00000800
+
+#define BIAS_GALE1_VALID                0x00001000
+#define BIAS_GALE1_UNC_VALID            0x00002000
+#define BIAS_GALE1_GALE5A_VALID         0x00004000
+#define BIAS_GALE1_GALE5A_UNC_VALID     0x00008000
+#define BIAS_BDSB1_VALID                0x00010000
+#define BIAS_BDSB1_UNC_VALID            0x00020000
+#define BIAS_BDSB1_BDSB1C_VALID         0x00040000
+#define BIAS_BDSB1_BDSB1C_UNC_VALID     0x00080000
+#define BIAS_BDSB1_BDSB2A_VALID         0x00100000
+#define BIAS_BDSB1_BDSB2A_UNC_VALID     0x00200000
+
+typedef struct {
+    uint64_t flags;
+
+    /* used directly */
+    float gpsL1;
+    float gpsL1Unc;
+    float gpsL1_gpsL5;
+    float gpsL1_gpsL5Unc;
+    float gpsL1_gloG1;
+    float gpsL1_gloG1Unc;
+    float gpsL1_galE1;
+    float gpsL1_galE1Unc;
+    float gpsL1_bdsB1;
+    float gpsL1_bdsB1Unc;
+    float gpsL1_navic;
+    float gpsL1_navicUnc;
+
+    /* used for intermediate computations */
+    float galE1;
+    float galE1Unc;
+    float galE1_galE5a;
+    float galE1_galE5aUnc;
+    float bdsB1;
+    float bdsB1Unc;
+    float bdsB1_bdsB1c;
+    float bdsB1_bdsB1cUnc;
+    float bdsB1_bdsB2a;
+    float bdsB1_bdsB2aUnc;
+} timeBiases;
+
 /* This class derives from the LocApiBase class.
    The members of this class are responsible for converting
    the Loc API V02 data structures into Loc Adapter data structures.
@@ -96,9 +151,13 @@ private:
   bool mGPSreceived;
   int  mMsInWeek;
   bool mAgcIsPresent;
+  timeBiases mTimeBiases;
 
   size_t mBatchSize, mDesiredBatchSize;
   size_t mTripBatchSize, mDesiredTripBatchSize;
+  GnssSvMeasurementSet*  mSvMeasurementSet;
+  bool mIsFirstFinalFixReported;
+  bool mIsFirstStartFixReq;
 
   /* Convert event mask from loc eng to loc_api_v02 format */
   static locClientEventMaskType convertMask(LOC_API_ADAPTER_EVENT_MASK_T mask);
@@ -236,10 +295,13 @@ private:
       mGnssMeasurements->gnssSvMeasurementSet.isNhz = false;
       mGnssMeasurements->gnssSvMeasurementSet.svMeasSetHeader.size =
           sizeof(GnssSvMeasurementHeader);
+      memset(&mTimeBiases, 0, sizeof(mTimeBiases));
       mGPSreceived = false;
       mMsInWeek = -1;
       mAgcIsPresent = false;
   }
+
+  void setGnssBiases();
 
   /* convert and report ODCPI request */
   void requestOdcpi(
@@ -252,6 +314,7 @@ private:
   void registerMasterClient();
   int getGpsLock(uint8_t subType);
   void getRobustLocationConfig(uint32_t sessionId, LocApiResponse* adapterResponse);
+  void getMinGpsWeek(uint32_t sessionId, LocApiResponse* adapterResponse);
 
   /* Convert get blacklist sv info to GnssSvIdConfig */
   void reportGnssSvIdConfig
@@ -354,7 +417,7 @@ public:
     setTime(LocGpsUtcTime time, int64_t timeReference, int uncertainty);
 
   virtual void
-    injectPosition(double latitude, double longitude, float accuracy);
+    injectPosition(double latitude, double longitude, float accuracy, bool onDemandCpi);
 
   virtual void
     injectPosition(const Location& location, bool onDemandCpi);
@@ -372,10 +435,6 @@ public:
     setServerSync(const char* url, int len, LocServerType type);
   virtual LocationError
     setServerSync(unsigned int ip, int port, LocServerType type);
-  virtual enum loc_api_adapter_err
-    setXtraData(char* data, int length);
-  virtual enum loc_api_adapter_err
-    requestXtraServer();
   virtual void
     atlOpenStatus(int handle, int is_succ, char* apn, uint32_t apnLen, AGpsBearerType bear,
                    LocAGpsType agpsType, LocApnTypeMask mask);
@@ -384,7 +443,7 @@ public:
 
   virtual enum loc_api_adapter_err setNMEATypesSync(uint32_t typesMask);
 
-  virtual LocationError setLPPConfigSync(GnssConfigLppProfile profile);
+  virtual LocationError setLPPConfigSync(GnssConfigLppProfileMask profileMask);
 
 
   virtual enum loc_api_adapter_err
@@ -414,11 +473,17 @@ public:
                                       LocApiResponse *adapterResponse=nullptr);
   virtual void setPositionAssistedClockEstimatorMode(bool enabled,
                                                      LocApiResponse *adapterResponse=nullptr);
-  virtual LocationError getGnssEnergyConsumed();
+  virtual void getGnssEnergyConsumed();
   virtual void updateSystemPowerState(PowerStateType powerState);
   virtual void requestForAidingData(GnssAidingDataSvMask svDataMask);
   virtual void configRobustLocation(bool enable, bool enableForE911,
                                     LocApiResponse *adapterResponse=nullptr);
+  virtual void configMinGpsWeek(uint16_t minGpsWeek,
+                                LocApiResponse *adapterResponse=nullptr);
+  virtual LocationError setParameterSync(const GnssConfig & gnssConfig);
+
+  virtual void getParameter(uint32_t sessionId, GnssConfigFlagsMask flags,
+                            LocApiResponse* adapterResponse=nullptr);
   /*
   Returns
   Current value of GPS Lock on success
@@ -426,28 +491,41 @@ public:
   */
   virtual int setSvMeasurementConstellation(const locClientEventMaskType mask);
   virtual LocationError setXtraVersionCheckSync(uint32_t check);
-  virtual void installAGpsCert(const LocDerEncodedCertificate* pData,
-                               size_t length,
-                               uint32_t slotBitMask);
 
   virtual LocPosTechMask convertPosTechMask(qmiLocPosTechMaskT_v02 mask);
   virtual LocNavSolutionMask convertNavSolutionMask(qmiLocNavSolutionMaskT_v02 mask);
   virtual GnssConfigSuplVersion convertSuplVersion(const uint32_t suplVersion);
-  virtual GnssConfigLppProfile convertLppProfile(const uint32_t lppProfile);
   virtual GnssConfigLppeControlPlaneMask convertLppeCp(const uint32_t lppeControlPlaneMask);
   virtual GnssConfigLppeUserPlaneMask convertLppeUp(const uint32_t lppeUserPlaneMask);
   virtual LocationError setEmergencyExtensionWindowSync(const uint32_t emergencyExtensionSeconds);
+  virtual void setMeasurementCorrections(
+        const GnssMeasurementCorrections& gnssMeasurementCorrections);
   virtual GnssSignalTypeMask convertQmiGnssSignalType(
         qmiLocGnssSignalTypeMaskT_v02 qmiGnssSignalType);
 
+  void convertQmiBlacklistedSvConfigToGnssConfig(
+        const qmiLocGetBlacklistSvIndMsgT_v02& qmiBlacklistConfig,
+        GnssSvIdConfig& gnssBlacklistConfig);
+
+  virtual void convertQmiSecondaryConfigToGnssConfig(
+        qmiLocGNSSConstellEnumT_v02 qmiSecondaryBandConfig,
+        GnssSvTypeConfig& secondaryBandConfig);
+
   /* Requests for SV/Constellation Control */
   virtual LocationError setBlacklistSvSync(const GnssSvIdConfig& config);
-  virtual void setBlacklistSv(const GnssSvIdConfig& config);
+  virtual void setBlacklistSv(const GnssSvIdConfig& config,
+                              LocApiResponse* adapterResponse=nullptr);
   virtual void getBlacklistSv();
   virtual void setConstellationControl(const GnssSvTypeConfig& config,
                                        LocApiResponse *adapterResponse=nullptr);
   virtual void getConstellationControl();
   virtual void resetConstellationControl(LocApiResponse *adapterResponse=nullptr);
+
+  virtual void configConstellationMultiBand(const GnssSvTypeConfig& secondaryBandConfig,
+                                            LocApiResponse* adapterResponse=nullptr);
+
+  virtual void getConstellationMultiBandConfig(uint32_t sessionId,
+                                      LocApiResponse* adapterResponse=nullptr);
 
   locClientStatusEnumType locSyncSendReq(uint32_t req_id, locClientReqUnionType req_payload,
           uint32_t timeout_msec, uint32_t ind_id, void* ind_payload_ptr);

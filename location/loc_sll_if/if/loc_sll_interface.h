@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1124,7 +1124,7 @@ typedef struct {
        contexts. The execution context will identify using ‘void *context’ variable.
 
        @datatypes
-       #GnssConfigLppProfile
+       #GnssConfigLppProfileMask
        #loc_api_adapter_err
 
        @param profile[Input]    Configure of LPP Profile.
@@ -1139,7 +1139,8 @@ typedef struct {
        @dependencies
            None.
    */
-   enum loc_api_adapter_err (*sllSetLPPConfigSync)(GnssConfigLppProfile profile, void *context);
+   enum loc_api_adapter_err (*sllSetLPPConfigSync)(GnssConfigLppProfileMask profileMask,
+           void *context);
 
    /**
        The SLL interface function to configure Sensor Properties. This interface API should
@@ -1344,7 +1345,7 @@ typedef struct {
        This is blocking call.
 
        @datatypes
-       #GnssConfigLppProfile
+       #GnssConfigLppProfileMask
        #loc_api_adapter_err
 
        @param lppProfile[Input] LPP Profile.
@@ -1362,7 +1363,7 @@ typedef struct {
            None.
    */
    enum loc_api_adapter_err (*sllConvertLppProfile)(const uint32_t lppProfile,
-            GnssConfigLppProfile *gnssLppProfile, void *context);
+            GnssConfigLppProfileMask *gnssLppProfileMask, void *context);
 
    /**
        The SLL interface function to get GNSS LPP Control Plan Mask. This interface API should

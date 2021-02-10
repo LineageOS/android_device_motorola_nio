@@ -40,10 +40,6 @@ AC_ARG_WITH([external_ap],
     [],
     with_external_ap=no)
 
-if test "x$with_external_ap" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -DFEATURE_EXTERNAL_AP"
-fi
-
 AM_CONDITIONAL(USE_EXTERNAL_AP, test "x${with_external_ap}" = "xyes")
 
 AC_ARG_WITH([glib],

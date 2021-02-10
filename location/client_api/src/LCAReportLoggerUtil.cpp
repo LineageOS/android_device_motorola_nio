@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, 2018 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -24,28 +24,50 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
+#include "LCAReportLoggerUtil.h"
 
-#ifndef LOC_API_V02_LOG_H
-#define LOC_API_V02_LOG_H
+namespace location_client {
 
-#include <loc_log.h>
-#include <loc_api_v02_client.h>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-const char* loc_get_v02_event_name(uint32_t event);
-const char* loc_get_v02_client_status_name(locClientStatusEnumType status);
-const char* loc_get_v02_qmi_status_name(qmiLocStatusEnumT_v02 status);
-const char* loc_get_v02_qmi_reg_mk_status_name(qmiLocRegisterMasterClientStatusEnumT_v02 status);
-
-
-#ifdef __cplusplus
+LCAReportLoggerUtil::LCAReportLoggerUtil():
+        mLogLocation(nullptr),
+        mLogSv(nullptr),
+        mLogNmea(nullptr),
+        mLogMeas(nullptr) {
+    const char* libname = "liblocdiagiface.so";
+    void* libHandle = nullptr;
+    mLogLocation = (LogGnssLocation)dlGetSymFromLib(
+            libHandle, libname, "LogGnssLocation");
+    mLogSv = (LogGnssSv)dlGetSymFromLib(
+            libHandle, libname, "LogGnssSv");
+    mLogNmea = (LogGnssNmea)dlGetSymFromLib(
+            libHandle, libname, "LogGnssNmea");
+    mLogMeas = (LogGnssMeas)dlGetSymFromLib(
+            libHandle, libname, "LogGnssMeas");
 }
-#endif
 
-#endif /* LOC_API_V02_LOG_H */
+void LCAReportLoggerUtil::log(const GnssLocation& gnssLocation) {
+    if (mLogLocation != nullptr) {
+        mLogLocation(gnssLocation);
+    }
+}
+
+void LCAReportLoggerUtil::log(const std::vector<GnssSv>& gnssSvsVector) {
+    if (mLogSv != nullptr) {
+        mLogSv(gnssSvsVector);
+    }
+}
+
+void LCAReportLoggerUtil::log(
+        uint64_t timestamp, uint32_t length, const char* nmea) {
+    if (mLogNmea != nullptr) {
+        mLogNmea(timestamp, length, nmea);
+    }
+}
+
+void LCAReportLoggerUtil::log(const GnssMeasurements& gnssMeasurements) {
+    if (mLogMeas != nullptr) {
+        mLogMeas(gnssMeasurements);
+    }
+}
+}

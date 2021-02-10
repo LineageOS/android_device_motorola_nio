@@ -2,7 +2,7 @@ AM_CFLAGS = \
     -I. \
     $(LOCPLA_CFLAGS) \
     $(GPSUTILS_CFLAGS) \
-    $(LOC_CORE_CFLAGS) \
+    $(LOCCORE_CFLAGS) \
     $(QMIFW_CFLAGS) \
     -fno-short-enums \
     -D__func__=__PRETTY_FUNCTION__ \
@@ -26,7 +26,7 @@ libloc_api_v02_la_CPPFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS)
 endif
 
 libloc_api_v02_la_CXXFLAGS = -std=c++0x
-libloc_api_v02_la_LIBADD = -lstdc++ -ldl -lutils $(QMIFW_LIBS) $(GPSUTILS_LIBS) $(LOC_CORE_LIBS)
+libloc_api_v02_la_LIBADD = -lstdc++ -ldl -lutils $(QMIFW_LIBS) $(GPSUTILS_LIBS) $(LOCCORE_LIBS)
 
 library_include_HEADERS = \
     location_service_v02.h \

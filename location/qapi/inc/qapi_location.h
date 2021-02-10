@@ -26,8 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef QAPI_LOCATION_H_
-#define QAPI_LOCATION_H_
+#ifndef _QAPI_LOCATION_H_
+#define _QAPI_LOCATION_H_
 
 #include <stdint.h>
 #include <stddef.h>
@@ -99,18 +99,12 @@ extern "C" {
     typedef uint32_t qapi_Location_Capabilities_Mask_t;
     /** Flags to indicate the capabilities bit. */
     typedef enum {
-        /**< Capabilities time-based tracking bit. */
-        QAPI_LOCATION_CAPABILITIES_TIME_BASED_TRACKING_BIT = (1 << 0),
-        /**< Capabilities time-based batching bit. */
-        QAPI_LOCATION_CAPABILITIES_TIME_BASED_BATCHING_BIT = (1 << 1),
-        /**< Capabilities distance-based tracking bit. */
-        QAPI_LOCATION_CAPABILITIES_DISTANCE_BASED_TRACKING_BIT = (1 << 2),
-        /**< Capabilities distance-based batching bit. */
-        QAPI_LOCATION_CAPABILITIES_DISTANCE_BASED_BATCHING_BIT = (1 << 3),
-        /**< Capabilities Geofence bit. */
-        QAPI_LOCATION_CAPABILITIES_GEOFENCE_BIT = (1 << 4),
-        /**< Capabilities Geofence bit. */
-        QAPI_LOCATION_CAPABILITIES_GNSS_DATA_BIT = (1 << 5),
+        QAPI_LOCATION_CAPABILITIES_TIME_BASED_TRACKING_BIT = (1 << 0),  /**< Capabilities time-based tracking bit. */
+        QAPI_LOCATION_CAPABILITIES_TIME_BASED_BATCHING_BIT = (1 << 1),  /**< Capabilities time-based batching bit. */
+        QAPI_LOCATION_CAPABILITIES_DISTANCE_BASED_TRACKING_BIT = (1 << 2),  /**< Capabilities distance-based tracking bit. */
+        QAPI_LOCATION_CAPABILITIES_DISTANCE_BASED_BATCHING_BIT = (1 << 3),  /**< Capabilities distance-based batching bit. */
+        QAPI_LOCATION_CAPABILITIES_GEOFENCE_BIT = (1 << 4),  /**< Capabilities Geofence bit. */
+        QAPI_LOCATION_CAPABILITIES_GNSS_DATA_BIT = (1 << 5),  /**< Capabilities Geofence bit. */
     } qapi_Location_Capabilities_Mask_Bits_t;
 
     /** Flags to indicate the constellation type. */
@@ -135,14 +129,11 @@ extern "C" {
     typedef struct {
         size_t size;                        /**< Size. Set to the size of qapi_Location_t. */
         qapi_Location_Flags_Mask_t flags;   /**< Bitwise OR of qapi_Location_Flags_t. */
-        uint64_t timestamp;                 /**< UTC timestamp for a location fix; milliseconds
-                                            since Jan. 1, 1970. */
+        uint64_t timestamp;                 /**< UTC timestamp for a location fix; milliseconds since Jan. 1, 1970. */
         double latitude;                    /**< Latitude in degrees. */
         double longitude;                   /**< Longitude in degrees. */
-        double altitude;                    /**< Altitude in meters above the WGS 84 reference
-                                            ellipsoid. */
-        double altitudeMeanSeaLevel;        /**< Altitude in meters with respect to mean
-                                            sea level. */
+        double altitude;                    /**< Altitude in meters above the WGS 84 reference ellipsoid. */
+        double altitudeMeanSeaLevel;        /**< Altitude in meters with respect to mean sea level. */
         float speed;                        /**< Speed in meters per second. */
         float bearing;                      /**< Bearing in degrees; range: 0 to 360. */
         float accuracy;                     /**< Accuracy in meters. */
@@ -153,7 +144,7 @@ extern "C" {
 
     /** Structure for GNSS data information. */
     typedef struct {
-        size_t size;                           /**< Size. Set to the size of #qapi_Gnss_Data_t. */
+        size_t size;                                            /**< Size. Set to the size of #qapi_Gnss_Data_t. */
         uint32_t jammerInd[QAPI_MAX_NUMBER_OF_CONSTELLATIONS];  /**< Jammer indication. */
     } qapi_Gnss_Data_t;
 
@@ -163,36 +154,32 @@ extern "C" {
         uint32_t minInterval; /**<  There are three different interpretations of this field,
                               depending if minDistance is 0 or not:
                               1. Time-based tracking (minDistance = 0). minInterval is the minimum
-                              time interval in milliseconds that must elapse between final position
-                              reports.
+                              time interval in milliseconds that must elapse between final position reports.
                               2. Distance-based tracking (minDistance > 0). minInterval is the
                               maximum time period in milliseconds after the minimum distance
                               criteria has been met within which a location update must be provided.
                               If set to 0, an ideal value will be assumed by the engine.
-                              3. Batching. minInterval is the minimum time interval in milliseconds
-                              that must elapse between position reports. */
-        uint32_t minDistance; /**< Minimum distance in meters that must be traversed between
-                              position reports. Setting this interval to 0 will be a pure
-                              time-based tracking/batching. */
+                              3. Batching. minInterval is the minimum time interval in milliseconds that
+                              must elapse between position reports.
+                              */
+        uint32_t minDistance; /**< Minimum distance in meters that must be traversed between position reports.
+                              Setting this interval to 0 will be a pure time-based tracking/batching.
+                              */
     } qapi_Location_Options_t;
 
     /** Structure for Geofence options. */
     typedef struct {
-        /**< Size. Set to the size of #qapi_Geofence_Option_t. */
-        size_t size;
-        /**< Bitwise OR of #qapi_Geofence_Breach_Mask_Bits_t bits. */
-        qapi_Geofence_Breach_Mask_t breachTypeMask;
-        /**< Specifies in milliseconds the user-defined rate of detection for a Geofence
-        breach. This may impact the time lag between the actual breach event and
-        when it is reported. The gap between the actual breach and the time it
-        is reported depends on the user setting. The power implication is
-        inversely proportional to the responsiveness value set by the user.
-        The higher the responsiveness value, the lower the power implications,
-        and vice-versa. */
-        uint32_t responsiveness;
-        /**< Dwell time is the time in milliseconds a user spends in the Geofence before
-        a dwell event is sent. */
-        uint32_t dwellTime;
+        size_t size;                                /**< Size. Set to the size of #qapi_Geofence_Option_t. */
+        qapi_Geofence_Breach_Mask_t breachTypeMask; /**< Bitwise OR of #qapi_Geofence_Breach_Mask_Bits_t bits. */
+        uint32_t responsiveness;                    /**< Specifies in milliseconds the user-defined rate of detection for a Geofence
+                                                    breach. This may impact the time lag between the actual breach event and
+                                                    when it is reported. The gap between the actual breach and the time it
+                                                    is reported depends on the user setting. The power implication is
+                                                    inversely proportional to the responsiveness value set by the user.
+                                                    The higher the responsiveness value, the lower the power implications,
+                                                    and vice-versa. */
+        uint32_t dwellTime;                         /**< Dwell time is the time in milliseconds a user spends in the Geofence before
+                                                    a dwell event is sent. */
     } qapi_Geofence_Option_t;
 
     /** Structure for Geofence information. */
@@ -205,8 +192,7 @@ extern "C" {
 
     /** Structure for Geofence breach notification. */
     typedef struct {
-        size_t size;                    /**< Size. Set to the size of
-                                        #qapi_Geofence_Breach_Notification_t. */
+        size_t size;                    /**< Size. Set to the size of #qapi_Geofence_Breach_Notification_t. */
         size_t count;                   /**< Number of IDs in the array. */
         uint32_t* ids;                  /**< Array of IDs that have been breached. */
         qapi_Location_t location;       /**< Location associated with a breach. */
@@ -799,8 +785,7 @@ extern "C" {
 
     responseCb returns: \n
     QAPI_LOCATION_ERROR_SUCCESS if session was successfully started. \n
-    QAPI_LOCATION_ERROR_ALREADY_STARTED if a qapi_Loc_Start_Get_Gnss_Data() session is already
-    in progress.    \n
+    QAPI_LOCATION_ERROR_ALREADY_STARTED if a qapi_Loc_Start_Get_Gnss_Data() session is already in progress.    \n
     QAPI_LOCATION_ERROR_CALLBACK_MISSING if no gnssDataCb was passed in qapi_Loc_Init().
 
     @param[in] clientId     Client identifier for the location client.
@@ -877,4 +862,4 @@ extern "C" {
 }
 #endif
 
-#endif /* QAPI_LOCATION_H_ */
+#endif /* _QAPI_LOCATION_H_ */

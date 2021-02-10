@@ -35,6 +35,7 @@
 #include <MsgTask.h>
 #include <loc_cfg.h>
 #include <LocIpc.h>
+#include <LocTimer.h>
 #ifdef POWERMANAGER_ENABLED
 #include <PowerEvtHandler.h>
 #endif
@@ -53,13 +54,12 @@
 #undef LOG_TAG
 #define LOG_TAG "LocSvc_HalDaemon"
 
-#define SERVICE_NAME "locapiservice"
-
 typedef struct {
     uint32_t autoStartGnss;
     uint32_t gnssSessionTbfMs;
     uint32_t deleteAllBeforeAutoStart;
     uint32_t posEngineMask;
+    uint32_t positionMode;
 } configParamToRead;
 
 
@@ -73,6 +73,26 @@ typedef struct {
     std::string clientName;
     ELocMsgID   configMsgId;
 } ConfigReqClientData;
+
+// periodic timer to perform maintenance work, e.g.: resource cleanup
+// for location hal daemon
+typedef std::unordered_map<std::string, shared_ptr<LocIpcSender>> ClientNameIpcSenderMap;
+class MaintTimer : public LocTimer {
+public:
+    MaintTimer(LocationApiService* locationApiService) :
+            mLocationApiService(locationApiService),
+            mMsgTask("LocHalDaemonMaintenanceMsgTask") {
+    };
+
+    ~MaintTimer()  = default;
+
+public:
+    void timeOutCallback() override;
+
+private:
+    LocationApiService* mLocationApiService;
+    MsgTask             mMsgTask;
+};
 
 class LocationApiService
 {
@@ -112,6 +132,9 @@ public:
 
     static std::mutex mMutex;
 
+    // Utility routine used by maintenance timer
+    void performMaintenance();
+
 private:
     // APIs can be invoked to process client's IPC messgage
     void newClient(LocAPIClientRegisterReqMsg*);
@@ -140,12 +163,11 @@ private:
 
     void pingTest(LocAPIPingTestReqMsg*);
 
-    inline void gnssUpdateConfig(GnssConfig config) {
-        mLocationControlApi->gnssUpdateConfig(config);
-    }
-
-    inline void gnssDeleteAidingData(GnssAidingData& data) {
-        mLocationControlApi->gnssDeleteAidingData(data);
+    inline uint32_t gnssUpdateConfig(const GnssConfig& config) {
+        uint32_t* sessioIds =  mLocationControlApi->gnssUpdateConfig(config);
+        // in our usage, we only configure one setting at a time,
+        // so we have only one sessionId
+        return *sessioIds;
     }
 
     // Location control API callback
@@ -161,14 +183,21 @@ private:
             const LocConfigPositionAssistedClockEstimatorReqMsg* pMsg);
     void configConstellations(
             const LocConfigSvConstellationReqMsg* pMsg);
+    void configConstellationSecondaryBand(
+            const LocConfigConstellationSecondaryBandReqMsg* pMsg);
     void configAidingDataDeletion(
             LocConfigAidingDataDeletionReqMsg* pMsg);
     void configLeverArm(const LocConfigLeverArmReqMsg* pMsg);
     void configRobustLocation(const LocConfigRobustLocationReqMsg* pMsg);
+    void configMinGpsWeek(const LocConfigMinGpsWeekReqMsg* pMsg);
+    void configDeadReckoningEngineParams(const LocConfigDrEngineParamsReqMsg* pMsg);
+    void configMinSvElevation(const LocConfigMinSvElevationReqMsg* pMsg);
 
     // Location configuration API get/read requests
     void getGnssConfig(const LocAPIMsgHeader* pReqMsg,
                        GnssConfigFlagsBits configFlag);
+    void getConstellationSecondaryBandConfig(
+            const LocConfigGetConstellationSecondaryBandConfigReqMsg* pReqMsg);
 
     // Location configuration API util routines
     void addConfigRequestToMap(uint32_t sessionId,
@@ -192,8 +221,6 @@ private:
         std::string clientname(socketName);
         return getClient(clientname);
     }
-
-    void checkEnableGnss();
 
     GnssInterface* getGnssInterface();
     // OSFramework instance
@@ -223,7 +250,12 @@ private:
 
     // Configration
     const uint32_t mAutoStartGnss;
+    GnssSuplMode   mPositionMode;
+
     PowerStateType  mPowerState;
+
+    // maintenance timer
+    MaintTimer mMaintTimer;
 };
 
 #endif //LOCATIONAPISERVICE_H

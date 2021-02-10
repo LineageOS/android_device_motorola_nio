@@ -27,6 +27,11 @@ liblocation_integration_api_la_h_sources = $(h_sources)
 # Build location_integration_api
 ######################
 
+if USE_EXTERNAL_AP
+AM_CFLAGS += $(LOCSOCKET_CFLAGS) -DFEATURE_EXTERNAL_AP
+requiredlibs += $(LOCSOCKET_LIBS)
+endif
+
 if USE_GLIB
 liblocation_integration_api_la_CFLAGS = -DUSE_GLIB $(AM_CFLAGS) @GLIB_CFLAGS@
 liblocation_integration_api_la_LDFLAGS = -lstdc++ -g -Wl,-z,defs -lpthread @GLIB_LIBS@ -shared -version-info 1:0:0
@@ -35,11 +40,6 @@ else
 liblocation_integration_api_la_CFLAGS = $(AM_CFLAGS)
 liblocation_integration_api_la_LDFLAGS = -lstdc++ -Wl,-z,defs -lpthread -shared -version-info 1:0:0
 liblocation_integration_api_la_CPPFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS)
-endif
-
-if USE_EXTERNAL_AP
-AM_CFLAGS += $(LOCSOCKET_CFLAGS)
-requiredlibs += $(LOCSOCKET_LIBS)
 endif
 
 liblocation_integration_api_la_LIBADD = $(requiredlibs) -lstdc++ -ldl

@@ -39,7 +39,7 @@
 
 #define CLIENT_DIAG_GNSS_SV_MAX            (176)
 #define CLIENT_DIAG_GNSS_MEASUREMENTS_MAX  (128)
-#define LOG_CLIENT_LOCATION_DIAG_MSG_VERSION        (2)
+#define LOG_CLIENT_LOCATION_DIAG_MSG_VERSION        (3)
 #define LOG_CLIENT_SV_REPORT_DIAG_MSG_VERSION       (2)
 #define LOG_CLIENT_NMEA_REPORT_DIAG_MSG_VERSION     (1)
 #define LOG_CLIENT_MEASUREMENTS_DIAG_MSG_VERSION    (1)
@@ -133,7 +133,9 @@ typedef enum
     /** BDS satellite. */
     CLIENT_DIAG_GNSS_LOC_SV_SYSTEM_BDS                    = 6,
     /** QZSS satellite. */
-    CLIENT_DIAG_GNSS_LOC_SV_SYSTEM_QZSS                   = 7
+    CLIENT_DIAG_GNSS_LOC_SV_SYSTEM_QZSS                   = 7,
+    /** NAVIC satellite. */
+    CLIENT_DIAG_GNSS_LOC_SV_SYSTEM_NAVIC                  = 8
 } clientDiagGnss_LocSvSystemEnumType;
 
 typedef uint32_t clientDiagGnssSystemTimeStructTypeFlags;
@@ -234,6 +236,7 @@ typedef PACKED union PACKED_POST {
     clientDiagGnssSystemTimeStructType bdsSystemTime;
     clientDiagGnssSystemTimeStructType qzssSystemTime;
     clientDiagGnssGloTimeStructType gloSystemTime;
+    clientDiagGnssSystemTimeStructType navicSystemTime;
 } clientDiagSystemTimeStructUnion;
 
 typedef PACKED struct PACKED_POST {
@@ -351,8 +354,9 @@ typedef PACKED struct PACKED_POST {
      For GLONASS:  65 to 96. When slot-number to SV ID mapping is unknown, set as 255.
      For SBAS:     120 to 151
      For QZSS-L1CA:193 to 197
-     For BDS:      201 to 237
-     For GAL:      301 to 336 */
+     For BDS:      201 to 263
+     For GAL:      301 to 336
+     For NAVIC:    401 to 414 */
     uint16_t gnssSvId;
 } clientDiagGnssMeasUsageInfo;
 
@@ -364,20 +368,21 @@ typedef enum {
     CLIENT_DIAG_GNSS_SV_TYPE_QZSS,
     CLIENT_DIAG_GNSS_SV_TYPE_BEIDOU,
     CLIENT_DIAG_GNSS_SV_TYPE_GALILEO,
+    CLIENT_DIAG_GNSS_SV_TYPE_NAVIC
 } clientDiagGnssSvType;
 
 typedef uint16_t clientDiagGnssSvOptionsMask;
 typedef enum {
-    CLIENT_DIAG_GNSS_SV_OPTIONS_HAS_EPHEMER_BIT = (1<<0),
-    CLIENT_DIAG_GNSS_SV_OPTIONS_HAS_ALMANAC_BIT = (1<<1),
-    CLIENT_DIAG_GNSS_SV_OPTIONS_USED_IN_FIX_BIT = (1<<2),
+    CLIENT_DIAG_GNSS_SV_OPTIONS_HAS_EPHEMER_BIT           = (1<<0),
+    CLIENT_DIAG_GNSS_SV_OPTIONS_HAS_ALMANAC_BIT           = (1<<1),
+    CLIENT_DIAG_GNSS_SV_OPTIONS_USED_IN_FIX_BIT           = (1<<2),
     CLIENT_DIAG_GNSS_SV_OPTIONS_HAS_CARRIER_FREQUENCY_BIT = (1<<3)
 } clientDiagGnssSvOptionsBits;
 
 typedef PACKED struct PACKED_POST {
     /** Unique Identifier */
     uint16_t svId;
-    /** type of SV (GPS, SBAS, GLONASS, QZSS, BEIDOU, GALILEO) */
+    /** type of SV (GPS, SBAS, GLONASS, QZSS, BEIDOU, GALILEO, NAVIC) */
     clientDiagGnssSvType type;
     /** signal strength */
     float cN0Dbhz;
@@ -486,9 +491,10 @@ typedef enum {
     CLIENT_DIAG_GNSS_LOCATION_INFO_OUTPUT_ENG_MASK_BIT              = (1<<28),
     /** valid output conformityIndex */
     CLIENT_DIAG_GNSS_LOCATION_INFO_CONFORMITY_INDEX_BIT             = (1<<29),
-    /** GnssLocation has valid
-     *  GnssLocation::llaVRPBased.  */
+    /** valid llaVRPBased.  */
     CLIENT_DIAG_GNSS_LOCATION_INFO_LLA_VRP_BASED_BIT                = (1<<30),
+    /** valid enuVelocityVRPBased. */
+    CLIENT_DIAG_GNSS_LOCATION_INFO_ENU_VELOCITY_VRP_BASED_BIT       = (1<<31),
 } clientDiagGnssLocationInfoFlagBits;
 
 typedef enum {
@@ -505,6 +511,7 @@ typedef PACKED struct PACKED_POST {
     uint64_t galSvUsedIdsMask;
     uint64_t bdsSvUsedIdsMask;
     uint64_t qzssSvUsedIdsMask;
+    uint64_t navicSvUsedIdsMask;
 } clientDiagGnssLocationSvUsedInPosition;
 
 typedef uint32_t clientDiagGnssLocationNavSolutionMask;
@@ -684,6 +691,12 @@ typedef PACKED struct PACKED_POST {
     float conformityIndex;
     /** VRR-based latitude/longitude/altitude. */
     clientDiagLLAInfo llaVRPBased;
+    /** VRR-based east, north, and up velocity */
+    float enuVelocityVRPBased[3];
+    /** qtimer tick count when this diag log packet is
+     *  created and filled with the info at location client api
+     *  layer. This field is always valid. */
+    uint64_t qtimerTickCnt;
 } clientDiagGnssLocationStructType;
 
 typedef uint32_t clientDiagGnssMeasurementsDataFlagsMask;

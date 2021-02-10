@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, 2018 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -24,28 +24,25 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef LOC_API_V02_LOG_H
-#define LOC_API_V02_LOG_H
+#define LOG_TAG "NtripClientTestLib"
 
-#include <loc_log.h>
-#include <loc_api_v02_client.h>
+#include <stdio.h>
+#include <string>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <log_util.h>
+#include <loc_cfg.h>
+#include "NtripClientIntegrationApi.h"
 
-#ifdef __cplusplus
-extern "C"
+void startCorrectionDataStreaming(CorrectionDataCb corrDataCb)
 {
-#endif
-
-const char* loc_get_v02_event_name(uint32_t event);
-const char* loc_get_v02_client_status_name(locClientStatusEnumType status);
-const char* loc_get_v02_qmi_status_name(qmiLocStatusEnumT_v02 status);
-const char* loc_get_v02_qmi_reg_mk_status_name(qmiLocRegisterMasterClientStatusEnumT_v02 status);
-
-
-#ifdef __cplusplus
+    LOC_LOGi("Start correction data streaming\n");
 }
-#endif
 
-#endif /* LOC_API_V02_LOG_H */
+void stopCorrectionDataStreaming()
+{
+    LOC_LOGi("Stop correction data streaming\n");
+}

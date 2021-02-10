@@ -45,13 +45,11 @@ PKG_CHECK_MODULES([GPSUTILS], [gps-utils])
 AC_SUBST([GPSUTILS_CFLAGS])
 AC_SUBST([GPSUTILS_LIBS])
 
-AC_ARG_ENABLE(target,
-    [AS_HELP_STRING([--enable-target=TARGET], [Specify the target product to build])],
-    [TARGET=$enableval],
-    [TARGET=none]
-)
+AC_ARG_WITH([pwrmgrlib],
+    AC_HELP_STRING([--with-pwrmgrlib], [with power manager library]))
 
-AM_CONDITIONAL(POWERMANAGER_ENABLED, [test "x$TARGET" = "xmdm9607"])
+AM_CONDITIONAL(POWERMANAGER_ENABLED, test "x$with_pwrmgrlib" = "xyes")
+
 AM_COND_IF(POWERMANAGER_ENABLED, [
     PKG_CHECK_MODULES([PM], [powermanager])
     AC_SUBST([PM_CFLAGS])
