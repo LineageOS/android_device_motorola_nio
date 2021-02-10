@@ -37,6 +37,8 @@ target=`getprop ro.board.platform`
 usb_action=`getprop vendor.usb.mmi-usb-sh.action`
 echo "mmi-usb-sh: action = \"$usb_action\""
 sys_usb_config=`getprop vendor.usb.config`
+factory_usb_config="usbnet"
+factory_usb_config_adb="usbnet,adb"
 
 tcmd_ctrl_adb ()
 {
@@ -89,6 +91,7 @@ case "$target" in
     "msm8937")
         setprop vendor.usb.rps_mask 0
         setprop vendor.rmnet_vnd.rps_mask 0
+        setprop vendor.usb.diag.func.name "diag"
         case "$soc_id" in
 	    "294" | "295")
 		setprop vendor.usb.rps_mask 40
@@ -131,6 +134,7 @@ case "$target" in
             bpt_adb_usb_config="diag,serial_smd,serial_tty,rmnet,adb"
         fi
         setprop vendor.usb.controller "7000000.dwc3"
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "msm8996")
         #Set RPS Mask for Tethering to CPU2
@@ -141,6 +145,7 @@ case "$target" in
         bpt_usb_config="diag,serial_cdev,serial_tty,rmnet"
         bpt_adb_usb_config="diag,serial_cdev,serial_tty,rmnet,adb"
         setprop vendor.usb.controller "6a00000.dwc3"
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "msm8998")
         #Set RPS Mask for Tethering to CPU2
@@ -154,6 +159,7 @@ case "$target" in
         setprop vendor.usb.rndis.func.name "gsi"
         setprop vendor.usb.rmnet.func.name "gsi"
 	setprop vendor.usb.hcd_mask 80
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "sdm660")
         #Set RPS Mask for Tethering to CPU2
@@ -166,6 +172,7 @@ case "$target" in
         setprop vendor.usb.controller "a800000.dwc3"
         setprop vendor.usb.rndis.func.name "rndis_bam"
         setprop vendor.usb.rmnet.func.name "rmnet_bam"
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "sdm845")
         qcom_usb_config="diag,serial_cdev,rmnet"
@@ -175,6 +182,7 @@ case "$target" in
         setprop vendor.usb.controller "a600000.dwc3"
         setprop vendor.usb.rndis.func.name "gsi"
         setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "sdm710")
         qcom_usb_config="diag,serial_cdev,rmnet"
@@ -184,6 +192,7 @@ case "$target" in
         setprop vendor.usb.controller "a600000.dwc3"
         setprop vendor.usb.rndis.func.name "gsi"
         setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "sm6150")
         qcom_usb_config="diag,serial_cdev,rmnet"
@@ -195,6 +204,7 @@ case "$target" in
         setprop vendor.usb.rmnet.func.name "gsi"
 	setprop vendor.usb.hcd_mask 80
 	setprop vendor.usb.rps_mask 40
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "trinket")
         qcom_usb_config="diag,serial_cdev,rmnet"
@@ -204,15 +214,17 @@ case "$target" in
         setprop vendor.usb.controller "4e00000.dwc3"
         setprop vendor.usb.rndis.func.name "gsi"
         setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "diag"
     ;;
     "kona")
-        qcom_usb_config="diag,diag_mdm,qdss,qdss_mdm,serial_cdev,serial_cdev_mdm,mass_storage"
-        qcom_adb_usb_config="diag,diag_mdm,qdss,qdss_mdm,serial_cdev,serial_cdev_mdm,mass_storage,adb"
+        qcom_usb_config="diag,diag_mdm,qdss,qdss_mdm,serial_cdev,serial_cdev_mdm,dpl,rmnet"
+        qcom_adb_usb_config="diag,diag_mdm,qdss,qdss_mdm,serial_cdev,serial_cdev_mdm,dpl,rmnet,adb"
         bpt_usb_config="diag,serial,rmnet"
         bpt_adb_usb_config="diag,serial,rmnet,adb"
         setprop vendor.usb.controller "a600000.dwc3"
         setprop vendor.usb.rndis.func.name "gsi"
         setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "diag"
      ;;
     "lito")
         qcom_usb_config="diag,serial_cdev,rmnet"
@@ -222,6 +234,7 @@ case "$target" in
         setprop vendor.usb.controller "a600000.dwc3"
         setprop vendor.usb.rndis.func.name "gsi"
         setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "diag"
      ;;
     "bengal")
         qcom_usb_config="diag,serial_cdev,rmnet"
@@ -231,7 +244,30 @@ case "$target" in
         setprop vendor.usb.controller "4e00000.dwc3"
         setprop vendor.usb.rndis.func.name "gsi"
         setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "diag"
     ;;
+    "lahaina")
+        qcom_usb_config="diag,diag_mdm,qdss,qdss_mdm,serial_cdev,serial_cdev_mdm,dpl,rmnet"
+        qcom_adb_usb_config="diag,diag_mdm,qdss,qdss_mdm,serial_cdev,serial_cdev_mdm,dpl,rmnet,adb"
+        bpt_usb_config="diag,serial,rmnet"
+        bpt_adb_usb_config="diag,serial,rmnet,adb"
+        setprop vendor.usb.controller "a600000.dwc3"
+        setprop vendor.usb.rndis.func.name "gsi"
+        setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "ffs"
+     ;;
+    "holi")
+        qcom_usb_config="diag,serial_cdev,rmnet"
+        qcom_adb_usb_config="diag,serial_cdev,rmnet,adb"
+        bpt_usb_config="diag,serial,rmnet"
+        bpt_adb_usb_config="diag,serial,rmnet,adb"
+        factory_usb_config="diag,usbnet"
+        factory_usb_config_adb="diag,usbnet,adb"
+        setprop vendor.usb.controller "4e00000.dwc3"
+        setprop vendor.usb.rndis.func.name "gsi"
+        setprop vendor.usb.rmnet.func.name "gsi"
+        setprop vendor.usb.diag.func.name "ffs"
+     ;;
 esac
 
 ## This is needed to switch to the qcom rndis driver.
@@ -324,19 +360,19 @@ case "$bootmode" in
         allow_adb=`getprop persist.vendor.factory.allow_adb`
         case "$allow_adb" in
             "1")
-                if [ "$usb_config" != "usbnet,adb" ]
+                if [ "$usb_config" != $factory_usb_config_adb ]
                 then
-                    setprop persist.vendor.usb.config usbnet,adb
-                    setprop persist.vendor.usb.mot-factory.config usbnet,adb
-                    setprop persist.vendor.usb.mot-factory.func usbnet,adb
+                    setprop persist.vendor.usb.config $factory_usb_config_adb
+                    setprop persist.vendor.usb.mot-factory.config $factory_usb_config_adb
+                    setprop persist.vendor.usb.mot-factory.func $factory_usb_config_adb
                 fi
             ;;
             *)
-                if [ "$usb_config" != "usbnet" ]
+                if [ "$usb_config" != $factory_usb_config ]
                 then
-                    setprop persist.vendor.usb.config usbnet
-                    setprop persist.vendor.usb.mot-factory.config usbnet
-                    setprop persist.vendor.usb.mot-factory.func usbnet
+                    setprop persist.vendor.usb.config $factory_usb_config
+                    setprop persist.vendor.usb.mot-factory.config $factory_usb_config
+                    setprop persist.vendor.usb.mot-factory.func $factory_usb_config
                 fi
             ;;
         esac

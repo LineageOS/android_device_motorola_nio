@@ -135,6 +135,11 @@ service vendor.per_proxy /vendor/bin/pm-proxy
     group system
     disabled
 
+service vendor.mdm_helper /vendor/bin/mdm_helper
+    class core
+    group system wakelock
+    disabled
+
 service vendor.mdm_launcher /vendor/bin/sh /vendor/bin/init.mdm.sh
     class core
     oneshot
@@ -144,3 +149,26 @@ on property:init.svc.vendor.per_mgr=running
 
 on property:sys.shutdown.requested=*
     stop vendor.per_proxy
+
+on property:vendor.vold.post_fs_data_done=1 && property:ro.debuggable=1
+   start vendor.wlan_logging
+
+on property:vendor.vold.post_fs_data_done=1 && property:persist.wlan.debug_log=1
+   start vendor.wlan_logging
+
+service vendor.wlan_logging /system/vendor/bin/cnss_diag -q -f -t HELIUM
+   class main
+   user system
+   group system wifi inet sdcard_rw media_rw diag
+   oneshot
+   disabled
+
+service dcvs-sh /vendor/bin/init.qti.dcvs.sh
+    class late_start
+    user root
+    group root system
+    disabled
+    oneshot
+
+on property:vendor.dcvs.prop=1
+   start dcvs-sh

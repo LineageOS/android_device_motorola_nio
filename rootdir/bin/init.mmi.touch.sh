@@ -405,6 +405,14 @@ run_firmware_upgrade()
 	fi
 	if [ $dec_cfg_id_boot -ne $dec_cfg_id_latest ] || [ "$recovery" == "1" ]; then
 		wait_for_poweron
+		# wait for poweron time is limited, thus in ceratin cases
+		# it can time out. forfeiting firmware update in this case
+		# would be cleaner option, since script cannot indefinitely
+	        # delay sysfs permissions setup and cause more troubles
+		if [ "$?" != "0" ]; then
+			notice "Touch firmware update forfeited!!!"
+			return 1
+		fi
 		debug "forcing firmware upgrade"
 		echo 1 > $touch_path/forcereflash
 		debug "sending reflash command"
@@ -524,11 +532,13 @@ process_touch_instance()
 	query_panel_info
 	search_firmware_file
 	[ "$?" == "0" ] && run_firmware_upgrade
-	do_calibration
-	notice "Touch firmware is up to date"
-	setprop $touch_status_prop "ready"
-	notice "property [$touch_status_prop] set to [`getprop $touch_status_prop`]"
-	notice "Handling touch ID [$touch_instance] permissions"
+	if [ "$?" == "0" ]; then
+		do_calibration
+		notice "Touch firmware is up to date"
+		setprop $touch_status_prop "ready"
+		notice "property [$touch_status_prop] set to [`getprop $touch_status_prop`]"
+		notice "Handling touch ID [$touch_instance] permissions"
+	fi
 	#setup_permissions
 }
 

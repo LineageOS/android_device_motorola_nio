@@ -249,10 +249,16 @@ procfs_wait_for_device()
 	for mpi in $hw_mp $config_mp; do
 		status=$(cat $mpi/reload)
 		notice "$mpi reload is [$status]"
+		device_timeout_count=0
 		while [ "$status" != "$reload_done" ]; do
-			notice "waiting for loading to complete"
+			notice "waiting for loading $mpi to complete"
 			sleep 1;
 			status=$(cat $mpi/reload)
+			if [ "$device_timeout_count" -eq "10" ]; then
+				notice "error: waiting for loading $mpi timeout"
+				break
+			fi
+			device_timeout_count=$(($device_timeout_count + 1))
 		done
 	done
 	eval $__result=$status
@@ -332,6 +338,7 @@ populate_utags()
 	local pvalue
 	for pline in $(exec_parser $selection); do
 		get_tag_data ptag pvalue $pline
+		url_style_off pvalue $pvalue
 		debug "tag='$ptag' value='$pvalue'"
 		update_utag $ptag $pvalue
 	done
@@ -602,6 +609,26 @@ fi
 if [ -f /vendor/lib/modules/utags.ko ]; then
 	notice "loading utag driver"
 	insmod /vendor/lib/modules/utags.ko
+	if [ $? -ne 0 ]; then
+		gki_modules_full_path=`find /vendor/lib/modules -name "*-gki"`
+		if [ -n "$gki_modules_full_path" ]; then
+			gki_modules_path=`basename $gki_modules_full_path`
+			notice "loading gki utag driver in /vendor/lib/modules/$gki_modules_path"
+			insmod /vendor/lib/modules/$gki_modules_path/utags.ko
+			if [ $? -ne 0 ]; then
+				notice "fail to load /vendor/lib/modules/$gki_modules_path/utags.ko"
+				setprop ro.vendor.mot.gki.path "."
+			else
+				notice "successfully load /vendor/lib/modules/$gki_modules_path/utags.ko"
+				setprop ro.vendor.mot.gki.path $gki_modules_path
+			fi
+		else
+			notice "fail to load utag driver"
+			setprop ro.vendor.mot.gki.path "."
+		fi
+	else
+		setprop ro.vendor.mot.gki.path "."
+	fi
 fi
 
 notice "checking integrity"
