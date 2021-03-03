@@ -466,3 +466,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.mot.build.customerid=retcn \
     ro.vendor.mot.factory=false
+
+# Set system properties identifying the chipset
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.soc.manufacturer=Qualcomm \
+    ro.soc.model=SM8250
