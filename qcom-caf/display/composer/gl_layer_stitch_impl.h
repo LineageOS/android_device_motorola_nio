@@ -43,7 +43,7 @@ class GLLayerStitchImpl : public GLLayerStitch, public GLCommon {
  public:
   explicit GLLayerStitchImpl(bool secure);
   virtual ~GLLayerStitchImpl();
-  virtual int Blit(const std::vector<StitchParams> &stitch_params, int *release_fence_fd);
+  virtual int Blit(const std::vector<StitchParams> &stitch_params, shared_ptr<Fence> *release_fence);
   virtual int CreateContext(bool secure);
   virtual int Init();
   virtual int Deinit();

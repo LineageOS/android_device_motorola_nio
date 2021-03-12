@@ -43,8 +43,8 @@ struct CWBConfig {
 
 class HWPeripheralDRM : public HWDeviceDRM {
  public:
-  explicit HWPeripheralDRM(int32_t display_id, BufferSyncHandler *buffer_sync_handler,
-                           BufferAllocator *buffer_allocator, HWInfoInterface *hw_info_intf);
+  explicit HWPeripheralDRM(int32_t display_id, BufferAllocator *buffer_allocator,
+                           HWInfoInterface *hw_info_intf);
   virtual ~HWPeripheralDRM() {}
 
  protected:
@@ -56,10 +56,10 @@ class HWPeripheralDRM : public HWDeviceDRM {
   virtual DisplayError GetDppsFeatureInfo(void *payload, size_t size);
   virtual DisplayError HandleSecureEvent(SecureEvent secure_event, HWLayers *hw_layers);
   virtual DisplayError ControlIdlePowerCollapse(bool enable, bool synchronous);
-  virtual DisplayError PowerOn(const HWQosData &qos_data, int *release_fence);
+  virtual DisplayError PowerOn(const HWQosData &qos_data, shared_ptr<Fence> *release_fence);
   virtual DisplayError PowerOff(bool teardown);
-  virtual DisplayError Doze(const HWQosData &qos_data, int *release_fence);
-  virtual DisplayError DozeSuspend(const HWQosData &qos_data, int *release_fence);
+  virtual DisplayError Doze(const HWQosData &qos_data, shared_ptr<Fence> *release_fence);
+  virtual DisplayError DozeSuspend(const HWQosData &qos_data, shared_ptr<Fence> *release_fence);
   virtual DisplayError SetDisplayDppsAdROI(void *payload);
   virtual DisplayError SetDynamicDSIClock(uint64_t bit_clk_rate);
   virtual DisplayError GetDynamicDSIClock(uint64_t *bit_clk_rate);
@@ -79,7 +79,8 @@ class HWPeripheralDRM : public HWDeviceDRM {
   void SetDestScalarData(const HWLayersInfo &hw_layer_info);
   void ResetDestScalarCache();
   DisplayError SetupConcurrentWritebackModes();
-  void SetupConcurrentWriteback(const HWLayersInfo &hw_layer_info, bool validate);
+  bool SetupConcurrentWriteback(const HWLayersInfo &hw_layer_info, bool validate,
+                                int64_t *release_fence_fd);
   void ConfigureConcurrentWriteback(LayerStack *stack);
   void PostCommitConcurrentWriteback(LayerBuffer *output_buffer);
   void SetIdlePCState() {

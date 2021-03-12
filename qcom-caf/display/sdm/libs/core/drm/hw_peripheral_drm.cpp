@@ -49,9 +49,9 @@ using sde_drm::DRMCWbCaptureMode;
 
 namespace sdm {
 
-HWPeripheralDRM::HWPeripheralDRM(int32_t display_id, BufferSyncHandler *buffer_sync_handler,
-                                 BufferAllocator *buffer_allocator, HWInfoInterface *hw_info_intf)
-  : HWDeviceDRM(buffer_sync_handler, buffer_allocator, hw_info_intf) {
+HWPeripheralDRM::HWPeripheralDRM(int32_t display_id, BufferAllocator *buffer_allocator,
+                                 HWInfoInterface *hw_info_intf)
+  : HWDeviceDRM(buffer_allocator, hw_info_intf) {
   disp_type_ = DRMDisplayType::PERIPHERAL;
   device_name_ = "Peripheral";
   display_id_ = display_id;
@@ -72,7 +72,7 @@ DisplayError HWPeripheralDRM::Init() {
 }
 
 void HWPeripheralDRM::InitDestScaler() {
-  if (hw_panel_info_.is_primary_panel && hw_resource_.hw_dest_scalar_info.count) {
+  if (hw_resource_.hw_dest_scalar_info.count) {
     // Do all destination scaler block resource allocations here.
     dest_scaler_blocks_used_ = 1;
     if (kQuadSplit == mixer_attributes_.split_type) {
@@ -180,7 +180,7 @@ DisplayError HWPeripheralDRM::SetDisplayMode(const HWDisplayMode hw_display_mode
 DisplayError HWPeripheralDRM::Validate(HWLayers *hw_layers) {
   HWLayersInfo &hw_layer_info = hw_layers->info;
   SetDestScalarData(hw_layer_info);
-  SetupConcurrentWriteback(hw_layer_info, true);
+  SetupConcurrentWriteback(hw_layer_info, true, nullptr);
   SetIdlePCState();
 
   return HWDeviceDRM::Validate(hw_layers);
@@ -189,12 +189,20 @@ DisplayError HWPeripheralDRM::Validate(HWLayers *hw_layers) {
 DisplayError HWPeripheralDRM::Commit(HWLayers *hw_layers) {
   HWLayersInfo &hw_layer_info = hw_layers->info;
   SetDestScalarData(hw_layer_info);
-  SetupConcurrentWriteback(hw_layer_info, false);
+
+  int64_t cwb_fence_fd = -1;
+  bool has_fence = SetupConcurrentWriteback(hw_layer_info, false, &cwb_fence_fd);
+
   SetIdlePCState();
 
   DisplayError error = HWDeviceDRM::Commit(hw_layers);
   if (error != kErrorNone) {
     return error;
+  }
+
+  if (has_fence) {
+    hw_layer_info.stack->output_buffer->release_fence = Fence::Create(INT(cwb_fence_fd),
+                                                                      "release_cwb");
   }
 
   CacheDestScalarData();
@@ -384,10 +392,11 @@ DisplayError HWPeripheralDRM::HandleSecureEvent(SecureEvent secure_event, HWLaye
   return kErrorNone;
 }
 
-void HWPeripheralDRM::SetupConcurrentWriteback(const HWLayersInfo &hw_layer_info, bool validate) {
+bool HWPeripheralDRM::SetupConcurrentWriteback(const HWLayersInfo &hw_layer_info, bool validate,
+                                               int64_t *release_fence_fd) {
   bool enable = hw_resource_.has_concurrent_writeback && hw_layer_info.stack->output_buffer;
   if (!(enable || cwb_config_.enabled)) {
-    return;
+    return false;
   }
 
   bool setup_modes = enable && !cwb_config_.enabled && validate;
@@ -400,17 +409,19 @@ void HWPeripheralDRM::SetupConcurrentWriteback(const HWLayersInfo &hw_layer_info
       // Set DRM properties for Concurrent Writeback.
       ConfigureConcurrentWriteback(hw_layer_info.stack);
 
-      if (!validate) {
+      if (!validate && release_fence_fd) {
         // Set GET_RETIRE_FENCE property to get Concurrent Writeback fence.
-        int *fence = &hw_layer_info.stack->output_buffer->release_fence_fd;
         drm_atomic_intf_->Perform(DRMOps::CONNECTOR_GET_RETIRE_FENCE,
-                                  cwb_config_.token.conn_id, fence);
+                                  cwb_config_.token.conn_id, release_fence_fd);
+        return true;
       }
     } else {
       // Tear down the Concurrent Writeback topology.
       drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_CRTC, cwb_config_.token.conn_id, 0);
     }
   }
+
+  return false;
 }
 
 DisplayError HWPeripheralDRM::TeardownConcurrentWriteback(void) {
@@ -507,7 +518,8 @@ DisplayError HWPeripheralDRM::ControlIdlePowerCollapse(bool enable, bool synchro
   return kErrorNone;
 }
 
-DisplayError HWPeripheralDRM::PowerOn(const HWQosData &qos_data, int *release_fence) {
+DisplayError HWPeripheralDRM::PowerOn(const HWQosData &qos_data,
+                                      shared_ptr<Fence> *release_fence) {
   DTRACE_SCOPED();
   if (!drm_atomic_intf_) {
     DLOGE("DRM Atomic Interface is null!");
@@ -563,7 +575,7 @@ DisplayError HWPeripheralDRM::PowerOff(bool teardown) {
   return kErrorNone;
 }
 
-DisplayError HWPeripheralDRM::Doze(const HWQosData &qos_data, int *release_fence) {
+DisplayError HWPeripheralDRM::Doze(const HWQosData &qos_data, shared_ptr<Fence> *release_fence) {
   DTRACE_SCOPED();
 
   if (!first_cycle_ && switch_mode_valid_ && !doze_poms_switch_done_ &&
@@ -589,7 +601,8 @@ DisplayError HWPeripheralDRM::Doze(const HWQosData &qos_data, int *release_fence
   return kErrorNone;
 }
 
-DisplayError HWPeripheralDRM::DozeSuspend(const HWQosData &qos_data, int *release_fence) {
+DisplayError HWPeripheralDRM::DozeSuspend(const HWQosData &qos_data,
+                                          shared_ptr<Fence> *release_fence) {
   DTRACE_SCOPED();
 
   if (switch_mode_valid_ && !doze_poms_switch_done_ &&
@@ -611,7 +624,7 @@ DisplayError HWPeripheralDRM::DozeSuspend(const HWQosData &qos_data, int *releas
 }
 
 DisplayError HWPeripheralDRM::SetDisplayAttributes(uint32_t index) {
-  if (doze_poms_switch_done_ || pending_poms_switch_) {
+  if (doze_poms_switch_done_ || pending_poms_switch_ || bit_clk_rate_) {
     return kErrorNotSupported;
   }
 

@@ -52,9 +52,9 @@ struct ColorConvertBlitContext : public SyncTask<ColorConvertTaskCode>::TaskCont
   const private_handle_t* dst_hnd = nullptr;
   GLRect src_rect = {};
   GLRect dst_rect = {};
-  int src_acquire_fence_fd = -1;
-  int dst_acquire_fence_fd = -1;
-  int release_fence_fd = -1;
+  shared_ptr<Fence> src_acquire_fence = nullptr;
+  shared_ptr<Fence> dst_acquire_fence = nullptr;
+  shared_ptr<Fence> release_fence = nullptr;
 };
 
 class HWCDisplayVirtualGPU : public HWCDisplayVirtual,
@@ -66,8 +66,9 @@ class HWCDisplayVirtualGPU : public HWCDisplayVirtual,
   virtual int Init();
   virtual int Deinit();
   virtual HWC2::Error Validate(uint32_t *out_num_types, uint32_t *out_num_requests);
-  virtual HWC2::Error Present(int32_t *out_retire_fence);
-  virtual HWC2::Error SetOutputBuffer(buffer_handle_t buf, int32_t release_fence);
+  virtual HWC2::Error Present(shared_ptr<Fence> *out_retire_fence);
+  virtual HWC2::Error SetOutputBuffer(buffer_handle_t buf, shared_ptr<Fence> release_fence);
+  virtual bool FreezeScreen();
 
  private:
   // SyncTask methods.
@@ -76,6 +77,9 @@ class HWCDisplayVirtualGPU : public HWCDisplayVirtual,
 
   SyncTask<ColorConvertTaskCode> color_convert_task_;
   GLColorConvert *gl_color_convert_;
+
+  bool disable_animation_ = false;
+  bool animation_in_progress_ = false;
 };
 
 }  // namespace sdm

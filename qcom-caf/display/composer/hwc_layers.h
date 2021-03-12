@@ -34,16 +34,18 @@
 #undef HWC2_INCLUDE_STRINGIFICATION
 #undef HWC2_USE_CPP11
 #include <android/hardware/graphics/composer/2.3/IComposerClient.h>
-#include <vendor/qti/hardware/display/composer/2.0/IQtiComposerClient.h>
+#include <vendor/qti/hardware/display/composer/3.0/IQtiComposerClient.h>
+
 #include <deque>
 #include <map>
 #include <set>
+
 #include "core/buffer_allocator.h"
 #include "hwc_buffer_allocator.h"
 
 using PerFrameMetadataKey =
     android::hardware::graphics::composer::V2_3::IComposerClient::PerFrameMetadataKey;
-using vendor::qti::hardware::display::composer::V2_0::IQtiComposerClient;
+using vendor::qti::hardware::display::composer::V3_0::IQtiComposerClient;
 
 namespace sdm {
 
@@ -87,7 +89,7 @@ class HWCLayer {
   void ResetPerFrameData();
 
   HWC2::Error SetLayerBlendMode(HWC2::BlendMode mode);
-  HWC2::Error SetLayerBuffer(buffer_handle_t buffer, int32_t acquire_fence);
+  HWC2::Error SetLayerBuffer(buffer_handle_t buffer, shared_ptr<Fence> acquire_fence);
   HWC2::Error SetLayerColor(hwc_color_t color);
   HWC2::Error SetLayerCompositionType(HWC2::Composition type);
   HWC2::Error SetLayerDataspace(int32_t dataspace);
@@ -112,9 +114,9 @@ class HWCLayer {
   int32_t GetLayerDataspace() { return dataspace_; }
   uint32_t GetGeometryChanges() { return geometry_changes_; }
   void ResetGeometryChanges() { geometry_changes_ = GeometryChanges::kNone; }
-  void PushBackReleaseFence(int32_t fence);
-  int32_t PopBackReleaseFence(void);
-  int32_t PopFrontReleaseFence(void);
+  void PushBackReleaseFence(const shared_ptr<Fence> &fence);
+  void PopBackReleaseFence(shared_ptr<Fence> *fence);
+  void PopFrontReleaseFence(shared_ptr<Fence> *fence);
   void ResetValidation() { layer_->update_mask.reset(); }
   bool NeedsValidation() { return (geometry_changes_ || layer_->update_mask.any()); }
   bool IsSingleBuffered() { return single_buffer_; }
@@ -142,7 +144,7 @@ class HWCLayer {
   const hwc2_layer_t id_;
   const hwc2_display_t display_id_;
   static std::atomic<hwc2_layer_t> next_id_;
-  std::deque<int32_t> release_fences_;
+  std::deque<shared_ptr<Fence>> release_fences_;
   HWCBufferAllocator *buffer_allocator_ = NULL;
   int32_t dataspace_ =  HAL_DATASPACE_UNKNOWN;
   LayerTransform layer_transform_ = {};
@@ -172,7 +174,6 @@ class HWCLayer {
   uint32_t GetUint32Color(const hwc_color_t &source);
   void GetUBWCStatsFromMetaData(UBWCStats *cr_stats, UbwcCrStatsVector *cr_vec);
   DisplayError SetMetaData(const private_handle_t *pvt_handle, Layer *layer);
-  DisplayError SetIGC(IGC_t source, LayerIGC *target);
   uint32_t RoundToStandardFPS(float fps);
   void ValidateAndSetCSC(const private_handle_t *handle);
   void SetDirtyRegions(hwc_region_t surface_damage);

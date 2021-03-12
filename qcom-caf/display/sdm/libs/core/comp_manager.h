@@ -31,6 +31,7 @@
 #include <bitset>
 #include <set>
 #include <vector>
+#include <string>
 
 #include "strategy.h"
 #include "resource_default.h"
@@ -41,8 +42,7 @@ namespace sdm {
 class CompManager {
  public:
   DisplayError Init(const HWResourceInfo &hw_res_info_, ExtensionInterface *extension_intf,
-                    BufferAllocator *buffer_allocator, BufferSyncHandler *buffer_sync_handler,
-                    SocketHandler *socket_handler);
+                    BufferAllocator *buffer_allocator, SocketHandler *socket_handler);
   DisplayError Deinit();
   DisplayError RegisterDisplay(int32_t display_id, DisplayType type,
                                const HWDisplayAttributes &display_attributes,
@@ -71,7 +71,8 @@ class CompManager {
   void ControlPartialUpdate(Handle display_ctx, bool enable);
   DisplayError ValidateScaling(const LayerRect &crop, const LayerRect &dst, bool rotate90);
   DisplayError ValidateAndSetCursorPosition(Handle display_ctx, HWLayers *hw_layers, int x, int y);
-  bool SetDisplayState(Handle display_ctx, DisplayState state, int sync_handle);
+  bool SetDisplayState(Handle display_ctx, DisplayState state,
+                       const shared_ptr<Fence> &sync_handle);
   DisplayError SetMaxBandwidthMode(HWBwModes mode);
   DisplayError GetScaleLutConfig(HWScaleLutInfo *lut_info);
   DisplayError SetDetailEnhancerData(Handle display_ctx, const DisplayDetailEnhancerData &de_data);
@@ -98,7 +99,7 @@ class CompManager {
 
   void PrepareStrategyConstraints(Handle display_ctx, HWLayers *hw_layers);
   void UpdateStrategyConstraints(bool is_primary, bool disabled);
-  const char *StringDisplayList(const std::set<int32_t> &displays);
+  std::string StringDisplayList(const std::set<int32_t> &displays);
 
   struct DisplayCompositionContext {
     Strategy *strategy = NULL;
@@ -130,11 +131,9 @@ class CompManager {
   HWResourceInfo hw_res_info_;
   BufferAllocator *buffer_allocator_ = NULL;
   ExtensionInterface *extension_intf_ = NULL;
-  uint32_t max_layers_ = kMaxSDELayers;
   uint32_t max_sde_ext_layers_ = 0;
   uint32_t max_sde_builtin_layers_ = 2;
   DppsControlInterface *dpps_ctrl_intf_ = NULL;
-  BufferSyncHandler *sync_handler_ = NULL;
 };
 
 }  // namespace sdm

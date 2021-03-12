@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include <utils/constants.h>
+#include <utils/fence.h>
 
 #include <vector>
 #include <utility>
@@ -179,6 +180,11 @@ struct LayerFlags {
 
       uint32_t is_game : 1;  //!< This flag shall be set by client to indicate that this layer
                              //!< is a game layer.
+
+      uint32_t sde_preferred : 1;  //! This flag shall be set by client to indicate that this layer
+                                   //! will be composed by display device, layer with this flag
+                                   //! will have highest priority. To be used by OEMs only.
+
 #ifdef FOD_ZPOS
       uint32_t fod_pressed : 1;    //!< This flag shall be set internally to mark the fod pressed
                                    //!< layer
@@ -439,7 +445,8 @@ struct PrimariesTransfer {
 struct LayerStack {
   std::vector<Layer *> layers = {};    //!< Vector of layer pointers.
 
-  int retire_fence_fd = -1;            //!< File descriptor referring to a sync fence object which
+  shared_ptr<Fence> retire_fence = nullptr;
+                                       //!< File descriptor referring to a sync fence object which
                                        //!< will be signaled when this composited frame has been
                                        //!< replaced on screen by a subsequent frame on a physical
                                        //!< display. The fence object is created and returned during

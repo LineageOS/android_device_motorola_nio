@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -28,83 +28,154 @@
 */
 
 #include <utils/fence.h>
+#include <debug_handler.h>
+#include <assert.h>
 #include <string>
+#include <vector>
+#include <algorithm>
 
 #define __CLASS__ "Fence"
 
 namespace sdm {
 
-BufferSyncHandler* Fence::buffer_sync_handler_ = nullptr;
+#define ASSERT_IF_NO_BUFFER_SYNC(x) if (!x) { assert(false); }
 
-Fence::Fence(int fd) : fd_(fd) {
+BufferSyncHandler* Fence::g_buffer_sync_handler_ = nullptr;
+std::vector<std::weak_ptr<Fence>> Fence::wps_;
+
+Fence::Fence(int fd, const string &name) : fd_(fd), name_(name) {
 }
 
 Fence::~Fence() {
   close(fd_);
+
+  // erase all expired weak references.
+  /*
+  wps_.erase(std::remove_if(wps_.begin(), wps_.end(), [](const std::weak_ptr<Fence> &wp) {
+    return wp.expired();
+  }), wps_.end());
+  */
 }
 
 void Fence::Set(BufferSyncHandler *buffer_sync_handler) {
-  buffer_sync_handler_ = buffer_sync_handler;
+  g_buffer_sync_handler_ = buffer_sync_handler;
 }
 
-shared_ptr<Fence> Fence::Create(int fd) {
+shared_ptr<Fence> Fence::Create(int fd, const string &name) {
   // Do not create Fence object for invalid fd, so that nullptr can be used for invalid fences.
   if (fd < 0) {
     return nullptr;
   }
 
-  shared_ptr<Fence> fence(new Fence(fd));
+  shared_ptr<Fence> fence(new Fence(fd, name));
   if (!fence) {
     close(fd);
   }
+
+  // wps_.push_back(fence);
 
   return fence;
 }
 
 int Fence::Dup(const shared_ptr<Fence> &fence) {
-  if (!fence) {
-    return -1;
-  }
+  return (fence ? dup(fence->fd_) : -1);
+}
 
-  return dup(fence->fd_);
+int Fence::Get(const shared_ptr<Fence> &fence) {
+  return (fence ? fence->fd_ : -1);
 }
 
 shared_ptr<Fence> Fence::Merge(const shared_ptr<Fence> &fence1, const shared_ptr<Fence> &fence2) {
-  if (!buffer_sync_handler_) {
-    return nullptr;
-  }
+  ASSERT_IF_NO_BUFFER_SYNC(g_buffer_sync_handler_);
 
+  // Sync merge will return a new unique fd if source fds are same.
   int fd1 = fence1 ? fence1->fd_ : -1;
   int fd2 = fence2 ? fence2->fd_ : -1;
   int merged = -1;
+  std::string name = "merged[" + to_string(fd1) + ", " + to_string(fd2) + "]";
 
-  buffer_sync_handler_->SyncMerge(fd1, fd2, &merged);
+  g_buffer_sync_handler_->SyncMerge(fd1, fd2, &merged);
 
-  return Create(merged);
+  return Create(merged, name);
+}
+
+shared_ptr<Fence> Fence::Merge(const std::vector<shared_ptr<Fence>> &fences, bool ignore_signaled) {
+  ASSERT_IF_NO_BUFFER_SYNC(g_buffer_sync_handler_);
+
+  shared_ptr<Fence> merged_fence = nullptr;
+  for (auto &fence : fences) {
+    if (ignore_signaled && (Fence::Wait(fence, 0) == kErrorNone)) {
+      continue;
+    }
+
+    merged_fence = Fence::Merge(fence, merged_fence);
+  }
+
+  return merged_fence;
 }
 
 DisplayError Fence::Wait(const shared_ptr<Fence> &fence) {
-  if (!buffer_sync_handler_) {
-    return kErrorUndefined;
-  }
+  ASSERT_IF_NO_BUFFER_SYNC(g_buffer_sync_handler_);
 
-  return buffer_sync_handler_->SyncWait(Fence::Get(fence));
+  return g_buffer_sync_handler_->SyncWait(Fence::Get(fence), 1000);
 }
 
 DisplayError Fence::Wait(const shared_ptr<Fence> &fence, int timeout) {
-  if (!buffer_sync_handler_) {
-    return kErrorUndefined;
+  ASSERT_IF_NO_BUFFER_SYNC(g_buffer_sync_handler_);
+
+  return g_buffer_sync_handler_->SyncWait(Fence::Get(fence), timeout);
+}
+
+Fence::Status Fence::GetStatus(const shared_ptr<Fence> &fence) {
+  ASSERT_IF_NO_BUFFER_SYNC(g_buffer_sync_handler_);
+
+  if (!fence) {
+    return Fence::Status::kSignaled;
   }
 
-  return buffer_sync_handler_->SyncWait(Fence::Get(fence), timeout);
+  // Treat only timeout error as pending, assume other errors as signaled.
+  return (g_buffer_sync_handler_->SyncWait(Fence::Get(fence), 0) == kErrorTimeOut ?
+                                    Fence::Status::kPending : Fence::Status::kSignaled);
 }
 
 string Fence::GetStr(const shared_ptr<Fence> &fence) {
   return std::to_string(Fence::Get(fence));
 }
 
-int Fence::Get(const shared_ptr<Fence> &fence) {
-  return (fence ? fence->fd_ : -1);
+void Fence::Dump(std::ostringstream *os) {
+  ASSERT_IF_NO_BUFFER_SYNC(g_buffer_sync_handler_);
+
+  *os << "\n------------Active Fences Info---------";
+  /*
+  for (auto &wp : wps_) {
+    *os << "\n";
+    shared_ptr<Fence> fence = wp.lock();
+    if (!fence) {
+      continue;
+    }
+    *os << "FD: " << fence->fd_;
+    *os << ", name: " << fence->name_;
+    *os << ", use_count: " << fence.use_count() - 1;   // Do not count wp lock reference
+    *os << ", ";
+    g_buffer_sync_handler_->GetSyncInfo(fence->fd_, os);
+  }
+  */
+  *os << "\n---------------------------------------\n";
+}
+
+Fence::ScopedRef::~ScopedRef() {
+  for (int dup_fd : dup_fds_) {
+    close(dup_fd);
+  }
+}
+
+int Fence::ScopedRef::Get(const shared_ptr<Fence> &fence) {
+  int dup_fd = Fence::Dup(fence);
+  if (dup_fd >= 0) {
+    dup_fds_.push_back(dup_fd);
+  }
+
+  return dup_fd;
 }
 
 }  // namespace sdm

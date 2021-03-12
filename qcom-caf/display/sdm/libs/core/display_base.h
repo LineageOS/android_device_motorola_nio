@@ -47,13 +47,11 @@ using std::lock_guard;
 class DisplayBase : public DisplayInterface {
  public:
   DisplayBase(DisplayType display_type, DisplayEventHandler *event_handler,
-              HWDeviceType hw_device_type, BufferSyncHandler *buffer_sync_handler,
-              BufferAllocator *buffer_allocator, CompManager *comp_manager,
-              HWInfoInterface *hw_info_intf);
+              HWDeviceType hw_device_type, BufferAllocator *buffer_allocator,
+              CompManager *comp_manager, HWInfoInterface *hw_info_intf);
   DisplayBase(int32_t display_id, DisplayType display_type, DisplayEventHandler *event_handler,
-              HWDeviceType hw_device_type, BufferSyncHandler *buffer_sync_handler,
-              BufferAllocator *buffer_allocator, CompManager *comp_manager,
-              HWInfoInterface *hw_info_intf);
+              HWDeviceType hw_device_type, BufferAllocator *buffer_allocator,
+              CompManager *comp_manager, HWInfoInterface *hw_info_intf);
   virtual ~DisplayBase() { }
   virtual DisplayError Init();
   virtual DisplayError Deinit();
@@ -67,7 +65,7 @@ class DisplayBase : public DisplayInterface {
   virtual DisplayError GetActiveConfig(uint32_t *index);
   virtual DisplayError GetVSyncState(bool *enabled);
   virtual DisplayError SetDisplayState(DisplayState state, bool teardown,
-                                       int *release_fence);
+                                       shared_ptr<Fence> *release_fence);
   virtual DisplayError SetActiveConfig(uint32_t index);
   virtual DisplayError SetActiveConfig(DisplayConfigVariableInfo *variable_info) {
     return kErrorNotSupported;
@@ -163,6 +161,9 @@ class DisplayBase : public DisplayInterface {
   virtual DisplayError colorSamplingOn();
   virtual DisplayError colorSamplingOff();
   virtual DisplayError ReconfigureDisplay();
+  virtual DisplayError ClearLUTs() {
+    return kErrorNotSupported;
+  }
 
  protected:
   const char *kBt2020Pq = "bt2020_pq";
@@ -197,8 +198,8 @@ class DisplayBase : public DisplayInterface {
   PrimariesTransfer GetBlendSpaceFromColorMode();
   bool IsHdrMode(const AttrVal &attr);
   void InsertBT2020PqHlgModes(const std::string &str_render_intent);
-  DisplayError HandlePendingVSyncEnable(int32_t retire_fence);
-  DisplayError HandlePendingPowerState(int32_t retire_fence);
+  DisplayError HandlePendingVSyncEnable(const shared_ptr<Fence> &retire_fence);
+  DisplayError HandlePendingPowerState(const shared_ptr<Fence> &retire_fence);
 
   recursive_mutex recursive_mutex_;
   int32_t display_id_ = -1;
@@ -208,7 +209,6 @@ class DisplayBase : public DisplayInterface {
   HWInterface *hw_intf_ = NULL;
   HWPanelInfo hw_panel_info_;
   HWResourceInfo hw_resource_info_ = {};
-  BufferSyncHandler *buffer_sync_handler_ = NULL;
   BufferAllocator *buffer_allocator_ {};
   CompManager *comp_manager_ = NULL;
   DisplayState state_ = kStateOff;
@@ -242,7 +242,8 @@ class DisplayBase : public DisplayInterface {
   std::string current_color_mode_ = "hal_native";
   bool hw_recovery_logs_captured_ = false;
   int disable_hw_recovery_dump_ = 0;
-  HWQosData default_qos_data_;
+  HWQosData cached_qos_data_;
+  uint32_t default_clock_hz_ = 0;
   bool drop_hw_vsync_ = false;
   uint32_t current_refresh_rate_ = 0;
   bool drop_skewed_vsync_ = false;

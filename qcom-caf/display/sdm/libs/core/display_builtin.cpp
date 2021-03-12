@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2020, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -44,27 +44,28 @@
 namespace sdm {
 
 DisplayBuiltIn::DisplayBuiltIn(DisplayEventHandler *event_handler, HWInfoInterface *hw_info_intf,
-                               BufferSyncHandler *buffer_sync_handler,
                                BufferAllocator *buffer_allocator, CompManager *comp_manager)
-  : DisplayBase(kBuiltIn, event_handler, kDeviceBuiltIn, buffer_sync_handler, buffer_allocator,
+  : DisplayBase(kBuiltIn, event_handler, kDeviceBuiltIn, buffer_allocator,
                 comp_manager, hw_info_intf) {}
 
 DisplayBuiltIn::DisplayBuiltIn(int32_t display_id, DisplayEventHandler *event_handler,
                                HWInfoInterface *hw_info_intf,
-                               BufferSyncHandler *buffer_sync_handler,
                                BufferAllocator *buffer_allocator, CompManager *comp_manager)
-  : DisplayBase(display_id, kBuiltIn, event_handler, kDeviceBuiltIn, buffer_sync_handler,
+  : DisplayBase(display_id, kBuiltIn, event_handler, kDeviceBuiltIn,
                 buffer_allocator, comp_manager, hw_info_intf) {}
 
 DisplayBuiltIn::~DisplayBuiltIn() {
-  CloseFd(&previous_retire_fence_);
+}
+
+static uint64_t GetTimeInMs(struct timespec ts) {
+  return (ts.tv_sec * 1000 + (ts.tv_nsec + 500000) / 1000000);
 }
 
 DisplayError DisplayBuiltIn::Init() {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
 
   DisplayError error = HWInterface::Create(display_id_, kBuiltIn, hw_info_intf_,
-                                           buffer_sync_handler_, buffer_allocator_, &hw_intf_);
+                                           buffer_allocator_, &hw_intf_);
   if (error != kErrorNone) {
     DLOGE("Failed to create hardware interface on. Error = %d", error);
     return error;
@@ -119,6 +120,14 @@ DisplayError DisplayBuiltIn::Init() {
   int value = 0;
   Debug::Get()->GetProperty(DEFER_FPS_FRAME_COUNT, &value);
   deferred_config_.frame_count = (value > 0) ? UINT32(value) : 0;
+
+  value = 0;
+  DebugHandler::Get()->GetProperty(DISABLE_DYNAMIC_FPS, &value);
+  disable_dyn_fps_ = (value == 1);
+
+  value = 0;
+  DebugHandler::Get()->GetProperty(ENHANCE_IDLE_TIME, &value);
+  enhance_idle_time_ = (value == 1);
 
   return error;
 }
@@ -260,7 +269,7 @@ DisplayError DisplayBuiltIn::Commit(LayerStack *layer_stack) {
   if (vsync_enable_) {
     DTRACE_BEGIN("RegisterVsync");
     // wait for previous frame's retire fence to signal.
-    buffer_sync_handler_->SyncWait(previous_retire_fence_);
+    Fence::Wait(previous_retire_fence_);
 
     // Register for vsync and then commit the frame.
     hw_events_intf_->SetEventState(HWEvent::VSYNC, true);
@@ -276,7 +285,7 @@ DisplayError DisplayBuiltIn::Commit(LayerStack *layer_stack) {
     return error;
   }
   if (pending_brightness_) {
-    buffer_sync_handler_->SyncWait(layer_stack->retire_fence_fd);
+    Fence::Wait(layer_stack->retire_fence);
     SetPanelBrightness(cached_brightness_);
     pending_brightness_ = false;
   }
@@ -294,9 +303,11 @@ DisplayError DisplayBuiltIn::Commit(LayerStack *layer_stack) {
     deferred_config_.Clear();
   }
 
+  clock_gettime(CLOCK_MONOTONIC, &idle_timer_start_);
   int idle_time_ms = hw_layers_.info.set_idle_time_ms;
   if (idle_time_ms >= 0) {
     hw_intf_->SetIdleTimeoutMs(UINT32(idle_time_ms));
+    idle_time_ms_ = idle_time_ms;
   }
 
   if (switch_to_cmd_) {
@@ -328,8 +339,7 @@ DisplayError DisplayBuiltIn::Commit(LayerStack *layer_stack) {
 
   first_cycle_ = false;
 
-  CloseFd(&previous_retire_fence_);
-  previous_retire_fence_ = Sys::dup_(layer_stack->retire_fence_fd);
+  previous_retire_fence_ = layer_stack->retire_fence;
 
   return error;
 }
@@ -346,7 +356,7 @@ void DisplayBuiltIn::UpdateDisplayModeParams() {
 }
 
 DisplayError DisplayBuiltIn::SetDisplayState(DisplayState state, bool teardown,
-                                             int *release_fence) {
+                                             shared_ptr<Fence> *release_fence) {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
   DisplayError error = kErrorNone;
   HWDisplayMode panel_mode = hw_panel_info_.mode;
@@ -499,10 +509,12 @@ DisplayError DisplayBuiltIn::TeardownConcurrentWriteback(void) {
   return hw_intf_->TeardownConcurrentWriteback();
 }
 
-DisplayError DisplayBuiltIn::SetRefreshRate(uint32_t refresh_rate, bool final_rate) {
+DisplayError DisplayBuiltIn::SetRefreshRate(uint32_t refresh_rate, bool final_rate,
+                                            bool idle_screen) {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
 
-  if (!active_ || !hw_panel_info_.dynamic_fps || qsync_mode_ != kQSyncModeNone) {
+  if (!active_ || !hw_panel_info_.dynamic_fps || qsync_mode_ != kQSyncModeNone ||
+      disable_dyn_fps_) {
     return kErrorNotSupported;
   }
 
@@ -511,11 +523,11 @@ DisplayError DisplayBuiltIn::SetRefreshRate(uint32_t refresh_rate, bool final_ra
     return kErrorParameters;
   }
 
-  if (handle_idle_timeout_ && !final_rate) {
+  if (CanLowerFps(idle_screen) && !final_rate) {
     refresh_rate = hw_panel_info_.min_fps;
   }
 
-  if ((current_refresh_rate_ != refresh_rate) || handle_idle_timeout_) {
+  if (current_refresh_rate_ != refresh_rate) {
     DisplayError error = hw_intf_->SetRefreshRate(refresh_rate);
     if (error != kErrorNone) {
       // Attempt to update refresh rate can fail if rf interfenence is detected.
@@ -530,12 +542,35 @@ DisplayError DisplayBuiltIn::SetRefreshRate(uint32_t refresh_rate, bool final_ra
     }
   }
 
+  // Set safe mode upon success.
+  if (enhance_idle_time_ && handle_idle_timeout_ && (refresh_rate == hw_panel_info_.min_fps)) {
+    comp_manager_->ProcessIdleTimeout(display_comp_ctx_);
+  }
+
   // On success, set current refresh rate to new refresh rate
   current_refresh_rate_ = refresh_rate;
   handle_idle_timeout_ = false;
   deferred_config_.MarkDirty();
 
   return ReconfigureDisplay();
+}
+
+bool DisplayBuiltIn::CanLowerFps(bool idle_screen) {
+  if (!enhance_idle_time_) {
+    return handle_idle_timeout_;
+  }
+
+  if (!handle_idle_timeout_ || !idle_screen) {
+    return false;
+  }
+
+  struct timespec now;
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  uint64_t elapsed_time_ms = GetTimeInMs(now) - GetTimeInMs(idle_timer_start_);
+  bool can_lower = elapsed_time_ms >= UINT32(idle_time_ms_);
+  DLOGV_IF(kTagDisplay, "lower fps: %d", can_lower);
+
+  return can_lower;
 }
 
 DisplayError DisplayBuiltIn::VSync(int64_t timestamp) {
@@ -555,8 +590,10 @@ void DisplayBuiltIn::IdleTimeout() {
     }
     handle_idle_timeout_ = true;
     event_handler_->Refresh();
-    lock_guard<recursive_mutex> obj(recursive_mutex_);
-    comp_manager_->ProcessIdleTimeout(display_comp_ctx_);
+    if (!enhance_idle_time_) {
+      lock_guard<recursive_mutex> obj(recursive_mutex_);
+      comp_manager_->ProcessIdleTimeout(display_comp_ctx_);
+    }
   }
 }
 
@@ -577,6 +614,11 @@ void DisplayBuiltIn::IdlePowerCollapse() {
     lock_guard<recursive_mutex> obj(recursive_mutex_);
     comp_manager_->ProcessIdlePowerCollapse(display_comp_ctx_);
   }
+}
+
+DisplayError DisplayBuiltIn::ClearLUTs() {
+  comp_manager_->ProcessIdlePowerCollapse(display_comp_ctx_);
+  return kErrorNone;
 }
 
 void DisplayBuiltIn::PanelDead() {
@@ -720,7 +762,7 @@ DisplayError DisplayBuiltIn::DppsProcessOps(enum DppsOps op, void *payload, size
       enable = *(reinterpret_cast<bool *>(payload));
       dpps_info_.disable_pu_ = !enable;
       ControlPartialUpdate(enable, &pending);
-      event_handler_->HandleEvent(kInvalidateDisplay);
+      event_handler_->HandleEvent(kSyncInvalidateDisplay);
       event_handler_->Refresh();
       {
          lock_guard<recursive_mutex> obj(recursive_mutex_);
@@ -948,7 +990,7 @@ DisplayError DisplayBuiltIn::GetDynamicDSIClock(uint64_t *bit_clk_rate) {
 
 void DisplayBuiltIn::ResetPanel() {
   DisplayError status = kErrorNone;
-  int release_fence = -1;
+  shared_ptr<Fence> release_fence = nullptr;
   DisplayState last_display_state = {};
 
   GetDisplayState(&last_display_state);
@@ -958,7 +1000,6 @@ void DisplayBuiltIn::ResetPanel() {
   if (status != kErrorNone) {
     DLOGE("Power off for display id = %d failed with error = %d", display_id_, status);
   }
-  CloseFd(&release_fence);
 
   DLOGI("Set display %d to state = %d", display_id_, last_display_state);
   status = SetDisplayState(last_display_state, false /* teardown */, &release_fence);
@@ -966,7 +1007,6 @@ void DisplayBuiltIn::ResetPanel() {
      DLOGE("%d state for display id = %d failed with error = %d", last_display_state, display_id_,
            status);
   }
-  CloseFd(&release_fence);
 
   // If panel does not support color modes, do not set color mode.
   if (color_mode_map_.size() > 0) {
@@ -1147,10 +1187,11 @@ DisplayError DisplayBuiltIn::ReconfigureDisplay() {
 
   error = comp_manager_->ReconfigureDisplay(display_comp_ctx_, display_attributes, hw_panel_info,
                                             mixer_attributes, fb_config_,
-                                            &(default_qos_data_.clock_hz));
+                                            &(default_clock_hz_));
   if (error != kErrorNone) {
     return error;
   }
+  cached_qos_data_.clock_hz = default_clock_hz_;
 
   bool disble_pu = true;
   if (mixer_unchanged && panel_unchanged) {

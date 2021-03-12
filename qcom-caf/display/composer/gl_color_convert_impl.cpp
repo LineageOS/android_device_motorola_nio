@@ -157,8 +157,9 @@ int GLColorConvertImpl::CreateContext(GLRenderTarget target, bool secure) {
 
 int GLColorConvertImpl::Blit(const private_handle_t *src_hnd, const private_handle_t *dst_hnd,
                              const GLRect &src_rect, const GLRect &dst_rect,
-                             int src_acquire_fence_fd, int dst_acquire_fence_fd,
-                             int *release_fence_fd) {
+                             const shared_ptr<Fence> &src_acquire_fence,
+                             const shared_ptr<Fence> &dst_acquire_fence,
+                             shared_ptr<Fence> *release_fence) {
   DTRACE_SCOPED();
   // eglMakeCurrent attaches rendering context to rendering surface.
   MakeCurrent(&ctx_);
@@ -175,15 +176,11 @@ int GLColorConvertImpl::Blit(const private_handle_t *src_hnd, const private_hand
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, kFullScreenTexCoords);
   glDrawArrays(GL_TRIANGLES, 0, 3);
 
-  int in_fence_fd = -1;
-  buffer_sync_handler_.SyncMerge(src_acquire_fence_fd, dst_acquire_fence_fd, &in_fence_fd);
-  if (in_fence_fd >= 0) {
-    std::vector<int> fence = {in_fence_fd};
-    WaitOnInputFence(fence);
-  }
+  std::vector<shared_ptr<Fence>> in_fence = {Fence::Merge(src_acquire_fence, dst_acquire_fence)};
+  WaitOnInputFence(in_fence);
 
   // Create output fence for client to wait on.
-  *release_fence_fd = CreateOutputFence();
+  CreateOutputFence(release_fence);
 
   return 0;
 }

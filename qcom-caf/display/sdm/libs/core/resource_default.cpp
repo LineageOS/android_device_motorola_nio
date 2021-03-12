@@ -343,9 +343,6 @@ DisplayError ResourceDefault::PostCommit(Handle display_ctx, HWLayers *hw_layers
     }
   }
 
-  if (hw_layers->info.sync_handle >= 0)
-    Sys::close_(hw_layers->info.sync_handle);
-
   display_resource_ctx->frame_count++;
 
   return kErrorNone;
@@ -931,6 +928,11 @@ DisplayError ResourceDefault::GetScaleLutConfig(HWScaleLutInfo *lut_info) {
 
 DisplayError ResourceDefault::SetDetailEnhancerData(Handle display_ctx,
                                                     const DisplayDetailEnhancerData &de_data) {
+  return kErrorNotSupported;
+}
+
+DisplayError ResourceDefault::UpdateSyncHandle(Handle display_ctx,
+                                               const shared_ptr<Fence> &sync_handle) {
   return kErrorNotSupported;
 }
 

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015, 2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2015, 2019-2020, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -40,15 +40,17 @@ namespace sdm {
 
 class HWCBufferSyncHandler : public BufferSyncHandler {
  public:
-  HWCBufferSyncHandler() { }
-
   virtual DisplayError SyncWait(int fd);
   virtual DisplayError SyncWait(int fd, int timeout);
   virtual DisplayError SyncMerge(int fd1, int fd2, int *merged_fd);
   virtual bool IsSyncSignaled(int fd);
+  virtual void GetSyncInfo(int fd, std::ostringstream *os);
+
+ private:
+  HWCBufferSyncHandler();
+
+  static HWCBufferSyncHandler g_hwc_buffer_sync_handler_;
 };
 
 }  // namespace sdm
 #endif  // __HWC_BUFFER_SYNC_HANDLER_H__
-
-

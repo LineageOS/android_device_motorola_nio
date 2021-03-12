@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -126,6 +126,9 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
     auto descriptor = BufferDescriptor();
     mapper_V3_->createDescriptor(descriptor_info, [&](const auto &_error, const auto &_descriptor) {
       hidl_err = _error;
+      if (hidl_err != MapperV3Error::NONE) {
+        return;
+      }
       descriptor = _descriptor;
     });
 
@@ -139,6 +142,9 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
     allocator_V3_->allocate(descriptor, 1,
                             [&](const auto &_error, const auto &_stride, const auto &_buffers) {
                               hidl_err = _error;
+                              if (hidl_err != MapperV3Error::NONE) {
+                                return;
+                              }
                               raw_handle = _buffers[0];
                             });
 
@@ -149,6 +155,9 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
 
     mapper_V3_->importBuffer(raw_handle, [&](const auto &_error, const auto &_buffer) {
       hidl_err = _error;
+      if (hidl_err != MapperV3Error::NONE) {
+        return;
+      }
       buf = static_cast<const native_handle_t *>(_buffer);
     });
 
@@ -170,6 +179,9 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
     auto descriptor = BufferDescriptor();
     mapper_V2_->createDescriptor(descriptor_info, [&](const auto &_error, const auto &_descriptor) {
       hidl_err = _error;
+      if (hidl_err != Error::NONE) {
+        return;
+      }
       descriptor = _descriptor;
     });
 
@@ -183,6 +195,9 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
     allocator_V2_->allocate(descriptor, 1,
                             [&](const auto &_error, const auto &_stride, const auto &_buffers) {
                               hidl_err = _error;
+                              if (hidl_err != Error::NONE) {
+                                return;
+                              }
                               raw_handle = _buffers[0];
                             });
 
@@ -193,6 +208,9 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
 
     mapper_V2_->importBuffer(raw_handle, [&](const auto &_error, const auto &_buffer) {
       hidl_err = _error;
+      if (hidl_err != Error::NONE) {
+        return;
+      }
       buf = static_cast<const native_handle_t *>(_buffer);
     });
 
@@ -476,16 +494,19 @@ DisplayError HWCBufferAllocator::GetBufferLayout(const AllocatedBufferInfo &buf_
   return kErrorNone;
 }
 
-DisplayError HWCBufferAllocator::MapBuffer(const private_handle_t *handle, int acquire_fence) {
+DisplayError HWCBufferAllocator::MapBuffer(const private_handle_t *handle,
+                                           shared_ptr<Fence> acquire_fence) {
   auto err = GetGrallocInstance();
   if (err != kErrorNone) {
     return err;
   }
+
+  Fence::ScopedRef scoped_ref;
   NATIVE_HANDLE_DECLARE_STORAGE(acquire_fence_storage, 1, 0);
   hidl_handle acquire_fence_handle;
-  if (acquire_fence >= 0) {
+  if (acquire_fence) {
     auto h = native_handle_init(acquire_fence_storage, 1, 0);
-    h->data[0] = acquire_fence;
+    h->data[0] = scoped_ref.Get(acquire_fence);
     acquire_fence_handle = h;
   }
 

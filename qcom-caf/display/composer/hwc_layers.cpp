@@ -211,19 +211,15 @@ HWCLayer::HWCLayer(hwc2_display_t display_id, HWCBufferAllocator *buf_allocator)
   layer_ = new Layer();
   // Fences are deferred, so the first time this layer is presented, return -1
   // TODO(user): Verify that fences are properly obtained on suspend/resume
-  release_fences_.push_back(-1);
+  release_fences_.push_back(nullptr);
 }
 
 HWCLayer::~HWCLayer() {
   // Close any fences left for this layer
   while (!release_fences_.empty()) {
-    ::close(release_fences_.front());
     release_fences_.pop_front();
   }
   if (layer_) {
-    if (layer_->input_buffer.acquire_fence_fd >= 0) {
-      ::close(layer_->input_buffer.acquire_fence_fd);
-    }
     if (buffer_fd_ >= 0) {
       ::close(buffer_fd_);
     }
@@ -231,22 +227,16 @@ HWCLayer::~HWCLayer() {
   }
 }
 
-HWC2::Error HWCLayer::SetLayerBuffer(buffer_handle_t buffer, int32_t acquire_fence) {
+HWC2::Error HWCLayer::SetLayerBuffer(buffer_handle_t buffer, shared_ptr<Fence> acquire_fence) {
   if (!buffer) {
     if (client_requested_ == HWC2::Composition::Device ||
         client_requested_ == HWC2::Composition::Cursor) {
       DLOGW("Invalid buffer handle: %p on layer: %d client requested comp type %d", buffer,
             UINT32(id_), client_requested_);
-      ::close(acquire_fence);
       return HWC2::Error::BadParameter;
     } else {
       return HWC2::Error::None;
     }
-  }
-
-  if (acquire_fence == 0) {
-    DLOGW("acquire_fence is zero");
-    return HWC2::Error::BadParameter;
   }
 
   const private_handle_t *handle = static_cast<const private_handle_t *>(buffer);
@@ -291,10 +281,7 @@ HWC2::Error HWCLayer::SetLayerBuffer(buffer_handle_t buffer, int32_t acquire_fen
   layer_buffer->flags.secure_camera = secure_camera;
   layer_buffer->flags.secure_display = secure_display;
 
-  if (layer_buffer->acquire_fence_fd >= 0) {
-    ::close(layer_buffer->acquire_fence_fd);
-  }
-  layer_buffer->acquire_fence_fd = acquire_fence;
+  layer_buffer->acquire_fence = acquire_fence;
   if (buffer_fd_ >= 0) {
     ::close(buffer_fd_);
   }
@@ -881,13 +868,6 @@ void HWCLayer::GetUBWCStatsFromMetaData(UBWCStats *cr_stats, UbwcCrStatsVector *
 DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *layer) {
   LayerBuffer *layer_buffer = &layer->input_buffer;
   private_handle_t *handle = const_cast<private_handle_t *>(pvt_handle);
-  IGC_t igc = {};
-  LayerIGC layer_igc = layer_buffer->igc;
-  if (getMetaData(handle, GET_IGC, &igc) == 0) {
-    if (SetIGC(igc, &layer_igc) != kErrorNone) {
-      return kErrorNotSupported;
-    }
-  }
 
   float fps = 0;
   uint32_t frame_rate = layer->frame_rate;
@@ -910,10 +890,8 @@ DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *la
     layer_buffer->format = GetSDMFormat(INT32(linear_format), 0);
   }
 
-  if ((layer_igc != layer_buffer->igc) || (interlace != layer_buffer->flags.interlace) ||
-      (frame_rate != layer->frame_rate)) {
+  if ((interlace != layer_buffer->flags.interlace) || (frame_rate != layer->frame_rate)) {
     // Layer buffer metadata has changed.
-    layer_buffer->igc = layer_igc;
     layer->frame_rate = frame_rate;
     layer_buffer->flags.interlace = interlace;
     layer_->update_mask.set(kMetadataUpdate);
@@ -937,22 +915,6 @@ DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *la
 
   // Handle colorMetaData / Dataspace handling now
   ValidateAndSetCSC(handle);
-
-  return kErrorNone;
-}
-
-DisplayError HWCLayer::SetIGC(IGC_t source, LayerIGC *target) {
-  switch (source) {
-    case IGC_NotSpecified:
-      *target = kIGCNotSpecified;
-      break;
-    case IGC_sRGB:
-      *target = kIGCsRGB;
-      break;
-    default:
-      DLOGE("Unsupported IGC: %d", source);
-      return kErrorNotSupported;
-  }
 
   return kErrorNone;
 }
@@ -1102,28 +1064,26 @@ void HWCLayer::SetComposition(const LayerComposition &sdm_composition) {
   return;
 }
 
-void HWCLayer::PushBackReleaseFence(int32_t fence) {
+void HWCLayer::PushBackReleaseFence(const shared_ptr<Fence> &fence) {
   release_fences_.push_back(fence);
 }
 
-int32_t HWCLayer::PopBackReleaseFence() {
-  if (release_fences_.empty())
-    return -1;
+void HWCLayer::PopBackReleaseFence(shared_ptr<Fence> *fence) {
+  if (release_fences_.empty()) {
+    return;
+  }
 
-  auto fence = release_fences_.back();
+  *fence = release_fences_.back();
   release_fences_.pop_back();
-
-  return fence;
 }
 
-int32_t HWCLayer::PopFrontReleaseFence() {
-  if (release_fences_.empty())
-    return -1;
+void HWCLayer::PopFrontReleaseFence(shared_ptr<Fence> *fence) {
+  if (release_fences_.empty()) {
+    return;
+  }
 
-  auto fence = release_fences_.front();
+  *fence = release_fences_.front();
   release_fences_.pop_front();
-
-  return fence;
 }
 
 bool HWCLayer::IsRotationPresent() {
@@ -1137,6 +1097,10 @@ bool HWCLayer::IsScalingPresent() {
   uint32_t src_height = static_cast<uint32_t>(layer_->src_rect.bottom - layer_->src_rect.top);
   uint32_t dst_width  = static_cast<uint32_t>(layer_->dst_rect.right - layer_->dst_rect.left);
   uint32_t dst_height = static_cast<uint32_t>(layer_->dst_rect.bottom - layer_->dst_rect.top);
+
+  if ((layer_->transform.rotation == 90.0) || (layer_->transform.rotation == 270.0)) {
+    std::swap(src_width, src_height);
+  }
 
   return ((src_width != dst_width) || (dst_height != src_height));
 }

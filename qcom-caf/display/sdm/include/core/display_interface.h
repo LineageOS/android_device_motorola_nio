@@ -148,7 +148,8 @@ enum DisplayEvent {
   kIdlePowerCollapse,       // Event triggered by Idle Power Collapse.
   kPanelDeadEvent,          // Event triggered by ESD.
   kDisplayPowerResetEvent,  // Event triggered by Hardware Recovery.
-  kInvalidateDisplay,       // Event triggered to Invalidate display.
+  kInvalidateDisplay,       // Event triggered by DrawCycle thread to Invalidate display.
+  kSyncInvalidateDisplay,   // Event triggered by Non-DrawCycle threads to Invalidate display.
 };
 
 /*! @brief This enum represents the secure events received by Display HAL. */
@@ -209,15 +210,23 @@ struct DisplayConfigFixedInfo {
   @sa DisplayInterface::GetConfig
   @sa DisplayInterface::SetConfig
 */
-struct DisplayConfigVariableInfo {
+struct DisplayConfigGroupInfo {
   uint32_t x_pixels = 0;          //!< Total number of pixels in X-direction on the display panel.
   uint32_t y_pixels = 0;          //!< Total number of pixels in Y-direction on the display panel.
   float x_dpi = 0.0f;             //!< Dots per inch in X-direction.
   float y_dpi = 0.0f;             //!< Dots per inch in Y-direction.
-  uint32_t fps = 0;               //!< Frame rate per second.
-  uint32_t vsync_period_ns = 0;   //!< VSync period in nanoseconds.
   bool is_yuv = false;            //!< If the display output is in YUV format.
   bool smart_panel = false;       //!< If the display config has smart panel.
+
+  bool operator==(const DisplayConfigGroupInfo& info) const {
+    return ((x_pixels == info.x_pixels) && (y_pixels == info.y_pixels) && (x_dpi == info.x_dpi) &&
+            (y_dpi == info.y_dpi) && (is_yuv == info.is_yuv) && (smart_panel == info.smart_panel));
+  }
+};
+
+struct DisplayConfigVariableInfo : public DisplayConfigGroupInfo {
+  uint32_t fps = 0;               //!< Frame rate per second.
+  uint32_t vsync_period_ns = 0;   //!< VSync period in nanoseconds.
 
   bool operator==(const DisplayConfigVariableInfo& info) const {
     return ((x_pixels == info.x_pixels) && (y_pixels == info.y_pixels) && (x_dpi == info.x_dpi) &&
@@ -456,7 +465,7 @@ class DisplayInterface {
     @sa SetDisplayState
   */
   virtual DisplayError SetDisplayState(DisplayState state, bool teardown,
-                                       int *release_fence) = 0;
+                                       shared_ptr<Fence> *release_fence) = 0;
 
   /*! @brief Method to set active configuration for variable properties of the display device.
 
@@ -535,9 +544,12 @@ class DisplayInterface {
 
     @param[in] final_rate indicates whether refresh rate is final rate or can be changed by sdm
 
+    @param[in] idle_screen indicates whether screen is idle.
+
     @return \link DisplayError \endlink
   */
-  virtual DisplayError SetRefreshRate(uint32_t refresh_rate, bool final_rate) = 0;
+  virtual DisplayError SetRefreshRate(uint32_t refresh_rate, bool final_rate,
+                                      bool idle_screen = false) = 0;
 
   /*! @brief Method to get the refresh rate of a display.
 
@@ -930,6 +942,12 @@ class DisplayInterface {
     @return \link DisplayError \endlink
   */
   virtual DisplayError GetQSyncMode(QSyncMode *qsync_mode) = 0;
+
+  /*! @brief Method to clear scaler LUTs.
+
+    @return \link DisplayError \endlink
+  */
+  virtual DisplayError ClearLUTs() = 0;
 
  protected:
   virtual ~DisplayInterface() { }

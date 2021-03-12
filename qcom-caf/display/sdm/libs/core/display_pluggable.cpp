@@ -39,23 +39,21 @@ namespace sdm {
 
 DisplayPluggable::DisplayPluggable(DisplayEventHandler *event_handler,
                                    HWInfoInterface *hw_info_intf,
-                                   BufferSyncHandler *buffer_sync_handler,
                                    BufferAllocator *buffer_allocator, CompManager *comp_manager)
-  : DisplayBase(kPluggable, event_handler, kDevicePluggable, buffer_sync_handler, buffer_allocator,
+  : DisplayBase(kPluggable, event_handler, kDevicePluggable, buffer_allocator,
                 comp_manager, hw_info_intf) {}
 
 DisplayPluggable::DisplayPluggable(int32_t display_id, DisplayEventHandler *event_handler,
                                    HWInfoInterface *hw_info_intf,
-                                   BufferSyncHandler *buffer_sync_handler,
                                    BufferAllocator *buffer_allocator, CompManager *comp_manager)
-  : DisplayBase(display_id, kPluggable, event_handler, kDevicePluggable, buffer_sync_handler,
+  : DisplayBase(display_id, kPluggable, event_handler, kDevicePluggable,
                 buffer_allocator, comp_manager, hw_info_intf) {}
 
 DisplayError DisplayPluggable::Init() {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
 
   DisplayError error = HWInterface::Create(display_id_, kPluggable, hw_info_intf_,
-                                           buffer_sync_handler_, buffer_allocator_, &hw_intf_);
+                                           buffer_allocator_, &hw_intf_);
   if (error != kErrorNone) {
     if (kErrorDeviceRemoved == error) {
       DLOGW("Aborted creating hardware interface. Device removed.");
@@ -158,7 +156,8 @@ DisplayError DisplayPluggable::GetRefreshRateRange(uint32_t *min_refresh_rate,
   return error;
 }
 
-DisplayError DisplayPluggable::SetRefreshRate(uint32_t refresh_rate, bool final_rate) {
+DisplayError DisplayPluggable::SetRefreshRate(uint32_t refresh_rate, bool final_rate,
+                                              bool idle_screen) {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
 
   if (!active_) {

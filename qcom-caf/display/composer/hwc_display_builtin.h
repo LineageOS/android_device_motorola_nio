@@ -57,7 +57,9 @@ struct LayerStitchGetInstanceContext : public SyncTask<LayerStitchTaskCode>::Tas
 
 struct LayerStitchContext : public SyncTask<LayerStitchTaskCode>::TaskContext {
   vector<StitchParams> stitch_params;
-  int release_fence_fd = -1;
+  shared_ptr<Fence> src_acquire_fence = nullptr;
+  shared_ptr<Fence> dst_acquire_fence = nullptr;
+  shared_ptr<Fence> release_fence = nullptr;
 };
 
 class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode>::TaskHandler {
@@ -78,7 +80,7 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   static void Destroy(HWCDisplay *hwc_display);
   virtual int Init();
   virtual HWC2::Error Validate(uint32_t *out_num_types, uint32_t *out_num_requests);
-  virtual HWC2::Error Present(int32_t *out_retire_fence);
+  virtual HWC2::Error Present(shared_ptr<Fence> *out_retire_fence);
   virtual HWC2::Error CommitLayerStack();
   virtual HWC2::Error GetColorModes(uint32_t *out_num_modes, ColorMode *out_modes);
   virtual HWC2::Error SetColorMode(ColorMode mode);
@@ -91,7 +93,7 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   virtual HWC2::Error RestoreColorTransform();
   virtual int Perform(uint32_t operation, ...);
   virtual int HandleSecureSession(const std::bitset<kSecureMax> &secure_session,
-                                  bool *power_on_pending);
+                                  bool *power_on_pending, bool is_active_secure_display);
   virtual void SetIdleTimeoutMs(uint32_t timeout_ms);
   virtual HWC2::Error SetFrameDumpConfig(uint32_t count, uint32_t bit_mask_layer_type,
                                          int32_t format, bool post_processed);
@@ -99,9 +101,10 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   virtual int GetFrameCaptureStatus() { return frame_capture_status_; }
   virtual DisplayError SetDetailEnhancerConfig(const DisplayDetailEnhancerData &de_data);
   virtual DisplayError ControlPartialUpdate(bool enable, uint32_t *pending);
-  virtual HWC2::Error SetReadbackBuffer(const native_handle_t *buffer, int32_t acquire_fence,
+  virtual HWC2::Error SetReadbackBuffer(const native_handle_t *buffer,
+                                        shared_ptr<Fence> acquire_fence,
                                         bool post_processed_output, CWBClient client);
-  virtual HWC2::Error GetReadbackBufferFence(int32_t *release_fence);
+  virtual HWC2::Error GetReadbackBufferFence(shared_ptr<Fence> *release_fence);
   virtual HWC2::Error SetQSyncMode(QSyncMode qsync_mode);
   virtual DisplayError ControlIdlePowerCollapse(bool enable, bool synchronous);
   virtual HWC2::Error SetDisplayDppsAdROI(uint32_t h_start, uint32_t h_end, uint32_t v_start,
@@ -121,7 +124,7 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   virtual HWC2::Error SetFrameTriggerMode(uint32_t mode);
   virtual HWC2::Error SetBLScale(uint32_t level);
   virtual HWC2::Error UpdatePowerMode(HWC2::PowerMode mode);
-  virtual HWC2::Error SetClientTarget(buffer_handle_t target, int32_t acquire_fence,
+  virtual HWC2::Error SetClientTarget(buffer_handle_t target, shared_ptr<Fence> acquire_fence,
                                       int32_t dataspace, hwc_region_t damage);
   virtual bool IsSmartPanelConfig(uint32_t config_id);
   virtual bool HasSmartPanelConfig(void);
@@ -139,8 +142,8 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
       uint64_t max_frames, uint64_t timestamp, uint64_t *numFrames,
       int32_t samples_size[NUM_HISTOGRAM_COLOR_COMPONENTS],
       uint64_t *samples[NUM_HISTOGRAM_COLOR_COMPONENTS]);
+  void Dump(std::ostringstream *os) override;
   virtual HWC2::Error SetPowerMode(HWC2::PowerMode mode, bool teardown);
-  std::string Dump() override;
   virtual bool HasReadBackBufferSupport();
 
  private:
@@ -171,6 +174,8 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   int GetBwCode(const DisplayConfigVariableInfo &attr);
   void SetBwLimitHint(bool enable);
   void SetPartialUpdate(DisplayConfigFixedInfo fixed_info);
+  uint32_t GetUpdatingAppLayersCount();
+  void ValidateUiScaling();
 
   // SyncTask methods.
   void OnTask(const LayerStitchTaskCode &task_code,
@@ -221,6 +226,9 @@ class HWCDisplayBuiltIn : public HWCDisplay, public SyncTask<LayerStitchTaskCode
   bool is_smart_panel_ = false;
   const char *kDisplayBwName = "display_bw";
   bool enable_bw_limits_ = false;
+  bool disable_dyn_fps_ = false;
+  bool enhance_idle_time_ = false;
+  bool force_reset_validate_ = false;
 };
 
 }  // namespace sdm

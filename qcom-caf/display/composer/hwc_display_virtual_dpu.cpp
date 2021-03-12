@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -88,7 +88,8 @@ int HWCDisplayVirtualDPU::SetConfig(uint32_t width, uint32_t height) {
   return 0;
 }
 
-HWC2::Error HWCDisplayVirtualDPU::SetOutputBuffer(buffer_handle_t buf, int32_t release_fence) {
+HWC2::Error HWCDisplayVirtualDPU::SetOutputBuffer(buffer_handle_t buf,
+                                                  shared_ptr<Fence> release_fence) {
   HWC2::Error error = HWCDisplayVirtual::SetOutputBuffer(buf, release_fence);
   if (error != HWC2::Error::None) {
     return error;
@@ -150,7 +151,7 @@ HWC2::Error HWCDisplayVirtualDPU::Validate(uint32_t *out_num_types, uint32_t *ou
   return PrepareLayerStack(out_num_types, out_num_requests);
 }
 
-HWC2::Error HWCDisplayVirtualDPU::Present(int32_t *out_retire_fence) {
+HWC2::Error HWCDisplayVirtualDPU::Present(shared_ptr<Fence> *out_retire_fence) {
   auto status = HWC2::Error::None;
 
   if (!output_buffer_.buffer_id) {

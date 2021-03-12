@@ -65,23 +65,20 @@ static ColorPrimaries GetColorPrimariesFromAttribute(const std::string &gamut) {
 
 // TODO(user): Have a single structure handle carries all the interface pointers and variables.
 DisplayBase::DisplayBase(DisplayType display_type, DisplayEventHandler *event_handler,
-                         HWDeviceType hw_device_type, BufferSyncHandler *buffer_sync_handler,
-                         BufferAllocator *buffer_allocator, CompManager *comp_manager,
-                         HWInfoInterface *hw_info_intf)
+                         HWDeviceType hw_device_type, BufferAllocator *buffer_allocator,
+                         CompManager *comp_manager, HWInfoInterface *hw_info_intf)
   : display_type_(display_type), event_handler_(event_handler), hw_device_type_(hw_device_type),
-    buffer_sync_handler_(buffer_sync_handler), buffer_allocator_(buffer_allocator),
-    comp_manager_(comp_manager), hw_info_intf_(hw_info_intf) {
+    buffer_allocator_(buffer_allocator), comp_manager_(comp_manager), hw_info_intf_(hw_info_intf) {
 }
 
 DisplayBase::DisplayBase(int32_t display_id, DisplayType display_type,
                          DisplayEventHandler *event_handler, HWDeviceType hw_device_type,
-                         BufferSyncHandler *buffer_sync_handler, BufferAllocator *buffer_allocator,
-                         CompManager *comp_manager, HWInfoInterface *hw_info_intf)
+                         BufferAllocator *buffer_allocator, CompManager *comp_manager,
+                         HWInfoInterface *hw_info_intf)
   : display_id_(display_id),
     display_type_(display_type),
     event_handler_(event_handler),
     hw_device_type_(hw_device_type),
-    buffer_sync_handler_(buffer_sync_handler),
     buffer_allocator_(buffer_allocator),
     comp_manager_(comp_manager),
     hw_info_intf_(hw_info_intf) {}
@@ -149,11 +146,12 @@ DisplayError DisplayBase::Init() {
 
   error = comp_manager_->RegisterDisplay(display_id_, display_type_, display_attributes_,
                                          hw_panel_info_, mixer_attributes_, fb_config_,
-                                         &display_comp_ctx_, &(default_qos_data_.clock_hz));
+                                         &display_comp_ctx_, &(default_clock_hz_));
   if (error != kErrorNone) {
     DLOGW("Display %d comp manager registration failed!", display_id_);
     goto CleanupOnError;
   }
+  cached_qos_data_.clock_hz = default_clock_hz_;
 
   if (color_modes_cs_.size() > 0) {
     error = comp_manager_->SetColorModesInfo(display_comp_ctx_, color_modes_cs_);
@@ -421,13 +419,13 @@ DisplayError DisplayBase::Commit(LayerStack *layer_stack) {
   drop_hw_vsync_ = false;
 
   // Reset pending power state if any after the commit
-  error = HandlePendingPowerState(layer_stack->retire_fence_fd);
+  error = HandlePendingPowerState(layer_stack->retire_fence);
   if (error != kErrorNone) {
     return error;
   }
 
   // Handle pending vsync enable if any after the commit
-  error = HandlePendingVSyncEnable(layer_stack->retire_fence_fd);
+  error = HandlePendingVSyncEnable(layer_stack->retire_fence);
   if (error != kErrorNone) {
     return error;
   }
@@ -542,7 +540,7 @@ DisplayError DisplayBase::GetVSyncState(bool *enabled) {
 }
 
 DisplayError DisplayBase::SetDisplayState(DisplayState state, bool teardown,
-                                          int *release_fence) {
+                                          shared_ptr<Fence> *release_fence) {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
   DisplayError error = kErrorNone;
   bool active = false;
@@ -570,10 +568,12 @@ DisplayError DisplayBase::SetDisplayState(DisplayState state, bool teardown,
     if (error == kErrorNone) {
       error = hw_intf_->PowerOff(teardown);
     }
+    cached_qos_data_ = {};
+    cached_qos_data_.clock_hz = default_clock_hz_;
     break;
 
   case kStateOn:
-    error = hw_intf_->PowerOn(default_qos_data_, release_fence);
+    error = hw_intf_->PowerOn(cached_qos_data_, release_fence);
     if (error != kErrorNone) {
       if (error == kErrorDeferred) {
         pending_power_on_ = true;
@@ -585,16 +585,17 @@ DisplayError DisplayBase::SetDisplayState(DisplayState state, bool teardown,
 
     error = comp_manager_->ReconfigureDisplay(display_comp_ctx_, display_attributes_,
                                               hw_panel_info_, mixer_attributes_, fb_config_,
-                                              &(default_qos_data_.clock_hz));
+                                              &(default_clock_hz_));
     if (error != kErrorNone) {
       return error;
     }
+    cached_qos_data_.clock_hz = default_clock_hz_;
 
     active = true;
     break;
 
   case kStateDoze:
-    error = hw_intf_->Doze(default_qos_data_, release_fence);
+    error = hw_intf_->Doze(cached_qos_data_, release_fence);
     if (error != kErrorNone) {
       if (error == kErrorDeferred) {
         pending_doze_ = true;
@@ -607,7 +608,7 @@ DisplayError DisplayBase::SetDisplayState(DisplayState state, bool teardown,
     break;
 
   case kStateDozeSuspend:
-    error = hw_intf_->DozeSuspend(default_qos_data_, release_fence);
+    error = hw_intf_->DozeSuspend(cached_qos_data_, release_fence);
     if (display_type_ != kBuiltIn) {
       active = true;
     }
@@ -640,7 +641,8 @@ DisplayError DisplayBase::SetDisplayState(DisplayState state, bool teardown,
       active_ = active;
       state_ = state;
     }
-    comp_manager_->SetDisplayState(display_comp_ctx_, state, release_fence ? *release_fence : -1);
+    comp_manager_->SetDisplayState(display_comp_ctx_, state,
+                                   release_fence ? *release_fence : nullptr);
 
     // If previously requested power on state is still pending reset it on any new display state
     // request and handle the new request.
@@ -652,7 +654,7 @@ DisplayError DisplayBase::SetDisplayState(DisplayState state, bool teardown,
   // Handle vsync pending on resume, Since the power on commit is synchronous we pass -1 as retire
   // fence otherwise pass valid retire fence
   if (state_ == kStateOn) {
-    return HandlePendingVSyncEnable(-1 /* retire fence */);
+    return HandlePendingVSyncEnable(nullptr /* retire fence */);
   }
 
   return error;
@@ -1231,11 +1233,11 @@ DisplayError DisplayBase::GetRefreshRateRange(uint32_t *min_refresh_rate,
   return error;
 }
 
-DisplayError DisplayBase::HandlePendingVSyncEnable(int32_t retire_fence) {
+DisplayError DisplayBase::HandlePendingVSyncEnable(const shared_ptr<Fence> &retire_fence) {
   if (vsync_enable_pending_) {
     // Retire fence signalling confirms that CRTC enabled, hence wait for retire fence before
     // we enable vsync
-    buffer_sync_handler_->SyncWait(retire_fence);
+    Fence::Wait(retire_fence);
 
     DisplayError error = SetVSyncState(true /* enable */);
     if (error != kErrorNone) {
@@ -1315,10 +1317,11 @@ DisplayError DisplayBase::ReconfigureDisplay() {
 
   error = comp_manager_->ReconfigureDisplay(display_comp_ctx_, display_attributes, hw_panel_info,
                                             mixer_attributes, fb_config_,
-                                            &(default_qos_data_.clock_hz));
+                                            &(default_clock_hz_));
   if (error != kErrorNone) {
     return error;
   }
+  cached_qos_data_.clock_hz = default_clock_hz_;
 
   bool disble_pu = true;
   if (mixer_unchanged && panel_unchanged) {
@@ -1528,10 +1531,11 @@ DisplayError DisplayBase::SetFrameBufferConfig(const DisplayConfigVariableInfo &
 
   error =  comp_manager_->ReconfigureDisplay(display_comp_ctx_, display_attributes_, hw_panel_info_,
                                              mixer_attributes_, variable_info,
-                                             &(default_qos_data_.clock_hz));
+                                             &(default_clock_hz_));
   if (error != kErrorNone) {
     return error;
   }
+  cached_qos_data_.clock_hz = default_clock_hz_;
 
   fb_config_.x_pixels = width;
   fb_config_.y_pixels = height;
@@ -1630,7 +1634,7 @@ void DisplayBase::CommitLayerParams(LayerStack *layer_stack) {
     hw_layer.input_buffer.planes[0].offset = sdm_layer->input_buffer.planes[0].offset;
     hw_layer.input_buffer.planes[0].stride = sdm_layer->input_buffer.planes[0].stride;
     hw_layer.input_buffer.size = sdm_layer->input_buffer.size;
-    hw_layer.input_buffer.acquire_fence_fd = sdm_layer->input_buffer.acquire_fence_fd;
+    hw_layer.input_buffer.acquire_fence = sdm_layer->input_buffer.acquire_fence;
     hw_layer.input_buffer.handle_id = sdm_layer->input_buffer.handle_id;
     // TODO(user): Other FBT layer attributes like surface damage, dataspace, secure camera and
     // secure display flags are also updated during SetClientTarget() called between validate and
@@ -1668,26 +1672,14 @@ void DisplayBase::PostCommitLayerParams(LayerStack *layer_stack) {
     // output fence fd and assign it to layer's input buffer release fence fd.
     if (std::find(fence_dup_flag.begin(), fence_dup_flag.end(), sdm_layer_index) ==
         fence_dup_flag.end()) {
-      sdm_layer->input_buffer.release_fence_fd = hw_layer.input_buffer.release_fence_fd;
+      sdm_layer->input_buffer.release_fence = hw_layer.input_buffer.release_fence;
       fence_dup_flag.push_back(sdm_layer_index);
     } else {
-      int temp = -1;
-      buffer_sync_handler_->SyncMerge(hw_layer.input_buffer.release_fence_fd,
-                                      sdm_layer->input_buffer.release_fence_fd, &temp);
-
-      if (hw_layer.input_buffer.release_fence_fd >= 0) {
-        Sys::close_(hw_layer.input_buffer.release_fence_fd);
-        hw_layer.input_buffer.release_fence_fd = -1;
-      }
-
-      if (sdm_layer->input_buffer.release_fence_fd >= 0) {
-        Sys::close_(sdm_layer->input_buffer.release_fence_fd);
-        sdm_layer->input_buffer.release_fence_fd = -1;
-      }
-
-      sdm_layer->input_buffer.release_fence_fd = temp;
+      sdm_layer->input_buffer.release_fence = Fence::Merge(
+              hw_layer.input_buffer.release_fence, sdm_layer->input_buffer.release_fence);
     }
   }
+  cached_qos_data_ = hw_layers_.qos_data;
 
   return;
 }
@@ -2080,11 +2072,11 @@ bool DisplayBase::CanSkipValidate() {
   return skip_validate;
 }
 
-DisplayError DisplayBase::HandlePendingPowerState(int32_t retire_fence) {
+DisplayError DisplayBase::HandlePendingPowerState(const shared_ptr<Fence> &retire_fence) {
   if (pending_doze_ || pending_power_on_) {
     // Retire fence signalling confirms that CRTC enabled, hence wait for retire fence before
     // we enable vsync
-    buffer_sync_handler_->SyncWait(retire_fence);
+    Fence::Wait(retire_fence);
 
     if (pending_doze_) {
       state_ = kStateDoze;

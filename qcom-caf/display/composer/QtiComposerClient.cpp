@@ -18,6 +18,7 @@
  */
 
 #include <vector>
+#include <string>
 
 #include "QtiComposerClient.h"
 
@@ -26,7 +27,7 @@ namespace qti {
 namespace hardware {
 namespace display {
 namespace composer {
-namespace V2_1 {
+namespace V3_0 {
 namespace implementation {
 
 ComposerHandleImporter mHandleImporter;
@@ -101,19 +102,10 @@ QtiComposerClient::~QtiComposerClient() {
 
       hwc_session_->AcceptDisplayChanges(dpy.first);
 
-      int32_t presentFence = -1;
+      shared_ptr<Fence> presentFence = nullptr;
       std::vector<Layer> releasedLayers;
-      std::vector<int32_t> releaseFences;
-      mReader.presentDisplay(dpy.first, presentFence, releasedLayers, releaseFences);
-
-      if (presentFence >= 0) {
-        close(presentFence);
-      }
-      for (auto fence : releaseFences) {
-        if (fence >= 0) {
-          close(fence);
-        }
-      }
+      std::vector<shared_ptr<Fence>> releaseFences;
+      mReader.presentDisplay(dpy.first, &presentFence, releasedLayers, releaseFences);
     }
   }
 
@@ -127,21 +119,23 @@ QtiComposerClient::~QtiComposerClient() {
 void QtiComposerClient::onHotplug(hwc2_callback_data_t callbackData, hwc2_display_t display,
                                     int32_t connected) {
   auto client = reinterpret_cast<QtiComposerClient*>(callbackData);
-  auto connect = static_cast<composer_V2_1::IComposerCallback::Connection>(connected);
-  if (connect == composer_V2_1::IComposerCallback::Connection::CONNECTED) {
+  auto connect = static_cast<composer_V2_4::IComposerCallback::Connection>(connected);
+  if (connect == composer_V2_4::IComposerCallback::Connection::CONNECTED) {
     std::lock_guard<std::mutex> lock_d(client->mDisplayDataMutex);
     client->mDisplayData.emplace(display, DisplayData(false));
   }
 
-  auto ret = client->mCallback->onHotplug(display, connect);
+  auto ret = client->callback_->onHotplug(display, connect);
   ALOGW_IF(!ret.isOk(), "failed to send onHotplug: %s. SF likely unavailable.",
            ret.description().c_str());
 
-  if (connect == composer_V2_1::IComposerCallback::Connection::DISCONNECTED) {
+  if (connect == composer_V2_4::IComposerCallback::Connection::DISCONNECTED) {
     // Trigger refresh to make sure disconnect event received/updated properly by SurfaceFlinger.
     client->hwc_session_->Refresh(HWC_DISPLAY_PRIMARY);
     // Wait for sufficient time to ensure sufficient resources are available to process connection.
-    usleep(UINT32(client->hwc_session_->GetVsyncPeriod(HWC_DISPLAY_PRIMARY)) * 2 / 1000);
+    uint32_t vsync_period;
+    client->hwc_session_->GetVsyncPeriod(HWC_DISPLAY_PRIMARY, &vsync_period);
+    usleep(vsync_period * 2 / 1000);
 
     // Wait for the input command message queue to process before destroying the local display data.
     std::lock_guard<std::mutex> lock(client->mCommandMutex);
@@ -152,22 +146,52 @@ void QtiComposerClient::onHotplug(hwc2_callback_data_t callbackData, hwc2_displa
 
 void QtiComposerClient::onRefresh(hwc2_callback_data_t callbackData, hwc2_display_t display) {
   auto client = reinterpret_cast<QtiComposerClient*>(callbackData);
-  auto ret = client->mCallback->onRefresh(display);
+  auto ret = client->callback_->onRefresh(display);
   ALOGW_IF(!ret.isOk(), "failed to send onRefresh: %s. SF likely unavailable.",
            ret.description().c_str());
 }
 
 void QtiComposerClient::onVsync(hwc2_callback_data_t callbackData, hwc2_display_t display,
-                                  int64_t timestamp) {
+                                int64_t timestamp) {
   auto client = reinterpret_cast<QtiComposerClient*>(callbackData);
-  auto ret = client->mCallback->onVsync(display, timestamp);
+  auto ret = client->callback_->onVsync(display, timestamp);
   ALOGW_IF(!ret.isOk(), "failed to send onVsync: %s. SF likely unavailable.",
            ret.description().c_str());
 }
 
+void QtiComposerClient::onVsync_2_4(hwc2_callback_data_t callbackData, hwc2_display_t display,
+                                    int64_t timestamp, VsyncPeriodNanos vsyncPeriodNanos) {
+  auto client = reinterpret_cast<QtiComposerClient*>(callbackData);
+  auto ret = client->callback24_->onVsync_2_4(display, timestamp, vsyncPeriodNanos);
+  ALOGW_IF(!ret.isOk(), "failed to send onVsync_2_4: %s. SF likely unavailable.",
+           ret.description().c_str());
+}
+
+void QtiComposerClient::onVsyncPeriodTimingChanged(hwc2_callback_data_t callbackData,
+      hwc2_display_t display, hwc_vsync_period_change_timeline_t *updatedTimeline) {
+   VsyncPeriodChangeTimeline timeline =
+                                   {updatedTimeline->newVsyncAppliedTimeNanos,
+                                    static_cast<bool>(updatedTimeline->refreshRequired),
+                                    updatedTimeline->refreshTimeNanos};
+
+  auto client = reinterpret_cast<QtiComposerClient*>(callbackData);
+  auto ret = client->callback24_->onVsyncPeriodTimingChanged(display, timeline);
+  ALOGW_IF(!ret.isOk(), "failed to send onVsyncPeriodTimingChanged: %s. SF likely unavailable.",
+          ret.description().c_str());
+}
+
+void QtiComposerClient::onSeamlessPossible(hwc2_callback_data_t callbackData,
+                                           hwc2_display_t display) {
+  auto client = reinterpret_cast<QtiComposerClient*>(callbackData);
+  auto ret = client->callback24_->onSeamlessPossible(display);
+  ALOGW_IF(!ret.isOk(), "failed to send onSeamlessPossible: %s. SF likely unavailable.",
+           ret.description().c_str());
+}
+
 // convert fenceFd to or from hidl_handle
-Error QtiComposerClient::getFenceFd(const hidl_handle& fenceHandle,
-                                    android::base::unique_fd* outFenceFd) {
+// Handle would still own original fence. Hence create a Fence object on duped fd.
+Error QtiComposerClient::getFence(const hidl_handle& fenceHandle, shared_ptr<Fence>* outFence,
+                                  const string& name) {
   auto handle = fenceHandle.getNativeHandle();
   if (handle && handle->numFds > 1) {
     ALOGE("invalid fence handle with %d fds", handle->numFds);
@@ -175,25 +199,19 @@ Error QtiComposerClient::getFenceFd(const hidl_handle& fenceHandle,
   }
 
   int fenceFd = (handle && handle->numFds == 1) ? handle->data[0] : -1;
-  if (fenceFd >= 0) {
-    fenceFd = dup(fenceFd);
-    if (fenceFd < 0) {
-      return Error::NO_RESOURCES;
-    }
-  }
-
-  outFenceFd->reset(fenceFd);
+  *outFence = Fence::Create(dup(fenceFd), name);
 
   return Error::NONE;
 }
 
-hidl_handle QtiComposerClient::getFenceHandle(const android::base::unique_fd& fenceFd,
+// Handle would own fence hereafter. Hence provide a dupped fd.
+hidl_handle QtiComposerClient::getFenceHandle(const shared_ptr<Fence>& fence,
                                               char* handleStorage) {
   native_handle_t* handle = nullptr;
-  if (fenceFd >= 0) {
+  if (fence) {
     handle = native_handle_init(handleStorage, 1, 0);
     if (handle) {
-      handle->data[0] = fenceFd;
+      handle->data[0] = Fence::Dup(fence);
     }
   }
 
@@ -240,19 +258,34 @@ void QtiComposerClient::enableCallback(bool enable) {
                                    reinterpret_cast<hwc2_function_pointer_t>(onHotplug));
     hwc_session_->RegisterCallback(HWC2_CALLBACK_REFRESH, this,
                                    reinterpret_cast<hwc2_function_pointer_t>(onRefresh));
-    hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC, this,
-                                   reinterpret_cast<hwc2_function_pointer_t>(onVsync));
+    if (!mUseCallback24_) {
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC, this,
+                                     reinterpret_cast<hwc2_function_pointer_t>(onVsync));
+    } else {
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC_2_4, this,
+                                     reinterpret_cast<hwc2_function_pointer_t>(onVsync_2_4));
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC_PERIOD_TIMING_CHANGED, this,
+                             reinterpret_cast<hwc2_function_pointer_t>(onVsyncPeriodTimingChanged));
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_SEAMLESS_POSSIBLE, this,
+                                     reinterpret_cast<hwc2_function_pointer_t>(onSeamlessPossible));
+    }
   } else {
     hwc_session_->RegisterCallback(HWC2_CALLBACK_HOTPLUG, this, nullptr);
     hwc_session_->RegisterCallback(HWC2_CALLBACK_REFRESH, this, nullptr);
-    hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC, this, nullptr);
+    if (!mUseCallback24_) {
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC, this, nullptr);
+    } else {
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC_2_4, this, nullptr);
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_VSYNC_PERIOD_TIMING_CHANGED, this, nullptr);
+      hwc_session_->RegisterCallback(HWC2_CALLBACK_SEAMLESS_POSSIBLE, this, nullptr);
+    }
   }
 }
 
 // Methods from ::android::hardware::graphics::composer::V2_1::IComposerClient follow.
 Return<void> QtiComposerClient::registerCallback(
                                             const sp<composer_V2_1::IComposerCallback>& callback) {
-  mCallback = callback;
+  callback_ = callback;
   enableCallback(callback != nullptr);
   return Void();
 }
@@ -375,8 +408,8 @@ Return<void> QtiComposerClient::getDisplayAttribute(uint64_t display, uint32_t c
                                                composer_V2_1::IComposerClient::Attribute attribute,
                                                getDisplayAttribute_cb _hidl_cb) {
   int32_t value = 0;
-  auto error = hwc_session_->GetDisplayAttribute(display, config, static_cast<int32_t>(attribute),
-                                                 &value);
+  auto error = hwc_session_->GetDisplayAttribute(
+      display, config, static_cast<composer_V2_4::IComposerClient::Attribute>(attribute), &value);
 
   _hidl_cb(static_cast<Error>(error), value);
   return Void();
@@ -597,25 +630,23 @@ Return<void> QtiComposerClient::getReadbackBufferAttributes(uint64_t display,
 
 Return<void> QtiComposerClient::getReadbackBufferFence(uint64_t display,
                                                        getReadbackBufferFence_cb _hidl_cb) {
-  int32_t Fd = -1;
-  auto error = hwc_session_->GetReadbackBufferFence(display, &Fd);
+  shared_ptr<Fence> fence = nullptr;
+  auto error = hwc_session_->GetReadbackBufferFence(display, &fence);
   if (static_cast<Error>(error) != Error::NONE) {
     _hidl_cb(static_cast<Error>(error), nullptr);
     return Void();
   }
 
-  android::base::unique_fd fenceFd;
-  fenceFd.reset(Fd);
   NATIVE_HANDLE_DECLARE_STORAGE(fenceStorage, 1, 0);
 
-  _hidl_cb(static_cast<Error>(error), getFenceHandle(fenceFd, fenceStorage));
+  _hidl_cb(static_cast<Error>(error), getFenceHandle(fence, fenceStorage));
   return Void();
 }
 
 Return<Error> QtiComposerClient::setReadbackBuffer(uint64_t display, const hidl_handle& buffer,
                                                    const hidl_handle& releaseFence) {
-  android::base::unique_fd fenceFd;
-  Error error = getFenceFd(releaseFence, &fenceFd);
+  shared_ptr<Fence> fence = nullptr;
+  Error error = getFence(releaseFence, &fence, "read_back");
   if (error != Error::NONE) {
     return error;
   }
@@ -626,7 +657,7 @@ Return<Error> QtiComposerClient::setReadbackBuffer(uint64_t display, const hidl_
     return error;
   }
 
-  auto err = hwc_session_->SetReadbackBuffer(display, readbackBuffer, std::move(fenceFd));
+  auto err = hwc_session_->SetReadbackBuffer(display, readbackBuffer, fence);
   return static_cast<Error>(err);
 }
 
@@ -931,26 +962,30 @@ Return<Error> QtiComposerClient::setColorMode_2_3(uint64_t display, common_V1_2:
 
 Return<void> QtiComposerClient::getDisplayCapabilities(uint64_t display,
                                                        getDisplayCapabilities_cb _hidl_cb) {
-  hidl_vec<IComposerClient::DisplayCapability> capabilities;
+  // We only care about passing VTS for older composer versions
+  // Not returning any capabilities that are optional
+
+  hidl_vec<DisplayCapability_V2_3> capabilities;
+
   uint32_t count = 0;
-  auto error = hwc_session_->GetDisplayCapabilities(display, &count, nullptr);
+  auto error = hwc_session_->GetDisplayCapabilities2_3(display, &count, nullptr);
   if (error != HWC2_ERROR_NONE) {
     _hidl_cb(static_cast<Error>(error), capabilities);
     return Void();
   }
 
   capabilities.resize(count);
-  error = hwc_session_->GetDisplayCapabilities(display, &count,
-                 reinterpret_cast<std::underlying_type<IComposerClient::DisplayCapability>::type*>(
+  error = hwc_session_->GetDisplayCapabilities2_3(display, &count,
+                 reinterpret_cast<std::underlying_type<DisplayCapability_V2_3>::type*>(
                  capabilities.data()));
-  if (error != HWC2_ERROR_NONE) {
-    capabilities = hidl_vec<IComposerClient::DisplayCapability>();
-    _hidl_cb(static_cast<Error>(error), capabilities);
-    return Void();
-  }
+   if (error != HWC2_ERROR_NONE) {
+     capabilities = hidl_vec<DisplayCapability_V2_3>();
+     _hidl_cb(static_cast<Error>(error), capabilities);
+     return Void();
+   }
 
-  _hidl_cb(static_cast<Error>(error), capabilities);
-  return Void();
+   _hidl_cb(static_cast<Error>(error), capabilities);
+   return Void();
 }
 
 Return<void> QtiComposerClient::getPerFrameMetadataKeys_2_3(uint64_t display,
@@ -1012,6 +1047,99 @@ Return<Error> QtiComposerClient::setDisplayBrightness(uint64_t display, float br
 
   auto error = hwc_session_->SetDisplayBrightness(display, brightness);
   return static_cast<Error>(error);
+}
+
+// Methods from ::android::hardware::graphics::composer::V2_4::IComposerClient follow.
+Return<void> QtiComposerClient::registerCallback_2_4(
+    const sp<composer_V2_4::IComposerCallback> &callback) {
+  callback_ = sp<composer_V2_1::IComposerCallback>(callback.get());
+  callback24_ = callback;
+  mUseCallback24_ = true;
+  enableCallback(callback != nullptr);
+  return Void();
+}
+Return<void> QtiComposerClient::getDisplayCapabilities_2_4(uint64_t display,
+                                                           getDisplayCapabilities_2_4_cb _hidl_cb) {
+  hidl_vec<composer_V2_4::IComposerClient::DisplayCapability> capabilities;
+  auto error = hwc_session_->GetDisplayCapabilities(display, &capabilities);
+  _hidl_cb(static_cast<composer_V2_4::Error>(error), capabilities);
+  return Void();
+}
+
+Return<void> QtiComposerClient::getDisplayConnectionType(uint64_t display,
+                                                         getDisplayConnectionType_cb _hidl_cb) {
+  HwcDisplayConnectionType type;
+  auto error = hwc_session_->GetDisplayConnectionType(display, &type);
+  _hidl_cb(static_cast<composer_V2_4::Error>(error), type);
+  return Void();
+}
+
+Return<void> QtiComposerClient::getDisplayAttribute_2_4(
+    uint64_t display, uint32_t config, composer_V2_4::IComposerClient::Attribute attribute,
+    getDisplayAttribute_2_4_cb _hidl_cb) {
+  int32_t value = 0;
+  auto error = hwc_session_->GetDisplayAttribute(display, config, attribute, &value);
+  _hidl_cb(static_cast<composer_V2_4::Error>(error), value);
+  return Void();
+}
+
+Return<void> QtiComposerClient::getDisplayVsyncPeriod(uint64_t display,
+                                                      getDisplayVsyncPeriod_cb _hidl_cb) {
+  VsyncPeriodNanos vsync_period;
+  auto error = hwc_session_->GetDisplayVsyncPeriod(display, &vsync_period);
+  _hidl_cb(static_cast<composer_V2_4::Error>(error), vsync_period);
+  return Void();
+}
+
+Return<void> QtiComposerClient::setActiveConfigWithConstraints(
+    uint64_t display, uint32_t config,
+    const VsyncPeriodChangeConstraints &vsyncPeriodChangeConstraints,
+    setActiveConfigWithConstraints_cb _hidl_cb) {
+  VsyncPeriodChangeTimeline timeline;
+  timeline.newVsyncAppliedTimeNanos = systemTime();
+  timeline.refreshRequired = false;
+  timeline.refreshTimeNanos = 0;
+
+  auto error = hwc_session_->SetActiveConfigWithConstraints(
+      display, config, &vsyncPeriodChangeConstraints, &timeline);
+  _hidl_cb(static_cast<composer_V2_4::Error>(error), timeline);
+  return Void();
+}
+
+Return<composer_V2_4::Error> QtiComposerClient::setAutoLowLatencyMode(uint64_t display, bool on) {
+  if (mDisplayData.find(display) == mDisplayData.end()) {
+    return composer_V2_4::Error::BAD_DISPLAY;
+  }
+  return composer_V2_4::Error::UNSUPPORTED;
+}
+
+Return<void> QtiComposerClient::getSupportedContentTypes(uint64_t display,
+                                                         getSupportedContentTypes_cb _hidl_cb) {
+  hidl_vec<composer_V2_4::IComposerClient::ContentType> types = {};
+  if (mDisplayData.find(display) == mDisplayData.end()) {
+    _hidl_cb(composer_V2_4::Error::BAD_DISPLAY, types);
+    return Void();
+  }
+  _hidl_cb(composer_V2_4::Error::NONE, types);
+  return Void();
+}
+
+Return<composer_V2_4::Error> QtiComposerClient::setContentType(
+    uint64_t display, composer_V2_4::IComposerClient::ContentType type) {
+  if (mDisplayData.find(display) == mDisplayData.end()) {
+    return composer_V2_4::Error::BAD_DISPLAY;
+  }
+  if (type == composer_V2_4::IComposerClient::ContentType::NONE) {
+    return composer_V2_4::Error::NONE;
+  }
+  return composer_V2_4::Error::UNSUPPORTED;
+}
+
+Return<void> QtiComposerClient::getLayerGenericMetadataKeys(
+    getLayerGenericMetadataKeys_cb _hidl_cb) {
+  hidl_vec<composer_V2_4::IComposerClient::LayerGenericMetadataKey> keys = {};
+  _hidl_cb(composer_V2_4::Error::NONE, keys);
+  return Void();
 }
 
 QtiComposerClient::CommandReader::CommandReader(QtiComposerClient& client)
@@ -1203,10 +1331,10 @@ bool QtiComposerClient::CommandReader::parseSetClientTarget(uint16_t length) {
   bool useCache = false;
   auto slot = read();
   auto clientTarget = readHandle(useCache);
-  auto fence = readFence();
+  shared_ptr<Fence> fence = nullptr;
+  readFence(&fence, "fbt");
   auto dataspace = readSigned();
   auto damage = readRegion((length - 4) / 4);
-  bool closeFence = true;
   hwc_region region = {damage.size(), damage.data()};
   auto err = lookupBuffer(BufferCache::CLIENT_TARGETS, slot, useCache, clientTarget, &clientTarget);
   if (err == Error::NONE) {
@@ -1216,12 +1344,8 @@ bool QtiComposerClient::CommandReader::parseSetClientTarget(uint16_t length) {
     auto updateBufErr = updateBuffer(BufferCache::CLIENT_TARGETS, slot,
         useCache, clientTarget);
     if (err == Error::NONE) {
-      closeFence = false;
       err = updateBufErr;
     }
-  }
-  if (closeFence) {
-    close(fence);
   }
   if (err != Error::NONE) {
     mWriter.setError(getCommandLoc(), err);
@@ -1238,22 +1362,18 @@ bool QtiComposerClient::CommandReader::parseSetOutputBuffer(uint16_t length) {
   bool useCache;
   auto slot = read();
   auto outputBuffer = readHandle(useCache);
-  auto fence = readFence();
-  bool closeFence = true;
-
+  shared_ptr<Fence> fence = nullptr;
+  readFence(&fence, "outbuf");
   auto err = lookupBuffer(BufferCache::OUTPUT_BUFFERS, slot, useCache, outputBuffer, &outputBuffer);
   if (err == Error::NONE) {
     auto error = mClient.hwc_session_->SetOutputBuffer(mDisplay, outputBuffer, fence);
     err = static_cast<Error>(error);
     auto updateBufErr = updateBuffer(BufferCache::OUTPUT_BUFFERS, slot, useCache, outputBuffer);
     if (err == Error::NONE) {
-      closeFence = false;
       err = updateBufErr;
     }
   }
-  if (closeFence) {
-    close(fence);
-  }
+
   if (err != Error::NONE) {
     mWriter.setError(getCommandLoc(), err);
   }
@@ -1358,10 +1478,11 @@ bool QtiComposerClient::CommandReader::parseAcceptDisplayChanges(uint16_t length
   return true;
 }
 
-Error QtiComposerClient::CommandReader::presentDisplay(Display display, int32_t& presentFence,
-                                                       std::vector<Layer>& layers,
-                                                       std::vector<int32_t>& releaseFences) {
-  int32_t err = mClient.hwc_session_->PresentDisplay(display, &presentFence);
+Error QtiComposerClient::CommandReader::presentDisplay(Display display,
+                                                  shared_ptr<Fence>* presentFence,
+                                                  std::vector<Layer>& layers,
+                                                  std::vector<shared_ptr<Fence>>& releaseFences) {
+  int32_t err = mClient.hwc_session_->PresentDisplay(display, presentFence);
   if (err != HWC2_ERROR_NONE) {
     return static_cast<Error>(err);
   }
@@ -1375,8 +1496,7 @@ Error QtiComposerClient::CommandReader::presentDisplay(Display display, int32_t&
 
   layers.resize(count);
   releaseFences.resize(count);
-  err = mClient.hwc_session_->GetReleaseFences(display, &count, layers.data(),
-                                               releaseFences.data());
+  err = mClient.hwc_session_->GetReleaseFences(display, &count, layers.data(), &releaseFences);
   if (err != HWC2_ERROR_NONE) {
     ALOGW("failed to get release fences");
     layers.clear();
@@ -1392,11 +1512,11 @@ bool QtiComposerClient::CommandReader::parsePresentDisplay(uint16_t length) {
     return false;
   }
 
-  int presentFence;
+  shared_ptr<Fence> presentFence = nullptr;
   std::vector<Layer> layers;
-  std::vector<int> fences;
+  std::vector<shared_ptr<Fence>> fences;
 
-  auto err = presentDisplay(mDisplay, presentFence, layers, fences);
+  auto err = presentDisplay(mDisplay, &presentFence, layers, fences);
   if (err == Error::NONE) {
     mWriter.setPresentFence(presentFence);
     mWriter.setReleaseFences(layers, fences);
@@ -1415,10 +1535,10 @@ bool QtiComposerClient::CommandReader::parsePresentOrValidateDisplay(uint16_t le
   // First try to Present as is.
   mClient.getCapabilities();
   if (mClient.hasCapability(HWC2_CAPABILITY_SKIP_VALIDATE)) {
-    int presentFence = -1;
+    shared_ptr<Fence> presentFence = nullptr;
     std::vector<Layer> layers;
-    std::vector<int> fences;
-    auto err = presentDisplay(mDisplay, presentFence, layers, fences);
+    std::vector<shared_ptr<Fence>> fences;
+    auto err = presentDisplay(mDisplay, &presentFence, layers, fences);
     if (err == Error::NONE) {
       mWriter.setPresentOrValidateResult(1);
       mWriter.setPresentFence(presentFence);
@@ -1469,21 +1589,16 @@ bool QtiComposerClient::CommandReader::parseSetLayerBuffer(uint16_t length) {
   bool useCache;
   auto slot = read();
   auto buffer = readHandle(useCache);
-  auto fence = readFence();
-  bool closeFence = true;
-
+  shared_ptr<Fence> fence = nullptr;
+  readFence(&fence, "layer");
   auto error = lookupBuffer(BufferCache::LAYER_BUFFERS, slot, useCache, buffer, &buffer);
   if (error == Error::NONE) {
     auto err = mClient.hwc_session_->SetLayerBuffer(mDisplay, mLayer, buffer, fence);
     error = static_cast<Error>(err);
     auto updateBufErr = updateBuffer(BufferCache::LAYER_BUFFERS, slot, useCache, buffer);
     if (static_cast<Error>(error) == Error::NONE) {
-      closeFence = false;
       error = updateBufErr;
     }
-  }
-  if (closeFence) {
-    close(fence);
   }
   if (static_cast<Error>(error) != Error::NONE) {
     mWriter.setError(getCommandLoc(), static_cast<Error>(error));
@@ -1933,7 +2048,7 @@ IQtiComposerClient* HIDL_FETCH_IQtiComposerClient(const char* /* name */) {
 }
 
 }  // namespace implementation
-}  // namespace V2_1
+}  // namespace V3_0
 }  // namespace composer
 }  // namespace display
 }  // namespace hardware

@@ -109,6 +109,15 @@ CamxPixelFormat CameraInfo::GetCameraPixelFormat(int hal_format) {
     case HAL_PIXEL_FORMAT_NV12_UBWC_FLEX:
       format = CAMERA_PIXEL_FORMAT_UBWC_FLEX;
       break;
+    case HAL_PIXEL_FORMAT_NV12_UBWC_FLEX_2_BATCH:
+      format = CAMERA_PIXEL_FORMAT_UBWC_FLEX_2_BATCH;
+      break;
+    case HAL_PIXEL_FORMAT_NV12_UBWC_FLEX_4_BATCH:
+      format = CAMERA_PIXEL_FORMAT_UBWC_FLEX_4_BATCH;
+      break;
+    case HAL_PIXEL_FORMAT_NV12_UBWC_FLEX_8_BATCH:
+      format = CAMERA_PIXEL_FORMAT_UBWC_FLEX_8_BATCH;
+      break;
     case HAL_PIXEL_FORMAT_MULTIPLANAR_FLEX:
       format = CAMERA_PIXEL_FORMAT_MULTIPLANAR_FLEX;
       break;

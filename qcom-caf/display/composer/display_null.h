@@ -69,7 +69,7 @@ class DisplayNull : public DisplayInterface {
   MAKE_NO_OP(TeardownConcurrentWriteback(void))
   MAKE_NO_OP(Commit(LayerStack *))
   MAKE_NO_OP(GetDisplayState(DisplayState *))
-  MAKE_NO_OP(SetDisplayState(DisplayState, bool, int*))
+  MAKE_NO_OP(SetDisplayState(DisplayState, bool, shared_ptr<Fence> *))
   MAKE_NO_OP(SetFrameBufferConfig(const DisplayConfigVariableInfo &))
   MAKE_NO_OP(Flush(LayerStack *))
   MAKE_NO_OP(GetVSyncState(bool *))
@@ -94,7 +94,7 @@ class DisplayNull : public DisplayInterface {
   MAKE_NO_OP(GetDefaultColorMode(string *))
   MAKE_NO_OP(ApplyDefaultDisplayMode())
   MAKE_NO_OP(SetCursorPosition(int, int))
-  MAKE_NO_OP(SetRefreshRate(uint32_t, bool))
+  MAKE_NO_OP(SetRefreshRate(uint32_t, bool, bool))
   MAKE_NO_OP(GetPanelBrightness(float *))
   MAKE_NO_OP(GetPanelMaxBrightness(uint32_t *))
   MAKE_NO_OP(GetRefreshRate(uint32_t *))
@@ -121,6 +121,7 @@ class DisplayNull : public DisplayInterface {
   MAKE_NO_OP(colorSamplingOn());
   MAKE_NO_OP(colorSamplingOff());
   MAKE_NO_OP(SetDisplayElapseTime(uint64_t))
+  MAKE_NO_OP(ClearLUTs())
 
  protected:
   DisplayConfigVariableInfo default_variable_config_ = {};
@@ -144,7 +145,7 @@ class DisplayNullExternal : public DisplayNull {
   virtual DisplayError Commit(LayerStack *layer_stack);
   virtual DisplayError GetDisplayState(DisplayState *state);
   virtual DisplayError SetDisplayState(DisplayState state, bool teardown,
-                                       int *release_fence);
+                                       shared_ptr<Fence> *release_fence);
   virtual DisplayError SetFrameBufferConfig(const DisplayConfigVariableInfo &variable_info);
   virtual DisplayError GetFrameBufferConfig(DisplayConfigVariableInfo *variable_info);
   virtual DisplayError GetDisplayIdentificationData(uint8_t *out_port, uint32_t *out_data_size,

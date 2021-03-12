@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2017 The Android Open Source Project
@@ -24,17 +24,19 @@
 #include <sync/sync.h>
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
+#include <utils/fence.h>
 
 #include <limits>
 #include <algorithm>
 #include <vector>
+#include <string>
 
 namespace vendor {
 namespace qti {
 namespace hardware {
 namespace display {
 namespace composer {
-namespace V2_1 {
+namespace V3_0 {
 
 using ::android::hardware::graphics::common::V1_0::ColorTransform;
 using ::android::hardware::graphics::common::V1_0::Dataspace;
@@ -48,6 +50,10 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::hidl_handle;
 
 using CommandQueueType = MessageQueue<uint32_t, ::android::hardware::kSynchronizedReadWrite>;
+
+using std::shared_ptr;
+using std::string;
+using sdm::Fence;
 
 // This class helps build a command queue.  Note that all sizes/lengths are in units of uint32_t's.
 class CommandWriter {
@@ -206,13 +212,14 @@ class CommandWriter {
   }
 
   static constexpr uint16_t kSetPresentFenceLength = 1;
-  void setPresentFence(int presentFence) {
+  void setPresentFence(const shared_ptr<Fence> &presentFence) {
     beginCommand(IQtiComposerClient::Command::SET_PRESENT_FENCE, kSetPresentFenceLength);
     writeFence(presentFence);
     endCommand();
   }
 
-  void setReleaseFences(const std::vector<Layer>& layers, const std::vector<int>& releaseFences) {
+  void setReleaseFences(const std::vector<Layer>& layers,
+                        const std::vector<shared_ptr<Fence>>& releaseFences) {
     size_t totalLayers = std::min(layers.size(), releaseFences.size());
     size_t currentLayer = 0;
 
@@ -240,8 +247,9 @@ class CommandWriter {
     endCommand();
   }
 
-  void setClientTarget(uint32_t slot, const native_handle_t* target, int acquireFence,
-                       Dataspace dataspace, const std::vector<IQtiComposerClient::Rect>& damage) {
+  void setClientTarget(uint32_t slot, const native_handle_t* target,
+                       const shared_ptr<Fence>& acquireFence, Dataspace dataspace,
+                       const std::vector<IQtiComposerClient::Rect>& damage) {
     bool doWrite = (damage.size() <= (kMaxLength - 4) / 4);
     size_t length = 4 + ((doWrite) ? damage.size() * 4 : 0);
 
@@ -260,7 +268,8 @@ class CommandWriter {
   }
 
   static constexpr uint16_t kSetOutputBufferLength = 3;
-  void setOutputBuffer(uint32_t slot, const native_handle_t* buffer, int releaseFence) {
+  void setOutputBuffer(uint32_t slot, const native_handle_t* buffer,
+                       const shared_ptr<Fence>& releaseFence) {
     beginCommand(IQtiComposerClient::Command::SET_OUTPUT_BUFFER, kSetOutputBufferLength);
     write(slot);
     writeHandle(buffer, true);
@@ -303,7 +312,8 @@ class CommandWriter {
   }
 
   static constexpr uint16_t kSetLayerBufferLength = 3;
-  void setLayerBuffer(uint32_t slot, const native_handle_t* buffer, int acquireFence) {
+  void setLayerBuffer(uint32_t slot, const native_handle_t* buffer,
+                      const shared_ptr<Fence>& acquireFence) {
     beginCommand(IQtiComposerClient::Command::SET_LAYER_BUFFER, kSetLayerBufferLength);
     write(slot);
     writeHandle(buffer, true);
@@ -576,17 +586,16 @@ class CommandWriter {
     writeHandle(handle, false);
   }
 
-  // ownership of fence is transferred
-  void writeFence(int fence) {
+  // Handle would own fence hereafter. Hence provide a dupped fd.
+  void writeFence(const shared_ptr<Fence>& fence) {
     native_handle_t* handle = nullptr;
-    if (fence >= 0) {
+    if (fence) {
       handle = getTemporaryHandle(1, 0);
       if (handle) {
-        handle->data[0] = fence;
+        handle->data[0] = Fence::Dup(fence);
       } else {
-        ALOGW("failed to get temporary handle for fence %d", fence);
-        sync_wait(fence, -1);
-        close(fence);
+        ALOGW("failed to get temporary handle for fence %s", Fence::GetStr(fence).c_str());
+        Fence::Wait(fence);
       }
     }
 
@@ -817,26 +826,23 @@ class CommandReaderBase {
     return readHandle(useCache);
   }
 
-  // ownership of fence is transferred
-  int readFence() {
+  // Handle would still own original fence. Hence create a Fence object on duped fd.
+  void readFence(shared_ptr<Fence>* fence, const string &name) {
     auto handle = readHandle();
     if (!handle || handle->numFds == 0) {
-      return -1;
+      return;
     }
 
     if (handle->numFds != 1) {
       ALOGE("invalid fence handle with %d fds", handle->numFds);
-      return -1;
+      return;
     }
 
-    int fd = dup(handle->data[0]);
-    if (fd < 0) {
+    *fence = Fence::Create(dup(handle->data[0]), name);
+    if (*fence == nullptr) {
       ALOGW("failed to dup fence %d", handle->data[0]);
       sync_wait(handle->data[0], -1);
-      fd = -1;
     }
-
-    return fd;
   }
 
  private:
@@ -854,7 +860,7 @@ class CommandReaderBase {
   hidl_vec<hidl_handle> mDataHandles;
 };
 
-}  // namespace V2_1
+}  // namespace V3_0
 }  // namespace composer
 }  // namespace display
 }  // namespace hardware

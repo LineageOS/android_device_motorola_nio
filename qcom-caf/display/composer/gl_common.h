@@ -65,19 +65,17 @@ class GLCommon {
   virtual void SetSourceBuffer(const private_handle_t *src_hnd);
   virtual void DestroyContext(GLContext *ctx);
   virtual void DeleteProgram(uint32_t id);
-  virtual int WaitOnInputFence(const std::vector<int> &in_fence_fds);
-  virtual int CreateOutputFence();
+  virtual int WaitOnInputFence(const std::vector<shared_ptr<Fence>> &in_fences);
+  virtual int CreateOutputFence(shared_ptr<Fence> *out_fence);
   virtual void ClearCache();
   virtual void SetRealTimePriority();
   virtual void SetViewport(const GLRect &dst_rect);
-  int GetMergedFd(const std::vector<int> &fence_fds, const std::string &desc, bool ignore_signaled);
 
  protected:
   virtual ~GLCommon() { }
 
  private:
   EGLImageWrapper image_wrapper_;
-  const private_handle_t *dst_hnd_ = nullptr;
 };
 
 }  // namespace sdm

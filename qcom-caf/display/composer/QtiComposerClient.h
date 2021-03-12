@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2017 The Android Open Source Project
@@ -20,12 +20,13 @@
 #ifndef __QTICOMPOSERCLIENT_H__
 #define __QTICOMPOSERCLIENT_H__
 
-#include <vendor/qti/hardware/display/composer/2.1/IQtiComposerClient.h>
+#include <vendor/qti/hardware/display/composer/3.0/IQtiComposerClient.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <log/log.h>
 #include <unordered_set>
 #include <vector>
+#include <string>
 
 #include "hwc_session.h"
 #include "QtiComposerCommandBuffer.h"
@@ -36,7 +37,7 @@ namespace qti {
 namespace hardware {
 namespace display {
 namespace composer {
-namespace V2_1 {
+namespace V3_0 {
 namespace implementation {
 
 namespace common_V1_0 = ::android::hardware::graphics::common::V1_0;
@@ -46,7 +47,9 @@ namespace common_V1_2 = ::android::hardware::graphics::common::V1_2;
 namespace composer_V2_1 = ::android::hardware::graphics::composer::V2_1;
 namespace composer_V2_2 = ::android::hardware::graphics::composer::V2_2;
 namespace composer_V2_3 = ::android::hardware::graphics::composer::V2_3;
+namespace composer_V2_4 = ::android::hardware::graphics::composer::V2_4;
 
+using DisplayCapability_V2_3 = composer_V2_3::IComposerClient::DisplayCapability;
 using PerFrameMetadataKey_V2 = composer_V2_2::IComposerClient::PerFrameMetadataKey;
 using PerFrameMetadataKey = composer_V2_3::IComposerClient::PerFrameMetadataKey;
 
@@ -61,6 +64,7 @@ using ::android::hardware::hidl_bitfield;
 using ::android::hardware::graphics::composer::V2_1::Error;
 
 using sdm::HWCSession;
+using sdm::Fence;
 
 class BufferCacheEntry {
  public:
@@ -186,6 +190,30 @@ class QtiComposerClient : public IQtiComposerClient {
                                            getDisplayBrightnessSupport_cb _hidl_cb) override;
   Return<Error> setDisplayBrightness(uint64_t display, float brightness) override;
 
+  // Methods from ::android::hardware::graphics::composer::V2_4::IComposerClient follow.
+  Return<void> registerCallback_2_4(const sp<composer_V2_4::IComposerCallback> &callback) override;
+  Return<void> getDisplayCapabilities_2_4(uint64_t display,
+                                          getDisplayCapabilities_2_4_cb _hidl_cb) override;
+  Return<void> getDisplayConnectionType(uint64_t display,
+                                        getDisplayConnectionType_cb _hidl_cb) override;
+  Return<void> getDisplayAttribute_2_4(uint64_t display, uint32_t config,
+                                       composer_V2_4::IComposerClient::Attribute attribute,
+                                       getDisplayAttribute_2_4_cb _hidl_cb) override;
+
+  Return<void> getDisplayVsyncPeriod(uint64_t display, getDisplayVsyncPeriod_cb _hidl_cb) override;
+  Return<void> setActiveConfigWithConstraints(
+      uint64_t display, uint32_t config,
+      const VsyncPeriodChangeConstraints &vsyncPeriodChangeConstraints,
+      setActiveConfigWithConstraints_cb _hidl_cb) override;
+
+  Return<composer_V2_4::Error> setAutoLowLatencyMode(uint64_t display, bool on) override;
+
+  Return<void> getSupportedContentTypes(uint64_t display,
+                                        getSupportedContentTypes_cb _hidl_cb) override;
+  Return<composer_V2_4::Error> setContentType(
+      uint64_t display, composer_V2_4::IComposerClient::ContentType type) override;
+  Return<void> getLayerGenericMetadataKeys(getLayerGenericMetadataKeys_cb _hidl_cb) override;
+
   // Methods for RegisterCallback
   void enableCallback(bool enable);
   static void onHotplug(hwc2_callback_data_t callbackData, hwc2_display_t display,
@@ -193,10 +221,17 @@ class QtiComposerClient : public IQtiComposerClient {
   static void onRefresh(hwc2_callback_data_t callbackData, hwc2_display_t display);
   static void onVsync(hwc2_callback_data_t callbackData, hwc2_display_t display,
                         int64_t timestamp);
+  static void onVsync_2_4(hwc2_callback_data_t callbackData, hwc2_display_t display,
+                          int64_t timestamp, VsyncPeriodNanos vsyncPeriodNanos);
+  static void onVsyncPeriodTimingChanged(hwc2_callback_data_t callbackData,
+                                           hwc2_display_t display,
+                                           hwc_vsync_period_change_timeline_t* updatedTimeline);
+  static void onSeamlessPossible(hwc2_callback_data_t callbackData, hwc2_display_t display);
 
   // Methods for ConcurrentWriteBack
-  hidl_handle getFenceHandle(const android::base::unique_fd& fenceFd, char* handleStorage);
-  Error getFenceFd(const hidl_handle& fenceHandle, android::base::unique_fd* outFenceFd);
+  hidl_handle getFenceHandle(const shared_ptr<Fence>& fence, char* handleStorage);
+  Error getFence(const hidl_handle& fenceHandle, shared_ptr<sdm::Fence>* outFence,
+                 const string& name);
   Error getDisplayReadbackBuffer(Display display, const native_handle_t* rawHandle,
                                  const native_handle_t** outHandle);
 
@@ -247,8 +282,9 @@ class QtiComposerClient : public IQtiComposerClient {
                           std::vector<IComposerClient::Composition>& compositionTypes,
                           uint32_t& displayRequestMask, std::vector<Layer>& requestedLayers,
                           std::vector<uint32_t>& requestMasks);
-    Error presentDisplay(Display display, int32_t& presentFence, std::vector<Layer>& layers,
-                         std::vector<int32_t>& releaseFences);
+    Error presentDisplay(Display display, shared_ptr<Fence>* presentFence,
+                         std::vector<Layer>& layers,
+                         std::vector<shared_ptr<Fence>>& releaseFences);
 
    private:
     // Commands from ::android::hardware::graphics::composer::V2_1::IComposerClient follow.
@@ -319,7 +355,9 @@ class QtiComposerClient : public IQtiComposerClient {
   };
 
   HWCSession *hwc_session_ = nullptr;
-  sp<composer_V2_1::IComposerCallback> mCallback;
+  sp<composer_V2_1::IComposerCallback> callback_ = nullptr;
+  sp<composer_V2_4::IComposerCallback> callback24_ = nullptr;
+  bool mUseCallback24_ = false;
   std::mutex mCommandMutex;
   // 64KiB minus a small space for metadata such as read/write pointers */
   static constexpr size_t kWriterInitialSize = 64 * 1024 / sizeof(uint32_t) - 16;
@@ -332,7 +370,7 @@ class QtiComposerClient : public IQtiComposerClient {
 extern "C" IQtiComposerClient* HIDL_FETCH_IQtiComposerClient(const char* name);
 
 }  // namespace implementation
-}  // namespace V2_1
+}  // namespace V3_0
 }  // namespace composer
 }  // namespace display
 }  // namespace hardware

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -134,9 +134,11 @@ HWC2::Error HWCDisplayPluggable::Validate(uint32_t *out_num_types, uint32_t *out
   }
 
   // Apply current Color Mode and Render Intent.
-  if (color_mode_->ApplyCurrentColorModeWithRenderIntent(
-      static_cast<bool>(layer_stack_.flags.hdr_present)) != HWC2::Error::None) {
-    // Fallback to GPU Composition, if Color Mode can't be applied.
+  status = color_mode_->ApplyCurrentColorModeWithRenderIntent(
+                                                 static_cast<bool>(layer_stack_.flags.hdr_present));
+  if (status != HWC2::Error::None || has_color_tranform_) {
+    // Fallback to GPU Composition if Color Mode can't be applied or if a color tranform needs to be
+    // applied.
     MarkLayersForClientComposition();
   }
 
@@ -146,7 +148,7 @@ HWC2::Error HWCDisplayPluggable::Validate(uint32_t *out_num_types, uint32_t *out
   return status;
 }
 
-HWC2::Error HWCDisplayPluggable::Present(int32_t *out_retire_fence) {
+HWC2::Error HWCDisplayPluggable::Present(shared_ptr<Fence> *out_retire_fence) {
   auto status = HWC2::Error::None;
 
   if (!active_secure_sessions_[kSecureDisplay]) {
@@ -233,12 +235,9 @@ int HWCDisplayPluggable::SetState(bool connected) {
         DLOGW("Set frame buffer config failed. Error = %d", error);
         return -1;
       }
-      int release_fence = -1;
+      shared_ptr<Fence> release_fence = nullptr;
       display_null_.GetDisplayState(&state);
       display_intf_->SetDisplayState(state, false /* teardown */, &release_fence);
-      if (release_fence >= 0) {
-        ::close(release_fence);
-      }
       validated_ = false;
 
       SetVsyncEnabled(HWC2::Vsync::Enable);
@@ -250,14 +249,11 @@ int HWCDisplayPluggable::SetState(bool connected) {
     }
   } else {
     if (!display_null_.IsActive()) {
-      int release_fence = -1;
+      shared_ptr<Fence> release_fence = nullptr;
       // Preserve required attributes of HDMI display that surfaceflinger sees.
       // Restore HDMI attributes when display is reconnected.
       display_intf_->GetDisplayState(&state);
       display_null_.SetDisplayState(state, false /* teardown */, &release_fence);
-      if (release_fence >= 0) {
-        ::close(release_fence);
-      }
 
       error = display_intf_->GetFrameBufferConfig(&fb_config);
       if (error != kErrorNone) {
@@ -331,6 +327,24 @@ HWC2::Error HWCDisplayPluggable::SetColorModeWithRenderIntent(ColorMode mode, Re
 HWC2::Error HWCDisplayPluggable::UpdatePowerMode(HWC2::PowerMode mode) {
   current_power_mode_ = mode;
   validated_ = false;
+  return HWC2::Error::None;
+}
+
+HWC2::Error HWCDisplayPluggable::SetColorTransform(const float *matrix,
+                                                   android_color_transform_t hint) {
+  if (HAL_COLOR_TRANSFORM_IDENTITY == hint) {
+    has_color_tranform_ = false;
+    // From 2.1 IComposerClient.hal:
+    // If the device is not capable of either using the hint or the matrix to apply the desired
+    // color transform, it must force all layers to client composition during VALIDATE_DISPLAY.
+  } else {
+    // Also, interpret HAL_COLOR_TRANSFORM_ARBITRARY_MATRIX hint as non-identity matrix.
+    has_color_tranform_ = true;
+  }
+
+  callbacks_->Refresh(id_);
+  validated_ = false;
+
   return HWC2::Error::None;
 }
 

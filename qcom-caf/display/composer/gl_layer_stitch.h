@@ -42,16 +42,16 @@ struct StitchParams {
   GLRect src_rect;
   GLRect dst_rect;
   GLRect scissor_rect;
-  int src_acquire_fence_fd = -1;
-  int dst_acquire_fence_fd = -1;
+  shared_ptr<Fence> src_acquire_fence = nullptr;
+  shared_ptr<Fence> dst_acquire_fence = nullptr;
 };
 
 class GLLayerStitch {
  public:
   static GLLayerStitch* GetInstance(bool secure);
   static void Destroy(GLLayerStitch *intf);
-
-  virtual int Blit(const std::vector<StitchParams> &stitch_params, int *release_fence_fd) = 0;
+  virtual int Blit(const std::vector<StitchParams> &stitch_params,
+                   shared_ptr<Fence> *release_fence) = 0;
  protected:
   virtual ~GLLayerStitch() { }
 };

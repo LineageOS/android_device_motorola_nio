@@ -102,45 +102,40 @@ void GLCommon::SetSourceBuffer(const private_handle_t *src_hnd) {
 
 void GLCommon::SetDestinationBuffer(const private_handle_t *dst_hnd) {
   DTRACE_SCOPED();
-  if (dst_hnd_ == dst_hnd) {
-    return;
-  }
   EGLImageBuffer *dst_buffer = image_wrapper_.wrap(reinterpret_cast<const void *>(dst_hnd));
 
   if (dst_buffer) {
     GL(glBindFramebuffer(GL_FRAMEBUFFER, dst_buffer->getFramebuffer()));
   }
-
-  // Same buffer gets reprogrammed. Avoid repeated setting.
-  dst_hnd_ = dst_hnd;
 }
 
-int GLCommon::WaitOnInputFence(const std::vector<int> &in_fence_fds) {
+int GLCommon::WaitOnInputFence(const std::vector<shared_ptr<Fence>> &in_fences) {
   DTRACE_SCOPED();
 
-  int merged_fd = GetMergedFd(in_fence_fds, "Acquire_fence", true);
-  if (merged_fd == -1) {
-    return 0;
+  shared_ptr<Fence> in_fence = Fence::Merge(in_fences, true /* ignore signaled*/);
+  if (in_fence == nullptr) {
+   return 0;
   }
 
-  EGLint attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID, merged_fd, EGL_NONE};
+  int fd = Fence::Dup(in_fence);
+  EGLint attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID, fd, EGL_NONE};
   EGLSyncKHR sync = eglCreateSyncKHR(eglGetCurrentDisplay(), EGL_SYNC_NATIVE_FENCE_ANDROID,
                                      attribs);
 
   if (sync == EGL_NO_SYNC_KHR) {
-    DLOGE("Failed to create sync from source fd: %d", merged_fd);
+    DLOGE("Failed to create sync from source fd: %s", Fence::GetStr(in_fence).c_str());
+    close(fd);
     return -1;
-  } else {
-    EGL(eglWaitSyncKHR(eglGetCurrentDisplay(), sync, 0));
-    EGL(eglDestroySyncKHR(eglGetCurrentDisplay(), sync));
   }
+
+  EGL(eglWaitSyncKHR(eglGetCurrentDisplay(), sync, 0));
+  EGL(eglDestroySyncKHR(eglGetCurrentDisplay(), sync));
 
   return 0;
 }
 
-int GLCommon::CreateOutputFence() {
+int GLCommon::CreateOutputFence(shared_ptr<Fence> *out_fence) {
   DTRACE_SCOPED();
-  int fd = -1;
   EGLSyncKHR sync = eglCreateSyncKHR(eglGetCurrentDisplay(), EGL_SYNC_NATIVE_FENCE_ANDROID, NULL);
 
   // Swap buffer.
@@ -148,15 +143,20 @@ int GLCommon::CreateOutputFence() {
 
   if (sync == EGL_NO_SYNC_KHR) {
     DLOGE("Failed to create egl sync fence");
-  } else {
-    fd = eglDupNativeFenceFDANDROID(eglGetCurrentDisplay(), sync);
-    if (fd == EGL_NO_NATIVE_FENCE_FD_ANDROID) {
-      DLOGE("Failed to dup sync");
-    }
-    EGL(eglDestroySyncKHR(eglGetCurrentDisplay(), sync));
+    return -1;
   }
 
-  return fd;
+  int status = 0;
+  int fd = eglDupNativeFenceFDANDROID(eglGetCurrentDisplay(), sync);
+  if (fd == EGL_NO_NATIVE_FENCE_FD_ANDROID) {
+    status = -1;
+    DLOGE("Failed to dup sync");
+  } else {
+    *out_fence = Fence::Create(fd, "gl_out_fence");
+  }
+  EGL(eglDestroySyncKHR(eglGetCurrentDisplay(), sync));
+
+  return status;
 }
 
 void GLCommon::DestroyContext(GLContext* ctx) {
@@ -192,32 +192,6 @@ void GLCommon::SetViewport(const GLRect &dst_rect) {
   float width = dst_rect.right - dst_rect.left;
   float height = dst_rect.bottom - dst_rect.top;
   GL(glViewport(dst_rect.left, dst_rect.top, width, height));
-}
-
-int GLCommon::GetMergedFd(const std::vector<int> &fence_fds, const std::string &desc,
-                          bool ignore_signaled) {
-  DTRACE_SCOPED();
-  int merged_fd = -1;
-  for (auto &fence_fd : fence_fds) {
-    if (fence_fd == -1) {
-      continue;
-    }
-
-    // Fence got signaled.
-    if (ignore_signaled && (sync_wait(fence_fd, 0) >= 0)) {
-      continue;
-    }
-
-    if (merged_fd == -1) {
-      merged_fd = dup(fence_fd);
-    } else {
-      int temp = merged_fd;
-      merged_fd = sync_merge(desc.c_str(), fence_fd, merged_fd);
-      close(temp);
-    }
-  }
-
-  return merged_fd;
 }
 
 }  // namespace sdm

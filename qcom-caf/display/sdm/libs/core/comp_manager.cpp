@@ -39,15 +39,13 @@ namespace sdm {
 DisplayError CompManager::Init(const HWResourceInfo &hw_res_info,
                                ExtensionInterface *extension_intf,
                                BufferAllocator *buffer_allocator,
-                               BufferSyncHandler *buffer_sync_handler,
                                SocketHandler *socket_handler) {
   SCOPE_LOCK(locker_);
 
   DisplayError error = kErrorNone;
 
   if (extension_intf) {
-    error = extension_intf->CreateResourceExtn(hw_res_info, buffer_allocator, buffer_sync_handler,
-                                               &resource_intf_);
+    error = extension_intf->CreateResourceExtn(hw_res_info, buffer_allocator, &resource_intf_);
     extension_intf->CreateDppsControlExtn(&dpps_ctrl_intf_, socket_handler);
   } else {
     error = ResourceDefault::CreateResourceDefault(hw_res_info, &resource_intf_);
@@ -63,7 +61,6 @@ DisplayError CompManager::Init(const HWResourceInfo &hw_res_info,
   hw_res_info_ = hw_res_info;
   buffer_allocator_ = buffer_allocator;
   extension_intf_ = extension_intf;
-  sync_handler_ = buffer_sync_handler;
 
   return error;
 }
@@ -97,7 +94,7 @@ DisplayError CompManager::RegisterDisplay(int32_t display_id, DisplayType type,
   }
 
   Strategy *&strategy = display_comp_ctx->strategy;
-  strategy = new Strategy(extension_intf_, buffer_allocator_, sync_handler_, display_id, type,
+  strategy = new Strategy(extension_intf_, buffer_allocator_, display_id, type,
                           hw_res_info_, hw_panel_info, mixer_attributes, display_attributes,
                           fb_config);
   if (!strategy) {
@@ -160,7 +157,7 @@ DisplayError CompManager::RegisterDisplay(int32_t display_id, DisplayType type,
   }
 
   DLOGV_IF(kTagCompManager, "Registered displays [%s], display %d-%d",
-           StringDisplayList(registered_displays_), display_comp_ctx->display_id,
+           StringDisplayList(registered_displays_).c_str(), display_comp_ctx->display_id,
            display_comp_ctx->display_type);
 
   return kErrorNone;
@@ -185,12 +182,8 @@ DisplayError CompManager::UnregisterDisplay(Handle display_ctx) {
   registered_displays_.erase(display_comp_ctx->display_id);
   powered_on_displays_.erase(display_comp_ctx->display_id);
 
-  if (display_comp_ctx->display_type == kPluggable) {
-    max_layers_ = kMaxSDELayers;
-  }
-
   DLOGV_IF(kTagCompManager, "Registered displays [%s], display %d-%d",
-           StringDisplayList(registered_displays_), display_comp_ctx->display_id,
+           StringDisplayList(registered_displays_).c_str(), display_comp_ctx->display_id,
            display_comp_ctx->display_type);
 
   delete display_comp_ctx;
@@ -264,7 +257,7 @@ void CompManager::PrepareStrategyConstraints(Handle comp_handle, HWLayers *hw_la
   StrategyConstraints *constraints = &display_comp_ctx->constraints;
 
   constraints->safe_mode = safe_mode_;
-  constraints->max_layers = max_layers_;
+  constraints->max_layers = hw_res_info_.num_blending_stages;
 
   // Limit 2 layer SDE Comp if its not a Primary Display.
   // Safe mode is the policy for External display on a low end device.
@@ -427,7 +420,7 @@ DisplayError CompManager::PostCommit(Handle display_ctx, HWLayers *hw_layers) {
   display_comp_ctx->first_cycle_ = false;
 
   DLOGV_IF(kTagCompManager, "Registered displays [%s], display %d-%d",
-           StringDisplayList(registered_displays_), display_comp_ctx->display_id,
+           StringDisplayList(registered_displays_).c_str(), display_comp_ctx->display_id,
            display_comp_ctx->display_type);
 
   return kErrorNone;
@@ -454,6 +447,7 @@ DisplayError CompManager::SetIdleTimeoutMs(Handle display_ctx, uint32_t active_m
 }
 
 void CompManager::ProcessIdleTimeout(Handle display_ctx) {
+  DTRACE_SCOPED();
   SCOPE_LOCK(locker_);
 
   DisplayCompositionContext *display_comp_ctx =
@@ -584,7 +578,8 @@ DisplayError CompManager::ControlDpps(bool enable) {
   return kErrorNone;
 }
 
-bool CompManager::SetDisplayState(Handle display_ctx, DisplayState state, int sync_handle) {
+bool CompManager::SetDisplayState(Handle display_ctx, DisplayState state,
+                                  const shared_ptr<Fence> &sync_handle) {
   DisplayCompositionContext *display_comp_ctx =
       reinterpret_cast<DisplayCompositionContext *>(display_ctx);
 
@@ -615,8 +610,8 @@ bool CompManager::SetDisplayState(Handle display_ctx, DisplayState state, int sy
   bool inactive = (state == kStateOff) || (state == kStateDozeSuspend);
   UpdateStrategyConstraints(display_comp_ctx->is_primary_panel, inactive);
 
-  resource_intf_->Perform(ResourceInterface::kCmdUpdateSyncHandle,
-                          display_comp_ctx->display_resource_ctx, sync_handle);
+  resource_intf_->UpdateSyncHandle(display_comp_ctx->display_resource_ctx, sync_handle);
+
   return true;
 }
 
@@ -630,7 +625,7 @@ DisplayError CompManager::SetColorModesInfo(Handle display_ctx,
   return kErrorNone;
 }
 
-const char *CompManager::StringDisplayList(const std::set<int32_t> &displays) {
+std::string CompManager::StringDisplayList(const std::set<int32_t> &displays) {
   std::string displays_str;
   for (auto disps : displays) {
     if (displays_str.empty()) {
@@ -639,7 +634,7 @@ const char *CompManager::StringDisplayList(const std::set<int32_t> &displays) {
       displays_str += ", " + std::to_string(disps);
     }
   }
-  return displays_str.c_str();
+  return displays_str;
 }
 
 DisplayError CompManager::SetBlendSpace(Handle display_ctx, const PrimariesTransfer &blend_space) {

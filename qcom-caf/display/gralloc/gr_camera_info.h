@@ -51,8 +51,14 @@ typedef enum : unsigned int {
                                          // individual APIs
   CAMERA_PIXEL_FORMAT_UBWC_FLEX = 0x126,  // YUV format with fliexible alignment defined by
                                           // individual APIs
-  CAMERA_PIXEL_FORMAT_MULTIPLANAR_FLEX = 0x127,  // YUV format with fliexible alignment defined by
-                                                 // individual APIs
+  CAMERA_PIXEL_FORMAT_MULTIPLANAR_FLEX = 0x127,   // YUV format with fliexible alignment defined by
+                                                  // individual APIs
+  CAMERA_PIXEL_FORMAT_UBWC_FLEX_2_BATCH = 0x128,  // YUV format with fliexible alignment defined by
+                                                  // individual APIs
+  CAMERA_PIXEL_FORMAT_UBWC_FLEX_4_BATCH = 0x129,  // YUV format with fliexible alignment defined by
+                                                  // individual APIs
+  CAMERA_PIXEL_FORMAT_UBWC_FLEX_8_BATCH = 0x130,  // YUV format with fliexible alignment defined by
+                                                  // individual APIs
   CAMERA_PIXEL_FORMAT_NV12_VENUS = 0x7FA30C04,           // NV12 video format
   CAMERA_PIXEL_FORMAT_NV12_HEIF = 0x00000116,            // HEIF video YUV420 format
   CAMERA_PIXEL_FORMAT_YCbCr_420_SP_UBWC = 0x7FA30C06,    // 8 bit YUV 420 semi-planar UBWC format

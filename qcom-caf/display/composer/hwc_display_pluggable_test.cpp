@@ -161,7 +161,7 @@ HWC2::Error HWCDisplayPluggableTest::Validate(uint32_t *out_num_types, uint32_t 
   return  status;
 }
 
-HWC2::Error HWCDisplayPluggableTest::Present(int32_t *out_retire_fence) {
+HWC2::Error HWCDisplayPluggableTest::Present(shared_ptr<Fence> *out_retire_fence) {
   auto status = HWC2::Error::None;
 
   if (active_secure_sessions_[kSecureDisplay]) {
@@ -722,23 +722,11 @@ int HWCDisplayPluggableTest::DestroyLayerStack() {
   return 0;
 }
 
-HWC2::Error HWCDisplayPluggableTest::PostCommit(int32_t *out_retire_fence) {
+HWC2::Error HWCDisplayPluggableTest::PostCommit(shared_ptr<Fence> *out_retire_fence) {
   auto status = HWC2::Error::None;
   // Do no call flush on errors, if a successful buffer is never submitted.
   if (flush_ && flush_on_error_) {
     display_intf_->Flush(&layer_stack_);
-  }
-  if (!flush_) {
-    for (size_t i = 0; i < layer_stack_.layers.size(); i++) {
-      Layer *layer = layer_stack_.layers.at(i);
-      LayerBuffer &layer_buffer = layer->input_buffer;
-
-      close(layer_buffer.release_fence_fd);
-      layer_buffer.release_fence_fd = -1;
-    }
-    close(layer_stack_.retire_fence_fd);
-    layer_stack_.retire_fence_fd = -1;
-    *out_retire_fence = -1;
   }
   flush_ = false;
 

@@ -121,6 +121,8 @@
 #define DISABLE_ROTATOR_PRE_DOWNSCALER_PROP  DISPLAY_PROP("disable_pre_downscaler")
 #define DISABLE_INLINE_ROTATOR_UI_PROP       DISPLAY_PROP("disable_inline_rotator_ui")
 #define ENABLE_POMS_DURING_DOZE              DISPLAY_PROP("enable_poms_during_doze")
+#define DISABLE_DYNAMIC_FPS                  DISPLAY_PROP("disable_dynamic_fps")
+#define ENHANCE_IDLE_TIME                    DISPLAY_PROP("enhance_idle_time")
 
 // Add all vendor.display properties above
 
