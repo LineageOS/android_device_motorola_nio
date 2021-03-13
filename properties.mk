@@ -161,7 +161,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     debug.mdpcomp.logs=0 \
     debug.sf.hw=0 \
     debug.sf.latch_unsignaled=1 \
-    debug.sf.high_fps_late_app_phase_offset_ns=1000000 \
     persist.demo.hdmirotationlock=false \
     persist.sys.sf.color_saturation=1.0 \
     persist.sys.sf.native_mode=1 \
@@ -300,9 +299,9 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     debug.sf.late.sf.duration=10500000 \
     debug.sf.late.app.duration=20500000 \
     debug.sf.early.sf.duration=16000000 \
-    debug.sf.early.app.duration=16500000 \
+    debug.sf.early.app.duration=33500000 \
     debug.sf.earlyGl.sf.duration=13500000 \
-    debug.sf.earlyGl.app.duration=21000000
+    debug.sf.earlyGl.app.duration=38000000
 
 # Sensor
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
