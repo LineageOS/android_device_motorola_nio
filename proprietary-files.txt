@@ -857,10 +857,20 @@ vendor/radio/qcril_database/upgrade/19_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/20_version_qcrildb.sql
 
 # Radio - Telephony (qti-telephony-common)
-system_ext/framework/qti-telephony-common.jar
+-system_ext/framework/qti-telephony-common.jar|f83942f084745ea741266d899c3869b96e4f0d86
 
 # Radio - IMS (APK)
--system_ext/priv-app/ims/ims.apk
+-system_ext/priv-app/ims/ims.apk|61a632c8e5cbcc4e7d112d4a30abc805f31c1d59
+
+# Radio - Moto Telephony Framework
+-system_ext/framework/qcom-moto-telephony-ext.jar|44c4e2d92af58a322bb98dd3feba105cca7ebd7b
+-system_ext/framework/qcom-moto-ims-ext.jar|906a0397aac5c44099b29270cbdd396cb6bbea4f
+-framework/moto-ims-ext.jar|ca1cc4f4b37449157d1d084da70d279abf64ac00
+-framework/moto-settings.jar|29686a092ea353980e47e66baddde67677b6e6d9
+-framework/moto-telephony.jar|ab93073bce880ff7dc2e962623e88a57061964fd
+etc/permissions/moto-ims-ext.xml
+etc/permissions/moto-settings.xml
+etc/permissions/moto-telephony.xml
 
 # Radio - IMS
 product/etc/permissions/vendor.qti.hardware.data.connection-V1.0-java.xml
