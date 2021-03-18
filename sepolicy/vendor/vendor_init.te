@@ -10,3 +10,4 @@ set_prop(vendor_init, vendor_time_service_prop)
 set_prop(vendor_init, vendor_fm_prop)
 allow vendor_init { proc_dirty proc proc_sched_lib_mask_cpuinfo }:file rw_file_perms;
 allow vendor_init vendor_debugfs_clk:file write;
+allow vendor_init self:perf_event cpu;
