@@ -583,14 +583,6 @@
             <name>IPictureAdjustment</name>
             <instance>default</instance>
         </interface>
-        <interface>
-            <name>ISunlightEnhancement</name>
-            <instance>default</instance>
-        </interface>
-        <interface>
-            <name>IAdaptiveBacklight</name>
-            <instance>default</instance>
-        </interface>
     </hal>
     <hal format="hidl">
         <name>motorola.hardware.health</name>
