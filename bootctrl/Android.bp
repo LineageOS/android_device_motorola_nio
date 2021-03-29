@@ -49,5 +49,5 @@ cc_defaults {
 cc_library {
     name: "bootctrl.qcom",
     defaults: ["bootctrl_hal_defaults"],
-    static_libs: ["libgptutils.motorola_lito"],
+    static_libs: ["libgptutils.motorola_kona"],
 }

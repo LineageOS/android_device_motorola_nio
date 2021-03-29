@@ -16,7 +16,7 @@
 
 
 cc_library {
-    name: "libgptutils.motorola_lito",
+    name: "libgptutils.motorola_kona",
     vendor: true,
     recovery_available: true,
     shared_libs: [

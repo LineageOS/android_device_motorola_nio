@@ -15,9 +15,9 @@
 //
 
 cc_library_static {
-    name: "libinit_lito",
+    name: "libinit_kona",
     recovery_available: true,
-    srcs: ["init_lito.cpp"],
+    srcs: ["init_kona.cpp"],
     include_dirs: [
         "system/core/base/include",
         "system/core/init",

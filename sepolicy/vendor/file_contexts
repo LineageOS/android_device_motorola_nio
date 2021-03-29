@@ -11,10 +11,9 @@
 /(vendor|system/vendor)/super_modem  u:object_r:firmware_file:s0
 
 # HAL Services
-/(vendor|system/vendor)/bin/hw/android\.hardware\.light@2\.0-service\.motorola_lito    u:object_r:hal_light_default_exec:s0
-/(vendor|system/vendor)/bin/hw/android\.hardware\.power-service\.sm7250-libperfmgr     u:object_r:hal_power_default_exec:s0
+/(vendor|system/vendor)/bin/hw/android\.hardware\.light@2\.0-service\.motorola_kona    u:object_r:hal_light_default_exec:s0
 /(vendor|system/vendor)/bin/hw/motorola\.hardware\.audio\.adspd@1\.0-service           u:object_r:hal_audio_default_exec:s0
-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay@2\.0-service-sysfs\.motorola_lito    u:object_r:hal_lineage_livedisplay_sysfs_exec:s0
+/(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay@2\.0-service-sysfs\.motorola_kona    u:object_r:hal_lineage_livedisplay_sysfs_exec:s0
 
 # Vendor init scripts
 /(vendor|system/vendor)/bin/init\.mmi\.(touch|laser|usb)\.sh               u:object_r:vendor_qti_init_shell_exec:s0
@@ -23,10 +22,6 @@
 # Capsense
 /(vendor|system/vendor)/bin/capsense_reset                                 u:object_r:capsense_reset_exec:s0
 /(vendor|system/vendor)/bin/motpsd                                         u:object_r:motpsd_exec:s0
-
-# NFC
-/(vendor|system/vendor)/bin/hw/android\.hardware\.nfc@1\.2-service.st      u:object_r:hal_nfc_default_exec:s0
-/dev/st21nfc                                                               u:object_r:nfc_device:s0
 
 # Radio
 /data/vendor/misc/cutback(/.*)?                         u:object_r:cutback_data_file:s0

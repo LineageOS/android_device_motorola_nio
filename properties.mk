@@ -1,5 +1,5 @@
 #
-# Properties for sm7250
+# Properties for sm8250
 #
 
 # Audio
@@ -169,7 +169,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.sf.force_brightness_capability=1 \
     debug.sf.enable_gl_backpressure=1 \
     ro.opengles.version=196610 \
-    ro.gfx.driver.1=com.qualcomm.qti.gpudrivers.lito.api30 \
+    ro.gfx.driver.1=com.qualcomm.qti.gpudrivers.kona.api30 \
     vendor.display.enable_default_color_mode=1 \
     vendor.gralloc.disable_ubwc=0
 
@@ -242,6 +242,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Radio
 PRODUCT_PROPERTY_OVERRIDES += \
+    rild.libpath=/vendor/lib64/libril-qc-hal-qmi.so \
     ro.vendor.build.vendorprefix=/vendor \
     ro.vendor.radio.imei.sv=11 \
     persist.vendor.data.iwlan.enable=true \

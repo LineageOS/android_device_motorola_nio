@@ -18,7 +18,7 @@ BUILD_BROKEN_DUP_RULES := true
 
 BOARD_VENDOR := motorola
 
-VENDOR_PATH := device/motorola/sm7250-common
+VENDOR_PATH := device/motorola/sm8250-common
 
 # Architecture
 TARGET_ARCH := arm64
@@ -41,20 +41,19 @@ ENABLE_CPUSETS := true
 ENABLE_SCHEDBOOST := true
 
 # Bootloader
-TARGET_BOOTLOADER_BOARD_NAME := lito
+TARGET_BOOTLOADER_BOARD_NAME := kona
 TARGET_NO_BOOTLOADER := true
 TARGET_USES_UEFI := true
 
 # Kernel
-BOARD_BOOT_HEADER_VERSION := 2
 BOARD_KERNEL_BASE := 0x00000000
-BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=a600000.dwc3 swiotlb=2048 loop.max_part=7 cgroup.memory=nokmem,nosocket reboot=panic_warm
+BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=a600000.dwc3 swiotlb=2048 loop.max_part=7 cgroup.memory=nokmem,nosocket
+BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 BOARD_KERNEL_IMAGE_NAME := Image
 BOARD_KERNEL_PAGESIZE := 4096
-BOARD_KERNEL_SEPARATED_DTBO := true
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
+BOARD_KERNEL_SEPARATED_DTBO := false
 TARGET_KERNEL_ARCH := arm64
-TARGET_KERNEL_SOURCE := kernel/motorola/sm7250
+TARGET_KERNEL_SOURCE := kernel/motorola/sm8250
 TARGET_KERNEL_CLANG_COMPILE := true
 
 # Kernel modules - Audio
@@ -63,7 +62,7 @@ TARGET_MODULE_ALIASES += \
     apr_dlkm.ko:audio_apr.ko \
     bolero_cdc_dlkm.ko:audio_bolero_cdc.ko \
     hdmi_dlkm.ko:audio_hdmi.ko \
-    machine_dlkm.ko:audio_machine_lito.ko \
+    machine_dlkm.ko:audio_machine_kona.ko \
     mbhc_dlkm.ko:audio_mbhc.ko \
     native_dlkm.ko:audio_native.ko \
     pinctrl_lpi_dlkm.ko:audio_pinctrl_lpi.ko \
@@ -79,14 +78,11 @@ TARGET_MODULE_ALIASES += \
     tx_macro_dlkm.ko:audio_tx_macro.ko \
     usf_dlkm.ko:audio_usf.ko \
     va_macro_dlkm.ko:audio_va_macro.ko \
-    wcd937x_dlkm.ko:audio_wcd937x.ko \
-    wcd937x_slave_dlkm.ko:audio_wcd937x_slave.ko \
     wcd938x_dlkm.ko:audio_wcd938x.ko \
     wcd938x_slave_dlkm.ko:audio_wcd938x_slave.ko \
     wcd9xxx_dlkm.ko:audio_wcd9xxx.ko \
     wcd_core_dlkm.ko:audio_wcd_core.ko \
     wsa881x_dlkm.ko:audio_wsa881x.ko \
-    wsa883x_dlkm.ko:audio_wsa883x.ko \
     wsa_macro_dlkm.ko:audio_wsa_macro.ko
 
 # Kernel modules - WLAN
@@ -95,9 +91,9 @@ TARGET_MODULE_ALIASES += \
 
 # Platform
 BOARD_USES_QCOM_HARDWARE := true
-QCOM_BOARD_PLATFORMS += lito
-TARGET_BOARD_PLATFORM := lito
-TARGET_BOARD_PLATFORM_GPU := qcom-adreno620
+QCOM_BOARD_PLATFORMS += kona
+TARGET_BOARD_PLATFORM := kona
+TARGET_BOARD_PLATFORM_GPU := qcom-adreno650
 TARGET_USES_QCOM_BSP := true
 
 # APEX
@@ -140,8 +136,6 @@ endif
 WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY ?= true
 
 # Display
-USE_DEVICE_SPECIFIC_DISPLAY := true
-DEVICE_SPECIFIC_DISPLAY_PATH := $(VENDOR_PATH)/qcom-caf/display
 MAX_VIRTUAL_DISPLAY_DIMENSION := 4096
 NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
 TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
@@ -170,31 +164,29 @@ DEVICE_MATRIX_FILE := $(VENDOR_PATH)/compatibility_matrix.xml
 DEVICE_MANIFEST_FILE := $(VENDOR_PATH)/manifest.xml
 
 # Init
-TARGET_INIT_VENDOR_LIB := //$(VENDOR_PATH):libinit_lito
-TARGET_RECOVERY_DEVICE_MODULES := libinit_lito
+TARGET_INIT_VENDOR_LIB := //$(VENDOR_PATH):libinit_kona
+TARGET_RECOVERY_DEVICE_MODULES := libinit_kona
 
 # Metadata
 BOARD_USES_METADATA_PARTITION := true
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 100663296
-BOARD_DTBOIMG_PARTITION_SIZE := 2097152
-BOARD_RECOVERYIMAGE_PARTITION_SIZE := 104857600
-ifneq ($(WITH_GMS),true)
-BOARD_PRODUCTIMAGE_EXTFS_INODE_COUNT := -1
-BOARD_PRODUCTIMAGE_PARTITION_RESERVED_SIZE := 1258291200
-BOARD_SYSTEMIMAGE_EXTFS_INODE_COUNT := -1
-BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 1258291200
-endif
+BOARD_DTBOIMG_PARTITION_SIZE := 25165824
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
-BOARD_MOTOROLA_DYNAMIC_PARTITIONS_PARTITION_LIST := product system vendor
-BOARD_MOTOROLA_DYNAMIC_PARTITIONS_SIZE := 5268184832
+BOARD_VENDORIMAGE_PARTITION_RESERVED_SIZE := 30720000
+BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 30720000
+BOARD_MOTOROLA_DYNAMIC_PARTITIONS_PARTITION_LIST := product system system_ext vendor
+BOARD_MOTOROLA_DYNAMIC_PARTITIONS_SIZE := 6442450944
 BOARD_SUPER_PARTITION_GROUPS := motorola_dynamic_partitions
-BOARD_SUPER_PARTITION_SIZE := 10736369664
+BOARD_SUPER_PARTITION_SIZE := 12884901888
+BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 2097152
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
 TARGET_COPY_OUT_PRODUCT := product
+TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 TARGET_COPY_OUT_VENDOR := vendor
 
 # Power

@@ -25,7 +25,7 @@ source "${HELPER}"
 setup_vendor "${DEVICE_COMMON}" "${VENDOR}" "${ANDROID_ROOT}" true
 
 # Copyright headers and guards
-write_headers "nairo racer smith"
+write_headers "nio"
 
 # The standard common blobs
 write_makefiles "${MY_DIR}/proprietary-files.txt" true

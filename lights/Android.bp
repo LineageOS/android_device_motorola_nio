@@ -16,9 +16,9 @@
 cc_binary {
     relative_install_path: "hw",
     defaults: ["hidl_defaults"],
-    name: "android.hardware.light@2.0-service.motorola_lito",
-    init_rc: ["android.hardware.light@2.0-service.motorola_lito.rc"],
-    vintf_fragments: ["android.hardware.light@2.0-service.motorola_lito.xml"],
+    name: "android.hardware.light@2.0-service.motorola_kona",
+    init_rc: ["android.hardware.light@2.0-service.motorola_kona.rc"],
+    vintf_fragments: ["android.hardware.light@2.0-service.motorola_kona.xml"],
     srcs: ["service.cpp", "Light.cpp"],
     vendor: true,
     shared_libs: [
