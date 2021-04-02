@@ -568,8 +568,62 @@ vendor/bin/expat
 vendor/bin/motobox
 
 # Perf
+system_ext/lib/libqti-perfd-client_system.so
+system_ext/lib/libqti-util_system.so
+system_ext/lib/libqti_performance.so
+system_ext/lib/vendor.qti.hardware.perf@2.0.so
+system_ext/lib/vendor.qti.hardware.perf@2.1.so
+system_ext/lib/vendor.qti.hardware.perf@2.2.so
+system_ext/lib64/libqti-perfd-client_system.so
+system_ext/lib64/libqti-util_system.so
+system_ext/lib64/libqti_performance.so
+system_ext/lib64/vendor.qti.hardware.perf@2.0.so
+system_ext/lib64/vendor.qti.hardware.perf@2.1.so
+system_ext/lib64/vendor.qti.hardware.perf@2.2.so
+vendor/bin/hw/vendor.qti.hardware.perf@2.2-service
 vendor/bin/msm_irqbalance
+vendor/etc/init/vendor.qti.hardware.perf@2.2-service.rc
+vendor/etc/perf/commonresourceconfigs.xml
+vendor/etc/perf/perfboostsconfig.xml
+vendor/etc/perf/perfconfigstore.xml
+vendor/etc/perf/targetconfig.xml
+vendor/etc/perf/targetresourceconfigs.xml
+vendor/etc/powerhint.xml
+vendor/lib/libperfgluelayer.so
+vendor/lib/libqti-perfd-client.so
+vendor/lib/libqti-perfd.so
+vendor/lib/libqti-util.so
+vendor/lib/libqti-utils.so
+vendor/lib/vendor.qti.hardware.perf@2.0.so
+vendor/lib/vendor.qti.hardware.perf@2.1.so
+vendor/lib/vendor.qti.hardware.perf@2.2.so
+vendor/lib64/libadaptlaunch.so
+vendor/lib64/liblearningmodule.so
+vendor/lib64/libmeters-ns.so
+vendor/lib64/libmeters.so
+vendor/lib64/libperfconfig.so
+vendor/lib64/libperfgluelayer.so
 vendor/lib64/libqti-perfd-client.so
+vendor/lib64/libqti-perfd.so
+vendor/lib64/libqti-util.so
+vendor/lib64/libqti-utils.so
+vendor/lib64/vendor.qti.hardware.perf@2.0.so
+vendor/lib64/vendor.qti.hardware.perf@2.1.so
+vendor/lib64/vendor.qti.hardware.perf@2.2.so
+
+# Perf-IOP
+system_ext/lib/vendor.qti.hardware.iop@2.0.so
+system_ext/lib64/vendor.qti.hardware.iop@2.0.so
+vendor/bin/hw/vendor.qti.hardware.iop@2.0-service
+vendor/etc/init/vendor.qti.hardware.iop@2.0-service.rc
+vendor/lib/libqti-iopd-client.so
+vendor/lib/libqti-iopd.so
+vendor/lib/vendor.qti.hardware.iop@1.0.so
+vendor/lib/vendor.qti.hardware.iop@2.0.so
+vendor/lib64/libqti-iopd-client.so
+vendor/lib64/libqti-iopd.so
+vendor/lib64/vendor.qti.hardware.iop@1.0.so
+vendor/lib64/vendor.qti.hardware.iop@2.0.so
 
 # Perf - QSMP
 vendor/bin/vendor.qti.qspmhal@1.0-service
