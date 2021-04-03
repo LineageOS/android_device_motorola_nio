@@ -124,6 +124,9 @@ on boot
     # Disable serial console
     stop console
 
+    # DT2W
+    chown system system /sys/class/sensors/dt-gesture/enable
+
 on property:vendor.display.lcd_density=560
    setprop dalvik.vm.heapgrowthlimit 256m
 
