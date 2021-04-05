@@ -93,13 +93,13 @@ PRODUCT_ODM_PROPERTIES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.qcom.bluetooth.enable.splita2dp=true \
     persist.vendor.qcom.bluetooth.a2dp_offload_cap=sbc-aptx-aptxtws-aptxhd-aac-ldac \
-    persist.vendor.qcom.bluetooth.soc=cherokee \
+    persist.vendor.qcom.bluetooth.soc=hastings \
     ro.bluetooth.a2dp_offload.supported=true \
-    vendor.qcom.bluetooth.soc=cherokee
+    vendor.qcom.bluetooth.soc=hastings
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     ro.bluetooth.library_name=libbluetooth_qti.so \
-    vendor.bluetooth.soc=cherokee
+    vendor.bluetooth.soc=hastings
 
 # Camera
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -107,7 +107,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # CNE
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
-    persist.vendor.cne.feature=1
+    persist.vendor.cne.feature=1 \
+    persist.vendor.sys.cnd.iwlan=1
 
 # CoreSight STM
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -123,6 +124,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Dalvik
 PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.dex2oat64.enabled=true \
+    dalvik.vm.dex2oat-threads=6 \
     dalvik.vm.heapmaxfree=8m \
     dalvik.vm.heapminfree=512k \
     dalvik.vm.heapsize=512m \
@@ -135,11 +137,15 @@ PRODUCT_PROPERTY_OVERRIDES += \
     vendor.display.disable_excl_rect=0 \
     vendor.display.disable_excl_rect_partial_fb=1 \
     vendor.display.comp_mask=0 \
+    vendor.display.enable_async_powermode=0 \
     vendor.display.enable_posted_start_dyn=1 \
     vendor.display.enable_optimize_refresh=1 \
     vendor.display.use_smooth_motion=1 \
     vendor.display.disable_offline_rotator=1 \
-    vendor.display.disable_hw_recovery_dump=1
+    vendor.display.disable_hw_recovery_dump=1 \
+    vendor.display.idle_time=0 \
+    vendor.display.disable_idle_time_hdr=1 \
+    vendor.display.disable_idle_time_video=1
 
 # DPM
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -186,6 +192,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.dbg.volte_avail_ovr=1 \
     persist.dbg.vt_avail_ovr=1  \
     persist.dbg.wfc_avail_ovr=1
+    persist.vendor.ims.cam_sensor_delay=20 \
+    persist.vendor.ims.display_delay=40 \
+    persist.vendor.ims.playout_delay=50 \
+    persist.vendor.ims.vt.enableadb=1
 
 # Incremental FS
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -219,7 +229,7 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 
 # Netflix
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
-    ro.netflix.bsp_rev=Q7250-19133-1
+    ro.netflix.bsp_rev=Q8250-19134-1
 
 # NFC
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -231,6 +241,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 # PASR
 PRODUCT_PROPERTY_OVERRIDES += \
+    vendor.pasr.activemode.enabled=true \
     vendor.power.pasr.enabled=true
 
 # Perf
@@ -243,6 +254,10 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 # Qualcomm System Daemon
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.qcomsysd.enabled=1
+
+# QSPM
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.vendor.qspm.enable=true
 
 # Radio
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -269,7 +284,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.radio.sw_mbn_update=0 \
     persist.vendor.radio.sar_sensor=1 \
     persist.vendor.radio.fi_supported=0 \
-    persist.vendor.radio.rat_on=other \
+    persist.vendor.radio.rat_on=combine \
     persist.vendor.radio.hidl_dev_service=1 \
     persist.vendor.lte.pco_supported=true \
     persist.vendor.radio.enableadvancedscan=true \
@@ -280,15 +295,19 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.radio.snapshot_enabled=1 \
     persist.vendor.radio.aosp_usr_pref_sel=true \
     persist.vendor.radio.flexmap_type=none \
-    persist.vendor.radio.enable_temp_dds=true
+    persist.vendor.radio.enable_temp_dds=true \
+    persist.vendor.radio.jbims=1 \
+    persist.vendor.radio.start_ota_daemon=0 \
+    keyguard.no_require_sim=true
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     DEVICE_PROVISIONED=1 \
     persist.vendor.data.mode=concurrent \
     ril.subscription.types=NV,RUIM \
-    ro.telephony.default_network=27,10 \
+    ro.telephony.default_network=33,33 \
     ro.vendor.use_data_netmgrd=true \
-    telephony.lteOnCdmaDevice=1,1
+    telephony.lteOnCdmaDevice=1,1 \
+    persist.vendor.radio.atfwd.start=true
 
 # SurfaceFlinger
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -313,6 +332,15 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 # Sensor
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     persist.vendor.sensors.enable.mag_filter=true
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.sensors.allow_non_default_discovery=true \
+    persist.vendor.sensors.sync_request=true \
+    ro.vendor.sensors.glance_approach=false
+
+# SSR
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.ssr.restart_level=ALL_ENABLE
 
 # Time
 PRODUCT_PROPERTY_OVERRIDES += \
