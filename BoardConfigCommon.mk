@@ -190,6 +190,7 @@ TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 TARGET_COPY_OUT_VENDOR := vendor
 
 # Power
+TARGET_USES_INTERACTION_BOOST := true
 TARGET_RPM_MASTER_STAT := "/d/rpmh/master_stats"
 TARGET_RPM_STAT := "/d/rpmh/stats"
 TARGET_TAP_TO_WAKE_NODE := "/sys/class/sensors/dt-gesture/enable"
