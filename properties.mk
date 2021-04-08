@@ -91,14 +91,20 @@ PRODUCT_ODM_PROPERTIES += \
 
 # Bluetooth
 PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.qcom.bluetooth.soc=hastings \
     persist.vendor.qcom.bluetooth.enable.splita2dp=true \
     persist.vendor.qcom.bluetooth.a2dp_offload_cap=sbc-aptx-aptxtws-aptxhd-aac-ldac \
-    persist.vendor.qcom.bluetooth.soc=hastings \
-    ro.bluetooth.a2dp_offload.supported=true \
+    persist.vendor.qcom.bluetooth.aac_frm_ctl.enabled=true \
+    persist.vendor.qcom.bluetooth.a2dp_mcast_test.enabled=false \
+    persist.vendor.qcom.bluetooth.twsp_state.enabled=false \
+    persist.vendor.qcom.bluetooth.scram.enabled=false \
+    persist.vendor.qcom.bluetooth.aac_vbr_ctl.enabled=true \
     vendor.qcom.bluetooth.soc=hastings
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+    ro.bluetooth.a2dp_offload.supported=true \
     ro.bluetooth.library_name=libbluetooth_qti.so \
+    ro.vendor.bluetooth.wipower=false \
     vendor.bluetooth.soc=hastings
 
 # Camera
