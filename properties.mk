@@ -175,6 +175,8 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 
 # Graphics
 PRODUCT_PROPERTY_OVERRIDES += \
+    ro.hardware.vulkan=adreno \
+    ro.hardware.egl=adreno \
     debug.egl.hw=0 \
     debug.mdpcomp.logs=0 \
     debug.sf.hw=0 \
