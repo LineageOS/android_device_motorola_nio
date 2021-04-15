@@ -26,6 +26,9 @@ genfscon sysfs /devices/platform/soc/soc:qcom,dsi-display-primary/dsi_display_ac
 genfscon sysfs /devices/platform/soc/soc:qcom,dsi-display-primary/dsi_display_cabc            u:object_r:sysfs_livedisplay_tuneable:s0
 genfscon sysfs /devices/platform/soc/soc:qcom,dsi-display-primary/dsi_display_hbm             u:object_r:sysfs_livedisplay_tuneable:s0
 
+# Lights
+genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-05/c440000.qcom,spmi:qcom,pm8150l@5:qcom,leds@d000/leds/charging u:object_r:sysfs_leds:s0
+
 # Vibrator
 genfscon sysfs /devices/platform/soc/884000.i2c/i2c-1/1-005a/leds/vibrator      u:object_r:sysfs_vibrator:s0
 
