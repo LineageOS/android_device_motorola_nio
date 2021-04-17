@@ -100,6 +100,10 @@ lib64/libaptXHD_encoder.so
 # Camera (Firmware)
 vendor/firmware/CAMERA_ICP.elf
 
+# Camera (Permissions)
+product/etc/permissions/com.motorola.camera3.xml
+product/etc/permissions/com.motorola.camera3.content.ai.xml
+
 # CDSP
 vendor/bin/cdsprpcd
 vendor/etc/init/vendor.qti.cdsprpc-service.rc
@@ -570,7 +574,6 @@ vendor/lib64/vendor.qti.hardware.vpp@1.3.so
 # Moto Permissions
 product/etc/permissions/com.motorola.moto-uirefresh.xml
 product/etc/permissions/com.motorola.motodisplay.xml
-product/etc/permissions/com.motorola.androidx.camera.extensions.xml:vendor/etc/permissions/com.motorola.androidx.camera.extensions.xml
 
 # Neural-networks
 vendor/bin/hw/android.hardware.neuralnetworks@1.3-service-qti
@@ -622,6 +625,8 @@ vendor/lib/vendor.qti.hardware.perf@2.0.so
 vendor/lib/vendor.qti.hardware.perf@2.1.so
 vendor/lib/vendor.qti.hardware.perf@2.2.so
 vendor/lib64/libadaptlaunch.so
+vendor/lib64/libappclassifier.so
+vendor/lib64/libgameoptfeature.so
 vendor/lib64/liblearningmodule.so
 vendor/lib64/libmeters-ns.so
 vendor/lib64/libmeters.so
@@ -857,10 +862,8 @@ vendor/radio/qcril_database/upgrade/20_version_qcrildb.sql
 -system_ext/framework/qcom-moto-telephony-ext.jar|7e218f099b75e375873452831cd6dede4a9bae3e
 -system_ext/framework/qcom-moto-ims-ext.jar|906a0397aac5c44099b29270cbdd396cb6bbea4f
 -framework/moto-ims-ext.jar|ca1cc4f4b37449157d1d084da70d279abf64ac00
--framework/moto-settings.jar|29686a092ea353980e47e66baddde67677b6e6d9
 -framework/moto-telephony.jar|ab93073bce880ff7dc2e962623e88a57061964fd
 etc/permissions/moto-ims-ext.xml
-etc/permissions/moto-settings.xml
 etc/permissions/moto-telephony.xml
 
 # Radio - IMS
