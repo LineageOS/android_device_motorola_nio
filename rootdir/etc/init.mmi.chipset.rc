@@ -6,7 +6,7 @@ on post-fs
     chown camera /mnt/vendor/persist/camera/mot_ledcal
 
 on early-init
-    exec u:r:modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules exfat
+    exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules exfat
 
 #Enable qpnp_smbcharger_mmi debug
     write /sys/module/qpnp_smbcharger_mmi/parameters/debug_enabled Y
