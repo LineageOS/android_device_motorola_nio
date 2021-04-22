@@ -1,4 +1,5 @@
-# A/B partitions.
+# A/B partitions
+/dev/block/platform/soc/1d84000\.ufshc/by-name/mdm1m9kefs3_[ab] u:object_r:vendor_modem_block_device:s0
 /dev/block/platform/soc/1d84000\.ufshc/sd[df]                u:object_r:vendor_gpt_block_device:s0
 /dev/block/platform/soc/1d84000\.ufshc/by-name/fsg_[ab]      u:object_r:vendor_modem_block_device:s0
 /dev/block/platform/soc/1d84000\.ufshc/by-name/logo_[ab]     u:object_r:vendor_custom_ab_block_device:s0
@@ -42,3 +43,19 @@
 
 # Thermal
 /dev/mmi_sys_temp                                       u:object_r:thermal_device:s0
+
+# RTC
+/sys/devices/platform/soc/c440000\.qcom,spmi/spmi-0/spmi0-00/c440000\.qcom,spmi:qcom,pm8150@0:qcom,pm8150_rtc/rtc/rtc0/hctosys u:object_r:sysfs_rtc:s0
+
+# Wakeups
+/sys/devices/[0-9]+_[0-9]+.[0-9]+.[0-9]+/wakeup(/.*)?           u:object_r:sysfs_wakeup:s0
+/sys/devices/virtual/input/input[0-9]+/wakeup[0-9]+(/.*)?       u:object_r:sysfs_wakeup:s0
+/sys/devices/[^*]+/wakeup/wakeup[0-9]+(/.*)?                    u:object_r:sysfs_wakeup:s0
+/sys/devices/platform/[^*]+/wakeup/wakeup[0-9]+(/.*)?           u:object_r:sysfs_wakeup:s0
+/sys/devices/platform/soc/[^*]+/wakeup[0-9]+(/.*)?              u:object_r:sysfs_wakeup:s0
+/sys/devices/virtual/diag/diag/wakeup[0-9]+(/.*)?               u:object_r:sysfs_wakeup:s0
+/sys/devices/virtual/misc/[^*]+/wakeup[0-9]+(/.*)?              u:object_r:sysfs_wakeup:s0
+/sys/devices/virtual/fastrpc/adsprpc-smd/wakeup[0-9]+(/.*)?     u:object_r:sysfs_wakeup:s0
+
+# Fingerprint
+/(mnt/vendor/persist|persist)/fps(/.*)?                 u:object_r:vendor_persist_fps_file:s0

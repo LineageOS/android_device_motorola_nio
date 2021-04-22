@@ -1,1 +1,4 @@
 allow hal_bootctl_default vendor_uefi_block_device:blk_file getattr;
+
+# We never apply OTAs when GSI is running
+dontaudit hal_bootctl_default gsi_metadata_file:dir search;

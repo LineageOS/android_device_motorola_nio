@@ -1,0 +1,6 @@
+get_prop(flags_health_check, adbd_prop)
+get_prop(flags_health_check, vendor_aov_prop)
+get_prop(flags_health_check, vendor_data_qmipriod_prop)
+
+
+
