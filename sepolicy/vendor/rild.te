@@ -6,5 +6,5 @@ allow rild input_device:dir { open read search };
 allow rild proc_moto_boot:file r_file_perms;
 allow rild cutback_data_file:dir { ioctl read write getattr lock add_name remove_name search open };
 allow rild cutback_data_file:file { ioctl read write getattr lock append map open };
-allow rild cutback_data_file:sock_file { write unlink };
+allow rild cutback_data_file:sock_file { create setattr write unlink };
 allow rild cutback_socket:sock_file { ioctl read write create getattr setattr lock append map unlink rename open };

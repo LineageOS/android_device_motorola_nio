@@ -1,5 +1,6 @@
 # Radio
 vendor.ril.                u:object_r:vendor_radio_prop:s0
+gsm.operator.iso-country   u:object_r:exported_radio_prop:s0
 
 # USB
 vendor.rmnet_vnd.rps_mask  u:object_r:vendor_usb_prop:s0
@@ -44,3 +45,11 @@ vendor.powerhal.rendering  u:object_r:power_prop:s0
 
 # FM Radio
 ro.vendor.fm.              u:object_r:vendor_fm_prop:s0
+
+# Camera
+camera.mot.is.coming.cts   u:object_r:vendor_camera_prop:s0
+ro.camera.req.fmq.size     u:object_r:vendor_camera_prop:s0
+ro.camera.res.fmq.size     u:object_r:vendor_camera_prop:s0
+
+# GFX
+ro.gfx.driver.1            u:object_r:exported_default_prop:s0
