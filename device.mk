@@ -14,7 +14,8 @@ PRODUCT_SOONG_NAMESPACES += \
 # Overlays
 PRODUCT_PACKAGES += \
     FrameworksResNio \
-    SystemUIResNio
+    SystemUIResNio \
+    SettingsProviderResNio
 
 # Audio
 PRODUCT_COPY_FILES += \
