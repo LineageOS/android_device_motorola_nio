@@ -914,6 +914,13 @@ function enable_swap() {
     fi
 }
 
+function disable_ppr()
+{
+   if [ -f  /sys/module/process_reclaim/parameters/enable_process_reclaim ]; then
+       echo 0 > /sys/module/process_reclaim/parameters/enable_process_reclaim
+   fi
+}
+
 function configure_memory_parameters() {
     # Set Memory parameters.
     #
@@ -2423,6 +2430,10 @@ case "$target" in
 
                 # Set Memory parameters
                 configure_memory_parameters
+
+                if [ $KernelVersionA -ge 4 ] && [ $KernelVersionB -ge 19 ]; then
+                    disable_ppr
+                fi
             ;;
         esac
         case "$soc_id" in
@@ -2696,6 +2707,10 @@ case "$target" in
                 echo 1 > /proc/sys/kernel/power_aware_timer_migration
                 # Set Memory parameters
                 configure_memory_parameters
+
+                if [ $KernelVersionA -ge 4 ] && [ $KernelVersionB -ge 19 ]; then
+                    disable_ppr
+                fi
                 ;;
                 *)
                 ;;
@@ -2795,6 +2810,9 @@ case "$target" in
                 echo 1 > /proc/sys/kernel/power_aware_timer_migration
                 # Set Memory parameters
                 configure_memory_parameters
+                if [ $KernelVersionA -ge 4 ] && [ $KernelVersionB -ge 19 ]; then
+                    disable_ppr
+                fi
             ;;
             *)
 
@@ -3001,6 +3019,10 @@ case "$target" in
 
                 # Set Memory parameters
                 configure_memory_parameters
+
+                if [ $KernelVersionA -ge 4 ] && [ $KernelVersionB -ge 19 ]; then
+                    disable_ppr
+                fi
 
                 #disable sched_boost
                 echo 0 > /proc/sys/kernel/sched_boost
