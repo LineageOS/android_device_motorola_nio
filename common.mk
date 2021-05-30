@@ -133,11 +133,7 @@ PRODUCT_PACKAGES += \
     libaudioroute \
     libhdmiedid \
     libhfp \
-    libqcompostprocbundle \
-    libqcomvisualizer \
-    libqcomvoiceprocessing \
     libsndmonitor \
-    libvolumelistener \
     tinymix \
     libtinycompress \
     libtinycompress.vendor
