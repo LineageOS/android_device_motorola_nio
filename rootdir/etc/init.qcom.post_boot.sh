@@ -64,8 +64,17 @@ function 8953_sched_dcvs_eas()
             for cpubw in $device/*cpu-cpu-ddr-bw/devfreq/*cpu-cpu-ddr-bw
             do
                 echo "bw_hwmon" > $cpubw/governor
-                echo 85 > $cpubw/bw_hwmon/io_percent
+                echo 34 > $cpubw/bw_hwmon/io_percent
                 echo 0 > $cpubw/bw_hwmon/guard_band_mbps
+                echo 20 > $cpubw/bw_hwmon/hist_memory
+                echo 10 > $cpubw/bw_hwmon/hyst_length
+                echo 1600 > $cpubw/bw_hwmon/idle_mbps
+                echo 20 > $cpubw/bw_hwmon/low_power_delay
+                echo 34 > $cpubw/bw_hwmon/low_power_io_percent
+                echo "1611 3221 5859 6445 7104" > $cpubw/bw_hwmon/mbps_zones
+                echo 4 > $cpubw/bw_hwmon/sample_ms
+                echo 250 > $cpubw/bw_hwmon/up_scale
+                echo 1611 > $cpubw/min_freq
             done
         done
     else
@@ -117,8 +126,8 @@ function 8917_sched_dcvs_eas()
             for cpubw in $device/*cpu-cpu-ddr-bw/devfreq/*cpu-cpu-ddr-bw
             do
                 echo "bw_hwmon" > $cpubw/governor
-                echo 85 > $cpubw/bw_hwmon/io_percent
-                echo 0 > $cpubw/bw_hwmon/guard_band_mbps
+                echo 20 > $cpubw/bw_hwmon/io_percent
+                echo 30 > $cpubw/bw_hwmon/guard_band_mbps
             done
         done
     else
@@ -191,8 +200,8 @@ function 8937_sched_dcvs_eas()
             for cpubw in $device/*cpu-cpu-ddr-bw/devfreq/*cpu-cpu-ddr-bw
             do
                 echo "bw_hwmon" > $cpubw/governor
-                echo 85 > $cpubw/bw_hwmon/io_percent
-                echo 0 > $cpubw/bw_hwmon/guard_band_mbps
+                echo 20 > $cpubw/bw_hwmon/io_percent
+                echo 30 > $cpubw/bw_hwmon/guard_band_mbps
             done
         done
     else
@@ -2712,28 +2721,30 @@ case "$target" in
                 #disable sched_boost in 8937
                 echo 0 > /proc/sys/kernel/sched_boost
 
-                for devfreq_gov in /sys/class/devfreq/qcom,mincpubw*/governor
-                do
-                    echo "cpufreq" > $devfreq_gov
-                done
-
-                for devfreq_gov in /sys/class/devfreq/soc:qcom,cpubw/governor
-                do
-                    echo "bw_hwmon" > $devfreq_gov
-                    for cpu_io_percent in /sys/class/devfreq/soc:qcom,cpubw/bw_hwmon/io_percent
+                if [ $KernelVersionA -le 4 ] && [ $KernelVersionB -le 9 ]; then
+                    for devfreq_gov in /sys/class/devfreq/qcom,mincpubw*/governor
                     do
-                        echo 20 > $cpu_io_percent
+                        echo "cpufreq" > $devfreq_gov
                     done
-                for cpu_guard_band in /sys/class/devfreq/soc:qcom,cpubw/bw_hwmon/guard_band_mbps
-                    do
-                        echo 30 > $cpu_guard_band
-                    done
-                done
 
-                for gpu_bimc_io_percent in /sys/class/devfreq/soc:qcom,gpubw/bw_hwmon/io_percent
-                do
-                    echo 40 > $gpu_bimc_io_percent
-                done
+                    for devfreq_gov in /sys/class/devfreq/soc:qcom,cpubw/governor
+                    do
+                        echo "bw_hwmon" > $devfreq_gov
+                        for cpu_io_percent in /sys/class/devfreq/soc:qcom,cpubw/bw_hwmon/io_percent
+                        do
+                            echo 20 > $cpu_io_percent
+                        done
+                    for cpu_guard_band in /sys/class/devfreq/soc:qcom,cpubw/bw_hwmon/guard_band_mbps
+                        do
+                            echo 30 > $cpu_guard_band
+                        done
+                    done
+
+                    for gpu_bimc_io_percent in /sys/class/devfreq/soc:qcom,gpubw/bw_hwmon/io_percent
+                    do
+                        echo 40 > $gpu_bimc_io_percent
+                    done
+                fi
 
                 # disable thermal core_control to update interactive gov and core_ctl settings
                 echo 0 > /sys/module/msm_thermal/core_control/enabled
@@ -2808,8 +2819,8 @@ case "$target" in
                         for cpubw in $device/*cpu-cpu-ddr-bw/devfreq/*cpu-cpu-ddr-bw
                         do
                             echo "bw_hwmon" > $cpubw/governor
-                            echo 85 > $cpubw/bw_hwmon/io_percent
-                            echo 0 > $cpubw/bw_hwmon/guard_band_mbps
+                            echo 20 > $cpubw/bw_hwmon/io_percent
+                            echo 30 > $cpubw/bw_hwmon/guard_band_mbps
                         done
                     done
                 else
