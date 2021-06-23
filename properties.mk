@@ -452,6 +452,12 @@ PRODUCT_PROPERTY_OVERRIDES += vendor.usb.use_ffs_mtp=0
 # Enable incremental FS feature
 PRODUCT_PROPERTY_OVERRIDES += ro.incremental.enable=1
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.soc.manufacturer=QTI
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.soc.model=SM8250
+
 # privapp-permissions whitelisting (To Fix CTS :privappPermissionsMustBeEnforced)
 PRODUCT_PROPERTY_OVERRIDES += ro.control_privapp_permissions=enforce
 
