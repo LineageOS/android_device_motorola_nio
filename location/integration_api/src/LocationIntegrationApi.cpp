@@ -32,6 +32,7 @@
 #include <LocationIntegrationApi.h>
 #include <LocationIntegrationApiImpl.h>
 #include <log_util.h>
+#include <loc_pla.h>
 
 namespace location_integration {
 
@@ -269,6 +270,9 @@ bool LocationIntegrationApi::deleteAllAidingData() {
         GnssAidingData aidingData = {};
         aidingData.deleteAll = true;
         aidingData.posEngineMask = POSITION_ENGINE_MASK_ALL;
+        aidingData.sv.svTypeMask = GNSS_AIDING_DATA_SV_TYPE_MASK_ALL;
+        aidingData.sv.svMask |= GNSS_AIDING_DATA_SV_EPHEMERIS_BIT;
+        aidingData.dreAidingDataMask |= DR_ENGINE_AIDING_DATA_CALIBRATION_BIT;
         mApiImpl->gnssDeleteAidingData(aidingData);
         return true;
     } else {
@@ -499,6 +503,53 @@ bool LocationIntegrationApi::configMinSvElevation(uint8_t minSvElevation) {
 bool LocationIntegrationApi::getMinSvElevation() {
     if (mApiImpl) {
         return (mApiImpl->getMinSvElevation() == 0);
+    } else {
+        LOC_LOGe ("NULL mApiImpl");
+        return false;
+    }
+}
+
+bool LocationIntegrationApi::configEngineRunState(LocIntegrationEngineType engType,
+                                                  LocIntegrationEngineRunState engState) {
+    if (mApiImpl) {
+        PositioningEngineMask halEngType = (PositioningEngineMask)0;
+        LocEngineRunState halEngState = (LocEngineRunState)0;
+        switch (engType) {
+        case LOC_INT_ENGINE_SPE:
+            halEngType = STANDARD_POSITIONING_ENGINE;
+            break;
+        case LOC_INT_ENGINE_DRE:
+            halEngType = DEAD_RECKONING_ENGINE;
+            break;
+        case LOC_INT_ENGINE_PPE:
+            halEngType = PRECISE_POSITIONING_ENGINE;
+            break;
+        case LOC_INT_ENGINE_VPE:
+            halEngType = VP_POSITIONING_ENGINE;
+            break;
+        default:
+            LOC_LOGe("unknown engine type of %d", engType);
+            return false;
+        }
+
+        if (engState == LOC_INT_ENGINE_RUN_STATE_PAUSE) {
+            halEngState = LOC_ENGINE_RUN_STATE_PAUSE;
+        } else if (engState == LOC_INT_ENGINE_RUN_STATE_RESUME) {
+            halEngState = LOC_ENGINE_RUN_STATE_RESUME;
+        } else {
+             LOC_LOGe("unknown engine state %d", engState);
+            return false;
+        }
+        return (mApiImpl->configEngineRunState(halEngType, halEngState) == 0);
+    } else {
+        LOC_LOGe ("NULL mApiImpl");
+        return false;
+    }
+}
+
+bool LocationIntegrationApi::setUserConsentForTerrestrialPositioning(bool userConsent) {
+    if (mApiImpl) {
+        return (mApiImpl->setUserConsentForTerrestrialPositioning(userConsent) == 0);
     } else {
         LOC_LOGe ("NULL mApiImpl");
         return false;

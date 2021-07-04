@@ -29,7 +29,6 @@
 #ifndef LOCATION_INTEGRATION_API_H
 #define LOCATION_INTEGRATION_API_H
 
-#include <loc_pla.h>
 #include <unordered_set>
 #ifdef NO_UNORDERED_SET_OR_MAP
     #include <map>
@@ -77,6 +76,12 @@ enum LocConfigTypeEnum{
      *  standard position engine (SPE).
      *  <br/> */
     CONFIG_CONSTELLATION_SECONDARY_BAND = 10,
+    /** Config the run state, e.g.: pause/resume, of the position
+     * engine <br/> */
+    CONFIG_ENGINE_RUN_STATE = 11,
+    /** Config user consent to use GTP terrestrial positioning
+     *  service. <br/> */
+    CONFIG_USER_CONSENT_TERRESTRIAL_POSITIONING = 12,
 
     /** Get configuration regarding robust location setting used by
      *  the GNSS standard position engine (SPE).  <br/> */
@@ -109,6 +114,29 @@ enum LocIntegrationResponse {
      *  <br/> */
     LOC_INT_RESPONSE_PARAM_INVALID = 4,
 } ;
+
+/** Specify the position engine types used in location
+ *  integration api module. <br/> */
+enum LocIntegrationEngineType {
+    /** This is the standard GNSS position engine. <br/> */
+    LOC_INT_ENGINE_SPE   = 1,
+    /** This is the precise position engine. <br/> */
+    LOC_INT_ENGINE_PPE   = 2,
+    /** This is the dead reckoning position engine. <br/> */
+    LOC_INT_ENGINE_DRE   = 3,
+    /** This is the vision positioning engine. <br/>  */
+    LOC_INT_ENGINE_VPE   = 4,
+};
+
+/** Specify the position engine run state. <br/> */
+enum LocIntegrationEngineRunState {
+    /** Request the position engine to be put into pause state.
+     *  <br/> */
+    LOC_INT_ENGINE_RUN_STATE_PAUSE   = 1,
+    /** Request the position engine to be put into resume state.
+     *  <br/> */
+    LOC_INT_ENGINE_RUN_STATE_RESUME   = 2,
+};
 
 /**
  * Define the priority to be used when the corresponding
@@ -190,8 +218,13 @@ enum LeverArmType {
     LEVER_ARM_TYPE_DR_IMU_TO_GNSS = 2,
     /** Lever arm regarding GNSS Antenna w.r.t the origin at the
      *  IMU (inertial measurement unit) for VEPP (vision enhanced
-     *  precise positioning engine). <br/> */
+     *  precise positioning engine). <br/>
+     *  Note: this enum will be deprecated. <br/> */
     LEVER_ARM_TYPE_VEPP_IMU_TO_GNSS = 3,
+    /** Lever arm regarding GNSS Antenna w.r.t the origin at the
+     *  IMU (inertial measurement unit) for VPE (vision positioning
+     *  engine). <br/> */
+    LEVER_ARM_TYPE_VPE_IMU_TO_GNSS = 3,
 };
 
 /**
@@ -200,10 +233,11 @@ struct LeverArmParams {
     /** Offset along the vehicle forward axis, in unit of meters
      *  <br/> */
     float forwardOffsetMeters;
-    /** Offset along the vehicle starboard axis, in unit of
-     *  meters <br/> */
+    /** Offset along the vehicle starboard axis, in unit of meters.
+     *  Left side offset is negative, and right side offset is
+     *  positive. <br/> */
     float sidewaysOffsetMeters;
-    /** Offset along the vehicle up axis, in unit of meters <br/> */
+    /** Offset along the vehicle up axis, in unit of meters. <br/> */
     float upOffsetMeters;
 };
 
@@ -430,8 +464,8 @@ struct RobustLocationConfig {
  *  callback will be invoked for successful processing of
  *  getRobustLocationConfig(). <br/>
  *
- *  In order to receive the robust location configuration, user
- *  shall instantiate the callback and pass it to the
+ *  In order to receive the robust location configuration,
+ *  client shall instantiate the callback and pass it to the
  *  LocationIntegrationApi constructor and then invoke
  *  getRobustLocationConfig(). <br/> */
 typedef std::function<void(
@@ -1058,6 +1092,78 @@ public:
                 invoked. <br/>
     */
     bool getMinSvElevation();
+
+    /** @brief
+        This API is used to instruct the specified engine to be in
+        the pause/resume state. <br/>
+
+        When the engine is placed in paused state, the engine will
+        stop. If there is an on-going session, engine will no longer
+        produce fixes. In the paused state, calling API to delete
+        aiding data from the paused engine may not have effect.
+        Request to delete Aiding data shall be issued after
+        engine resume. <br/>
+
+        Currently, only DRE engine will support pause/resume
+        request. LocConfigCb() will return
+        LOC_INT_RESPONSE_NOT_SUPPORTED when request is made to
+        pause/resume none-DRE engine. <br/>
+
+        Request to pause/resume DRE engine can be made with or
+        without an on-going session. With QDR engine, on resume,
+        GNSS position & heading re-acquisition is needed for DR
+        engine to engage. If DR engine is already in the requested
+        state, the request will be no-op and the API call will
+        return success and LocConfigCb() will return
+        LOC_INT_RESPONSE_SUCCESS. <br/>
+
+        @param
+        engType: the engine that is instructed to change its run
+        state. <br/>
+
+        engState: the new engine run state that the engine is
+        instructed to be in. <br/>
+
+        @return true, if the API request has been accepted. The
+                status will be returned via configCB. When returning
+                true, LocConfigCb() will be invoked to deliver
+                asynchronous processing status.
+                <br/>
+
+        @return false, if the API request has not been accepted for
+                further processing. <br/>
+    */
+    bool configEngineRunState(LocIntegrationEngineType engType,
+                              LocIntegrationEngineRunState engState);
+
+
+    /** @brief
+        Set client consent to use terrestrial positioning. <br/>
+
+        Client must call this API with userConsent set to true in order
+        to retrieve terrestrial position via
+        LocationClientApi::getSingleTerrestrialPosition(). <br/>
+
+        The consent will remain effective across power cycles, until
+        this API is called with a different value.  <br/>
+
+        @param
+        true: client agrees to the privacy entailed when using terrestrial
+        positioning.
+        false: client does not agree to the privacy entailed when using
+        terrestrial positioning. Due to this, client will not be able to
+        retrieve terrestrial position.
+
+        @return true, if client constent has been accepted for further processing.
+                When returning true, LocConfigCb() will be invoked to deliver
+                asynchronous processing status. <br/>
+
+        @return false, if client constent has not been accepted for further
+                processing. When returning false, no further processing
+                will be performed and LocConfigCb() will not be invoked.
+                <br/>
+    */
+    bool setUserConsentForTerrestrialPositioning(bool userConsent);
 
 private:
     LocationIntegrationApiImpl* mApiImpl;

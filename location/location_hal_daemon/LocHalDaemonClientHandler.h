@@ -42,6 +42,7 @@
 
 #include <LocationAPI.h>
 #include <LocIpc.h>
+#include <LocationApiPbMsgConv.h>
 
 using namespace loc_util;
 
@@ -116,6 +117,8 @@ public:
     void eraseGeofenceIds(size_t count, uint32_t* clientIds);
     uint32_t* getSessionIds(size_t count, uint32_t* clientIds);
     uint32_t* getClientIds(size_t count, uint32_t* sessionIds);
+    // send terrestrial fix to the requesting LCA client
+    void sendTerrestrialFix(LocationError error, const Location& location);
 
     inline shared_ptr<LocIpcSender> getIpcSender () {return mIpcSender;};
 
@@ -151,31 +154,16 @@ private:
     void onLocationSystemInfoCb(LocationSystemInfo);
     void onLocationApiDestroyCompleteCb();
 
-    // send ipc message to this client for general use
-    template <typename MESSAGE>
-    bool sendMessage(const MESSAGE& msg) {
-        bool retVal= sendMessage(reinterpret_cast<const uint8_t*>(&msg), sizeof(msg));
-        if (retVal == false) {
-            struct timespec ts;
-            clock_gettime(CLOCK_BOOTTIME, &ts);
-            LOC_LOGe("failed: client %s, msg id: %d, msg size %d, err %s, "
-                     "boot timestamp %" PRIu64" msec",
-                     mName.c_str(), ((LocAPIMsgHeader) msg).msgId, sizeof(msg),
-                     strerror(errno), (ts.tv_sec * 1000ULL + ts.tv_nsec/1000000));
-        }
-        return retVal;
-    }
-
     // send ipc message to this client for serialized payload
-    bool sendMessage(const uint8_t* pmsg, size_t msglen) {
-        bool retVal= LocIpc::send(*mIpcSender, pmsg, msglen);
+    bool sendMessage(const char* msg, size_t msglen, ELocMsgID msg_id) {
+        bool retVal= LocIpc::send(*mIpcSender, reinterpret_cast<const uint8_t*>(msg), msglen);
         if (retVal == false) {
             struct timespec ts;
             clock_gettime(CLOCK_BOOTTIME, &ts);
             LOC_LOGe("failed: client %s, msg id: %d, msg size %d, err %s, "
                      "boot timestamp %" PRIu64" msec",
-                     mName.c_str(), ((LocAPIMsgHeader*) pmsg)->msgId, msglen,
-                     strerror(errno), (ts.tv_sec * 1000ULL + ts.tv_nsec/1000000));
+                     mName.c_str(), msg_id, msglen, strerror(errno),
+                     (ts.tv_sec * 1000ULL + ts.tv_nsec/1000000));
         }
         return retVal;
     }

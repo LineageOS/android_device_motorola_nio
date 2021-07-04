@@ -158,6 +158,7 @@ uint32_t LocationAPIControlClient::locAPIGnssUpdateConfig(GnssConfig config)
                 }
                 mRequestQueues[CTRL_REQUEST_CONFIG_UPDATE].push(new GnssUpdateConfigRequest(*this));
                 retVal = LOCATION_ERROR_SUCCESS;
+                delete [] idArray;
             }
         }
     }
@@ -180,6 +181,7 @@ uint32_t LocationAPIControlClient::locAPIGnssGetConfig(GnssConfigFlagsMask mask)
             }
             mRequestQueues[CTRL_REQUEST_CONFIG_GET].push(new GnssGetConfigRequest(*this));
             retVal = LOCATION_ERROR_SUCCESS;
+            delete [] idArray;
         }
     }
     pthread_mutex_unlock(&mMutex);
@@ -397,12 +399,11 @@ void LocationAPIClientBase::locAPIUpdateTrackingOptions(TrackingOptions& options
     if (mLocationAPI) {
         uint32_t session = 0;
         session = mRequestQueues[REQUEST_TRACKING].getSession();
-        // Not allowing to update the tracking options for stopped session
-        if (session > 0 && mTracking) {
+        if (session > 0) {
             mRequestQueues[REQUEST_TRACKING].push(new UpdateTrackingOptionsRequest(*this));
             mLocationAPI->updateTrackingOptions(session, options);
         } else {
-            LOC_LOGe("invalid or stopped session: %d.", session);
+            LOC_LOGE("%s:%d] invalid session: %d.", __FUNCTION__, __LINE__, session);
         }
     }
     pthread_mutex_unlock(&mMutex);

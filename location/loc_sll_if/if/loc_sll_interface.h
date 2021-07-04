@@ -698,6 +698,9 @@ typedef struct {
     */
     void (*sllReportGnssAdditionalSystemInfo)(GnssAdditionalSystemInfo& additionalSystemInfo,
             void *context);
+    void (*sllRequestEedGpsData) (void *context);
+    void (*sllRequestEedGloData) (void *context);
+
 } SllInterfaceEvent;
 
 /** SLL module’s Interface commands.
@@ -1779,6 +1782,31 @@ typedef struct {
             None.
     */
     enum loc_api_adapter_err (*sllResetConstellationControl)(void *context);
+
+
+    /**
+        This API used to request to XTRA configuration to GNSS hardware.
+        This interface API should be call by Synergy LOC API.
+        This API will be called multiple times in different execution contexts.
+        The execution context will identify using ‘void *context’ variable.
+
+        @datatypes
+              #loc_api_adapter_err
+
+        @param configMask[Input]      Configuration Mask.
+        @param configReqSource[Input] Configuration Request Source.
+        @param context[Input]         Context Pointer of Synergy Location API.
+
+        @return
+            loc_api_adapter_err[Output]
+                                 The return status LOC_API_ADAPTER_ERR_SUCCESS indicate command
+                                 is successfully received and other status indicate as failure.
+
+        @dependencies
+            None.
+    */
+    enum loc_api_adapter_err (*sllRequestXtraConfigInfo)(const uint32_t configMask,
+                                             const uint32_t configReqSource, void *context);
 
 } SllInterfaceReq;
 

@@ -36,9 +36,11 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <sys/prctl.h>
+#include <sys/capability.h>
 #include <semaphore.h>
 #include <loc_pla.h>
 #include <loc_cfg.h>
+#include <loc_misc_utils.h>
 #ifdef NO_UNORDERED_SET_OR_MAP
     #include <map>
 #else
@@ -82,6 +84,9 @@ static uint32_t numGnssMeasurementsCb = 0;
 #define CONFIG_DR_ENGINE    "configDrEngine"
 #define CONFIG_MIN_SV_ELEVATION "configMinSvElevation"
 #define GET_MIN_SV_ELEVATION    "getMinSvElevation"
+#define CONFIG_ENGINE_RUN_STATE "configEngineRunState"
+#define SET_USER_CONSENT    "setUserConsentForTerrestrialPositioning"
+#define GET_SINGLE_GTP_WWAN_FIX    "getSingleGtpWwanFix"
 
 // debug utility
 static uint64_t getTimestamp() {
@@ -96,7 +101,9 @@ static uint64_t getTimestamp() {
 Callback functions
 ******************************************************************************/
 static void onCapabilitiesCb(location_client::LocationCapabilitiesMask mask) {
-    printf("<<< onCapabilitiesCb mask=0x%x\n", mask);
+    printf("<<< onCapabilitiesCb mask=0x%" PRIx64 "\n", mask);
+    printf("<<< onCapabilitiesCb mask string=%s",
+            LocationClientApi::capabilitiesToString(mask).c_str());
 }
 
 static void onResponseCb(location_client::LocationResponse response) {
@@ -117,12 +124,30 @@ static void onLocationCb(const location_client::Location& location) {
            location.altitude);
 }
 
+static void onGtpResponseCb(location_client::LocationResponse response) {
+    printf("<<< onGtpResponseCb err=%u\n", response);
+}
+
+static void onGtpLocationCb(const location_client::Location& location) {
+    numLocationCb++;
+    if (!outputEnabled) {
+        return;
+    }
+    printf("<<< onGtpLocationCb cnt=%u time=%" PRIu64" mask=0x%x lat=%f lon=%f alt=%f\n",
+           numLocationCb,
+           location.timestamp,
+           location.flags,
+           location.latitude,
+           location.longitude,
+           location.altitude);
+}
+
 static void onGnssLocationCb(const location_client::GnssLocation& location) {
     numGnssLocationCb++;
     if (!outputEnabled) {
         return;
     }
-    printf("<<< onGnssLocationCb_new cnt=%u time=%" PRIu64" mask=0x%x lat=%f lon=%f alt=%f\n",
+    printf("<<< onGnssLocationCb cnt=%u time=%" PRIu64" mask=0x%x lat=%f lon=%f alt=%f\n",
             numGnssLocationCb,
             location.timestamp,
             location.flags,
@@ -138,7 +163,8 @@ static void onEngLocationsCb(const std::vector<location_client::GnssLocation>& l
     }
     for (auto gnssLocation : locations) {
        printf("<<< onEngLocationsCb: cnt=%u time=%" PRIu64" mask=0x%x lat=%f lon=%f alt=%f\n"
-              "info mask=0x%" PRIx64 ", nav solution maks = 0x%x, eng type %d, eng mask 0x%x",
+              "info mask=0x%" PRIx64 ", nav solution maks = 0x%x, eng type %d, eng mask 0x%x, "
+              "session status %d",
               numEngLocationCb,
               gnssLocation.timestamp,
               gnssLocation.flags,
@@ -148,7 +174,8 @@ static void onEngLocationsCb(const std::vector<location_client::GnssLocation>& l
               gnssLocation.gnssInfoFlags,
               gnssLocation.navSolutionMask,
               gnssLocation.locOutputEngType,
-              gnssLocation.locOutputEngMask);
+              gnssLocation.locOutputEngMask,
+              gnssLocation.sessionStatus);
     }
 }
 
@@ -249,52 +276,64 @@ static void printHelp() {
     printf("%s: config DR engine\n", CONFIG_DR_ENGINE);
     printf("%s: set min sv elevation angle\n", CONFIG_MIN_SV_ELEVATION);
     printf("%s: get min sv elevation angle\n", GET_MIN_SV_ELEVATION);
+    printf("%s: config engine run state\n", CONFIG_ENGINE_RUN_STATE);
+    printf("%s: set user consent for terrestrial positioning 0/1\n", SET_USER_CONSENT);
+    printf("%s: get single shot wwan fix\n", GET_SINGLE_GTP_WWAN_FIX);
 }
 
-void setRequiredPermToRunAsLocClient()
-{
+void setRequiredPermToRunAsLocClient() {
 #ifdef USE_GLIB
     if (0 == getuid()) {
-        printf("Test app set perm");
+        char groupNames[LOC_MAX_PARAM_NAME] = "diag locclient";
+        printf("group ids: diag locclient\n");
 
-        // For LE, we need to also add "diag" to existing groups
-        // to run in loc client mode for diag logging.
-        // We need to add diag grpid at end, so MAX+1
-        gid_t appGrpsIds[LOC_PROCESS_MAX_NUM_GROUPS+1] = {};
-        int i = 0, numGrpIds = 0;
+        gid_t groupIds[LOC_PROCESS_MAX_NUM_GROUPS] = {};
+        char *splitGrpString[LOC_PROCESS_MAX_NUM_GROUPS];
+        int numGrps = loc_util_split_string(groupNames, splitGrpString,
+                LOC_PROCESS_MAX_NUM_GROUPS, ' ');
 
-        // Get current set of supplementary groups.
-        memset(appGrpsIds, 0, sizeof(appGrpsIds));
-        numGrpIds = getgroups(LOC_PROCESS_MAX_NUM_GROUPS, appGrpsIds);
-        if(numGrpIds == -1) {
-            printf("Could not find groups. ngroups:%d\n", numGrpIds);
-            numGrpIds = 0;
-        }
-        else {
-            printf("Curr num_groups = %d, Current GIDs: ", numGrpIds);
-            for(i=0; i<numGrpIds; i++) {
-                printf("%d ", appGrpsIds[i]);
+        int numGrpIds=0;
+        for (int i = 0; i < numGrps; i++) {
+            struct group* grp = getgrnam(splitGrpString[i]);
+            if (grp) {
+                groupIds[numGrpIds] = grp->gr_gid;
+                printf("Group %s = %d\n", splitGrpString[i], groupIds[numGrpIds]);
+                numGrpIds++;
             }
         }
-
-        // get group id for diag and update supplementary groups to add "diag" to its list.
-        struct group* grp = getgrnam("diag");
-        if (grp) {
-            // we added diag also to grpid array and setgroups
-            appGrpsIds[numGrpIds] = grp->gr_gid;
-            printf("Diag Group id = %d", appGrpsIds[numGrpIds]);
-            numGrpIds++;
-            i = setgroups(numGrpIds, appGrpsIds);
-            if(i == -1) {
-                printf("Could not set groups. errno:%d, %s", errno, strerror(errno));
-            } else {
-                printf("Total of %d groups set for test app", numGrpIds);
+        if (0 != numGrpIds) {
+            if (-1 == setgroups(numGrpIds, groupIds)) {
+                printf("Error: setgroups failed %s", strerror(errno));
             }
+        }
+        // Set the group id first and then set the effective userid, to locclient.
+        if (-1 == setgid(GID_LOCCLIENT)) {
+            printf("Error: setgid failed. %s", strerror(errno));
+        }
+        // Set user id to locclient
+        if (-1 == setuid(UID_LOCCLIENT)) {
+            printf("Error: setuid failed. %s", strerror(errno));
+        }
+
+        // Set capabilities
+        struct __user_cap_header_struct cap_hdr = {};
+        cap_hdr.version = _LINUX_CAPABILITY_VERSION;
+        cap_hdr.pid = getpid();
+        if (prctl(PR_SET_KEEPCAPS, 1) < 0) {
+            printf("Error: prctl failed. %s", strerror(errno));
+        }
+
+        // Set access to CAP_NET_BIND_SERVICE
+        struct __user_cap_data_struct cap_data = {};
+        cap_data.permitted = (1 << CAP_NET_BIND_SERVICE);
+        cap_data.effective = cap_data.permitted;
+        printf("cap_data.permitted: %d", (int)cap_data.permitted);
+        if (capset(&cap_hdr, &cap_data)) {
+            printf("Error: capset failed. %s", strerror(errno));
         }
     } else {
         printf("Test app started as user: %d", getuid());
     }
-
 #endif// USE_GLIB
 }
 
@@ -735,6 +774,62 @@ int main(int argc, char *argv[]) {
             pIntClient->configMinSvElevation(minSvElevation);
         } else if (strncmp(buf, GET_MIN_SV_ELEVATION, strlen(GET_MIN_SV_ELEVATION)) == 0) {
             pIntClient->getMinSvElevation();
+        } else if (strncmp(buf, CONFIG_ENGINE_RUN_STATE, strlen(CONFIG_ENGINE_RUN_STATE)) == 0) {
+            printf("%s 3(DRE) 1(pause)/2(resume)", CONFIG_ENGINE_RUN_STATE);
+            static char *save = nullptr;
+            LocIntegrationEngineType engType = (LocIntegrationEngineType)0;
+            LocIntegrationEngineRunState engState = (LocIntegrationEngineRunState) 0;
+            // skip first argument of configEngineRunState
+            char* token = strtok_r(buf, " ", &save);
+            token = strtok_r(NULL, " ", &save);
+            if (token != NULL) {
+               engType = (LocIntegrationEngineType) atoi(token);
+                token = strtok_r(NULL, " ", &save);
+                if (token != NULL) {
+                    engState = (LocIntegrationEngineRunState) atoi(token);
+                }
+            }
+            printf("eng type %d, eng state %d\n", engType, engState);
+            bool retVal = pIntClient->configEngineRunState(engType, engState);
+            printf("configEngineRunState returned %d\n", retVal);
+        } else if (strncmp(buf, SET_USER_CONSENT, strlen(SET_USER_CONSENT)) == 0) {
+            static char *save = nullptr;
+            bool userConsent = false;
+            char* token = strtok_r(buf, " ", &save);
+            token = strtok_r(NULL, " ", &save);
+            if (token != NULL) {
+                userConsent = (atoi(token) != 0);
+            }
+            printf("userConsent %d\n", userConsent);
+            pIntClient->setUserConsentForTerrestrialPositioning(userConsent);
+        } else if (strncmp(buf, GET_SINGLE_GTP_WWAN_FIX, strlen(GET_SINGLE_GTP_WWAN_FIX)) == 0) {
+            static char *save = nullptr;
+            uint32_t timeoutMsec = 0;
+            float horQoS = 0.0;
+            uint32_t techMask = 0x0;
+            // skip first argument
+            char* token = strtok_r(buf, " ", &save);
+            // get timeout
+            token = strtok_r(NULL, " ", &save);
+            if (token != NULL) {
+                timeoutMsec = atoi(token);
+            }
+            // get qos
+            token = strtok_r(NULL, " ", &save);
+            if (token != NULL) {
+                horQoS = atof(token);
+            }
+            // tech mask
+            token = strtok_r(NULL, " ", &save);
+            if (token != NULL) {
+                techMask = atoi(token);
+            }
+            printf("timeout msec %d, horQoS %f, techMask 0x%x\n", timeoutMsec, horQoS, techMask);
+            if (!pClient) {
+                pClient = new LocationClientApi(onCapabilitiesCb);
+            }
+            pClient->getSingleTerrestrialPosition(timeoutMsec, (TerrestrialTechnologyMask) techMask,
+                                                  horQoS, onGtpLocationCb, onGtpResponseCb);
         } else {
             int command = buf[0];
             switch(command) {

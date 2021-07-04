@@ -68,7 +68,8 @@ bool LocationClientApi::startPositionSession(
         LocationCb locationCallback,
         ResponseCb responseCallback) {
 
-    loc_boot_kpi_marker("L - LCA standard startFix, tbf %d", intervalInMs);
+    loc_boot_kpi_marker("L - LCA ST-SPS %s %d",
+            program_invocation_short_name, intervalInMs);
     //Input parameter check
     if (!locationCallback) {
         LOC_LOGe ("NULL locationCallback");
@@ -114,7 +115,8 @@ bool LocationClientApi::startPositionSession(
         const GnssReportCbs& gnssReportCallbacks,
         ResponseCb responseCallback) {
 
-    loc_boot_kpi_marker("L - LCA Extended startFix, tbf %d", intervalInMs);
+    loc_boot_kpi_marker("L - LCA EX-SPS %s %d",
+            program_invocation_short_name, intervalInMs);
 
     if (!mApiImpl) {
         LOC_LOGe ("NULL mApiImpl");
@@ -164,7 +166,8 @@ bool LocationClientApi::startPositionSession(
         const EngineReportCbs& engReportCallbacks,
         ResponseCb responseCallback) {
 
-    loc_boot_kpi_marker("L - LCA Fused startFix, tbf %d", intervalInMs);
+    loc_boot_kpi_marker("L - LCA Fused-SPS %s %d",
+            program_invocation_short_name, intervalInMs);
     if (!mApiImpl) {
         LOC_LOGe ("NULL mApiImpl");
         return false;
@@ -511,6 +514,29 @@ uint16_t LocationClientApi::getYearOfHw() {
     }
 }
 
+void LocationClientApi::getSingleTerrestrialPosition(
+        uint32_t timeoutMsec, TerrestrialTechnologyMask techMask,
+        float horQoS, LocationCb terrestrialPositionCallback,
+        ResponseCb responseCallback) {
+
+    LOC_LOGd("timeout msec = %u, horQoS = %f,"
+             "techMask = 0x%x", timeoutMsec, horQoS, techMask);
+
+    if ((timeoutMsec == 0) || (techMask != TERRESTRIAL_TECH_GTP_WWAN) ||
+        (horQoS != 0.0)) {
+        LOC_LOGe("invalid parameter: timeout %d, tech mask 0x%x, horQoS %f",
+                 timeoutMsec, techMask, horQoS);
+        if (responseCallback) {
+            responseCallback(LOCATION_RESPONSE_PARAM_INVALID);
+        }
+    } else if (mApiImpl) {
+        mApiImpl->getSingleTerrestrialPos(timeoutMsec, ::TERRESTRIAL_TECH_GTP_WWAN, horQoS,
+                                          terrestrialPositionCallback, responseCallback);
+    } else {
+        LOC_LOGe ("NULL mApiImpl");
+    }
+}
+
 // ============ below Section implements toString() methods of data structs ==============
 static string maskToVals(uint64_t mask, int64_t baseNum) {
     string out;
@@ -523,12 +549,24 @@ static string maskToVals(uint64_t mask, int64_t baseNum) {
 
 // LocationCapabilitiesMask
 DECLARE_TBL(LocationCapabilitiesMask) = {
-    {LOCATION_CAPS_TIME_BASED_TRACKING_BIT, "TBT"},
-    {LOCATION_CAPS_TIME_BASED_BATCHING_BIT, "TBB"},
-    {LOCATION_CAPS_DISTANCE_BASED_TRACKING_BIT, "DBT"},
-    {LOCATION_CAPS_DISTANCE_BASED_BATCHING_BIT, "DBB"},
-    {LOCATION_CAPS_GEOFENCE_BIT, "GF"},
-    {LOCATION_CAPS_OUTDOOR_TRIP_BATCHING_BIT, "OTB"}
+    {LOCATION_CAPS_TIME_BASED_TRACKING_BIT, "TIME_BASED_TRACKING"},
+    {LOCATION_CAPS_TIME_BASED_BATCHING_BIT, "TIME_BASED_BATCHING"},
+    {LOCATION_CAPS_DISTANCE_BASED_TRACKING_BIT, "DIST_BASED_TRACKING"},
+    {LOCATION_CAPS_DISTANCE_BASED_BATCHING_BIT, "DIST_BASED_BATCHING"},
+    {LOCATION_CAPS_GEOFENCE_BIT, "GEOFENCE"},
+    {LOCATION_CAPS_OUTDOOR_TRIP_BATCHING_BIT, "OUTDOOR_TRIP_BATCHING"},
+    {LOCATION_CAPS_GNSS_MEASUREMENTS_BIT, "GNSS_MEASUREMENTS"},
+    {LOCATION_CAPS_CONSTELLATION_ENABLEMENT_BIT, "CONSTELLATION_ENABLE"},
+    {LOCATION_CAPS_CARRIER_PHASE_BIT, "CARRIER_PHASE"},
+    {LOCATION_CAPS_SV_POLYNOMIAL_BIT, "SV_POLY"},
+    {LOCATION_CAPS_QWES_GNSS_SINGLE_FREQUENCY, "GNSS_SINGLE_FREQ"},
+    {LOCATION_CAPS_QWES_GNSS_MULTI_FREQUENCY, "GNSS_MULTI_FREQ"},
+    {LOCATION_CAPS_QWES_VPE, "VPE"},
+    {LOCATION_CAPS_QWES_CV2X_LOCATION_BASIC, "CV2X_LOC_BASIC"},
+    {LOCATION_CAPS_QWES_CV2X_LOCATION_PREMIUM, "CV2X_LOC_PREMIUM"},
+    {LOCATION_CAPS_QWES_PPE, "PPE"},
+    {LOCATION_CAPS_QWES_QDR2, "QDR2"},
+    {LOCATION_CAPS_QWES_QDR3, "QDR3"}
 };
 // GnssSvOptionsMask
 DECLARE_TBL(GnssSvOptionsMask) = {
@@ -729,20 +767,23 @@ DECLARE_TBL(DrCalibrationStatusMask) = {
 DECLARE_TBL(LocReqEngineTypeMask) = {
     {LOC_REQ_ENGINE_FUSED_BIT, "FUSED"},
     {LOC_REQ_ENGINE_SPE_BIT, "SPE"},
-    {LOC_REQ_ENGINE_PPE_BIT, "PPE"}
+    {LOC_REQ_ENGINE_PPE_BIT, "PPE"},
+    {LOC_REQ_ENGINE_VPE_BIT, "VPE"}
 };
 // LocOutputEngineType
 DECLARE_TBL(LocOutputEngineType) = {
     {LOC_OUTPUT_ENGINE_FUSED, "FUSED"},
     {LOC_OUTPUT_ENGINE_SPE, "SPE"},
     {LOC_OUTPUT_ENGINE_PPE, "PPE"},
+    {LOC_OUTPUT_ENGINE_VPE, "VPE"},
     {LOC_OUTPUT_ENGINE_COUNT, "COUNT"}
 };
 // PositioningEngineMask
 DECLARE_TBL(PositioningEngineMask) = {
     {STANDARD_POSITIONING_ENGINE, "SPE"},
     {DEAD_RECKONING_ENGINE, "DRE"},
-    {PRECISE_POSITIONING_ENGINE, "PPE"}
+    {PRECISE_POSITIONING_ENGINE, "PPE"},
+    {VP_POSITIONING_ENGINE, "VPE"}
 };
 // GnssDataMask
 DECLARE_TBL(GnssDataMask) = {
@@ -828,6 +869,22 @@ DECLARE_TBL(LocationSystemInfoMask) = {
 DECLARE_TBL(DrSolutionStatusMask) = {
     {DR_SOLUTION_STATUS_VEHICLE_SENSOR_SPEED_INPUT_DETECTED, "VEHICLE_SENSOR_SPEED_INPUT_DETECTED"},
     {DR_SOLUTION_STATUS_VEHICLE_SENSOR_SPEED_INPUT_USED, "VEHICLE_SENSOR_SPEED_INPUT_USED"}
+};
+
+string LocationClientApi::capabilitiesToString(LocationCapabilitiesMask capabMask) {
+    string out;
+    out.reserve(256);
+
+    out += FIELDVAL_MASK(capabMask, LocationCapabilitiesMask_tbl);
+
+    return out;
+}
+
+// LocSessionStatus
+DECLARE_TBL(LocSessionStatus) = {
+    {LOC_SESS_SUCCESS, "LOC_SESS_SUCCESS"},
+    {LOC_SESS_INTERMEDIATE, "LOC_SESS_INTERMEDIATE"},
+    {LOC_SESS_FAILURE, "LOC_SESS_FAILURE" }
 };
 
 string GnssLocationSvUsedInPosition::toString() const {
@@ -1026,6 +1083,7 @@ string GnssLocation::toString() const {
     out += FIELDVAL_DEC(enuVelocityVRPBased[1]);
     out += FIELDVAL_DEC(enuVelocityVRPBased[2]);
     out += FIELDVAL_MASK(drSolutionStatusMask, DrSolutionStatusMask_tbl);
+    out += FIELDVAL_MASK(sessionStatus, LocSessionStatus_tbl);
 
     return out;
 }
@@ -1043,6 +1101,7 @@ string GnssSv::toString() const {
     out += FIELDVAL_DEC(carrierFrequencyHz);
     out += FIELDVAL_MASK(gnssSignalTypeMask, GnssSignalTypeMask_tbl);
     out += FIELDVAL_DEC(basebandCarrierToNoiseDbHz);
+    out += FIELDVAL_DEC(gloFrequency);
 
     return out;
 }

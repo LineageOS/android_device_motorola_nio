@@ -38,15 +38,8 @@
 #include <LocationClientApi.h>
 #include <MsgTask.h>
 #include <LocationApiMsg.h>
+#include <LocationApiPbMsgConv.h>
 #include <LCAReportLoggerUtil.h>
-#ifdef NO_UNORDERED_SET_OR_MAP
-    #include <set>
-    #include <map>
-#else
-    #include <unordered_set>
-    #include <unordered_map>
-#endif
-
 #ifdef NO_UNORDERED_SET_OR_MAP
     #include <set>
     #include <map>
@@ -170,10 +163,17 @@ public:
     inline uint16_t getYearOfHw() {return mYearOfHw;}
     void invokePositionSessionResponseCb(LocationResponse responseCode);
 
+    void getSingleTerrestrialPos(uint32_t timeoutMsec, TerrestrialTechMask techMask,
+                                 float horQoS, LocationCb terrestrialPositionCallback,
+                                 ResponseCb responseCallback);
+
 private:
     ~LocationClientApiImpl();
     void capabilitesCallback(ELocMsgID  msgId, const void* msgData);
     void updateTrackingOptionsSync(LocationClientApiImpl* pImpl, TrackingOptions& option);
+
+    // protobuf conversion util class
+    LocationApiPbMsgConv mPbufMsgConv;
 
     // internal session parameter
     static uint32_t         mClientIdGenerator;
@@ -221,6 +221,10 @@ private:
 
     LocationSystemInfoCb    mLocationSysInfoCb;
     ResponseCb              mLocationSysInfoResponseCb;
+
+    // Terrestrial fix callback
+    LocationCb              mSingleTerrestrialPosCb;
+    ResponseCb              mSingleTerrestrialPosRespCb;
 
     MsgTask                    mMsgTask;
 

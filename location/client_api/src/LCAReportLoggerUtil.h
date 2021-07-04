@@ -38,13 +38,14 @@ namespace location_client {
 
 class LCAReportLoggerUtil {
 public:
-    typedef void (*LogGnssLocation)(const GnssLocation& gnssLocation);
+    typedef void (*LogGnssLocation)(const GnssLocation& gnssLocation,
+            const LocationCapabilitiesMask& capMask);
     typedef void (*LogGnssSv)(const std::vector<GnssSv>& gnssSvsVector);
     typedef void (*LogGnssNmea)(uint64_t timestamp, uint32_t length, const char* nmea);
     typedef void (*LogGnssMeas)(const GnssMeasurements& gnssMeasurements);
 
     LCAReportLoggerUtil();
-    void log(const GnssLocation& gnssLocation);
+    void log(const GnssLocation& gnssLocation, const LocationCapabilitiesMask& capMask);
     void log(const std::vector<GnssSv>& gnssSvsVector);
     void log(uint64_t timestamp, uint32_t length, const char* nmea);
     void log(const GnssMeasurements& gnssMeasurements);

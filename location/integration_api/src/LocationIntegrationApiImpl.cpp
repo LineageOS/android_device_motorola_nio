@@ -74,6 +74,12 @@ static LocConfigTypeEnum getLocConfigTypeFromMsgId(ELocMsgID  msgId) {
     case E_INTAPI_CONFIG_MIN_SV_ELEVATION_MSG_ID:
         configType = CONFIG_MIN_SV_ELEVATION;
         break;
+    case E_INTAPI_CONFIG_ENGINE_RUN_STATE_MSG_ID:
+        configType = CONFIG_ENGINE_RUN_STATE;
+        break;
+    case E_INTAPI_CONFIG_USER_CONSENT_TERRESTRIAL_POSITIONING_MSG_ID:
+        configType = CONFIG_USER_CONSENT_TERRESTRIAL_POSITIONING;
+        break;
     case E_INTAPI_GET_ROBUST_LOCATION_CONFIG_REQ_MSG_ID:
     case E_INTAPI_GET_ROBUST_LOCATION_CONFIG_RESP_MSG_ID:
         configType = GET_ROBUST_LOCATION_CONFIG;
@@ -140,10 +146,12 @@ class IpcQrtrWatcher : public LocIpcQrtrWatcher {
     const weak_ptr<IpcListener> mIpcListener;
     const weak_ptr<LocIpcSender> mIpcSender;
     LocIpcQrtrWatcher::ServiceStatus mKnownStatus;
+    LocationApiPbMsgConv mPbufMsgConv;
 public:
-    inline IpcQrtrWatcher(shared_ptr<IpcListener>& listener, shared_ptr<LocIpcSender>& sender) :
+    inline IpcQrtrWatcher(shared_ptr<IpcListener>& listener, shared_ptr<LocIpcSender>& sender,
+            LocationApiPbMsgConv& pbMsgConv) :
             LocIpcQrtrWatcher({LOCATION_CLIENT_API_QSOCKET_HALDAEMON_SERVICE_ID}),
-            mIpcListener(listener), mIpcSender(sender),
+            mIpcListener(listener), mIpcSender(sender), mPbufMsgConv(pbMsgConv),
             mKnownStatus(LocIpcQrtrWatcher::ServiceStatus::DOWN) {
     }
     inline virtual void onServiceStatusChange(int serviceId, int instanceId,
@@ -160,8 +168,13 @@ public:
                     }
                     auto listener = mIpcListener.lock();
                     if (nullptr != listener) {
-                        const LocAPIHalReadyIndMsg msg(SERVICE_NAME);
-                        listener->onReceive((const char*)&msg, sizeof(msg), nullptr);
+                        LocAPIHalReadyIndMsg msg(SERVICE_NAME, &mPbufMsgConv);
+                        string pbStr;
+                        if (msg.serializeToProtobuf(pbStr)) {
+                            listener->onReceive(pbStr.c_str(), pbStr.size(), nullptr);
+                        } else {
+                            LOC_LOGe("LocAPIHalReadyIndMsg serializeToProtobuf failed");
+                        }
                     }
                 }
             }
@@ -187,7 +200,8 @@ LocationIntegrationApiImpl::LocationIntegrationApiImpl(LocIntegrationCbs& integr
         mLeverArmConfigInfo{},
         mRobustLocationConfigInfo{},
         mDreConfigInfo{},
-        mMsgTask("IntegrationApiImpl") {
+        mMsgTask("IntegrationApiImpl"),
+        mGtpUserConsentConfigInfo{} {
     if (integrationClientAllowed() == false) {
         return;
     }
@@ -198,8 +212,12 @@ LocationIntegrationApiImpl::LocationIntegrationApiImpl(LocIntegrationCbs& integr
 #ifdef FEATURE_EXTERNAL_AP
     SockNodeEap sock(LOCATION_CLIENT_API_QSOCKET_CLIENT_SERVICE_ID,
                      pid * 100);
-    strlcpy(mSocketName, sock.getNodePathname().c_str(), sizeof(mSocketName));
-
+    size_t pathNameLength = strlcpy(mSocketName, sock.getNodePathname().c_str(),
+                                    sizeof(mSocketName));
+    if (pathNameLength >= sizeof(mSocketName)) {
+        LOC_LOGe("socket name length exceeds limit of %d bytes", sizeof(mSocketName));
+        return;
+    }
     // establish an ipc sender to the hal daemon
     mIpcSender = LocIpc::getLocIpcQrtrSender(LOCATION_CLIENT_API_QSOCKET_HALDAEMON_SERVICE_ID,
                                              LOCATION_CLIENT_API_QSOCKET_HALDAEMON_INSTANCE_ID);
@@ -211,10 +229,16 @@ LocationIntegrationApiImpl::LocationIntegrationApiImpl(LocIntegrationCbs& integr
     }
     shared_ptr<IpcListener> listener(make_shared<IpcListener>(*this, mMsgTask, SockNode::Eap));
     unique_ptr<LocIpcRecver> recver = LocIpc::getLocIpcQrtrRecver(listener,
-            sock.getId1(), sock.getId2(), make_shared<IpcQrtrWatcher>(listener, mIpcSender));
+            sock.getId1(), sock.getId2(),
+            make_shared<IpcQrtrWatcher>(listener, mIpcSender, mPbufMsgConv));
 #else
     SockNodeLocal sock(LOCATION_INTEGRATION_API, pid, 0);
-    strlcpy(mSocketName, sock.getNodePathname().c_str(), sizeof(mSocketName));
+    size_t pathNameLength = strlcpy(mSocketName, sock.getNodePathname().c_str(),
+                                    sizeof(mSocketName));
+    if (pathNameLength >= sizeof(mSocketName)) {
+        LOC_LOGe("socket name length exceeds limit of %d bytes", sizeof(mSocketName));
+        return;
+    }
 
     LOC_LOGd("create sender socket: %s", mSocketName);
     // establish an ipc sender to the hal daemon
@@ -243,10 +267,17 @@ void LocationIntegrationApiImpl::destroy() {
         void proc() const {
             // deregister
             if (mApiImpl->mHalRegistered && (nullptr != mApiImpl->mIpcSender)) {
-                LocAPIClientDeregisterReqMsg msg(mApiImpl->mSocketName);
-                bool rc = mApiImpl->sendMessage(reinterpret_cast<uint8_t*>(&msg), sizeof(msg));
-                LOC_LOGd(">>> DeregisterReq rc=%d", rc);
-                mApiImpl->mIpcSender = nullptr;
+                string pbStr;
+                LocAPIClientDeregisterReqMsg msg(mApiImpl->mSocketName, &mApiImpl->mPbufMsgConv);
+                if (msg.serializeToProtobuf(pbStr)) {
+                    bool rc = mApiImpl->sendMessage(
+                            reinterpret_cast<uint8_t *>((uint8_t *)pbStr.c_str()), pbStr.size());
+                    LOC_LOGd(">>> DeregisterReq rc=%d", rc);
+                    mApiImpl->mIpcSender = nullptr;
+                } else {
+                    LOC_LOGe("LocAPIClientDeregisterReqMsg serializeToProtobuf failed");
+                }
+
             }
 
             // delete the integration client, so another integration client can be set
@@ -304,20 +335,33 @@ void IpcListener::onReceive(const char* data, uint32_t length,
 
         virtual ~OnReceiveHandler() {}
         void proc() const {
-            LocAPIMsgHeader *pMsg = (LocAPIMsgHeader *)(mMsgData.data());
-
-            // throw away message that does not come from location hal daemon
-            if (false == pMsg->isValidServerMsg(mMsgData.length())) {
+            // Protobuff Encoding enabled, so we need to convert the message from proto
+            // encoded format to local structure
+            PBLocAPIMsgHeader pbLocApiMsg;
+            if (0 == pbLocApiMsg.ParseFromString(mMsgData)) {
+                LOC_LOGe("Failed to parse pbLocApiMsg from input stream!! length: %u",
+                        mMsgData.length());
                 return;
             }
 
-            switch (pMsg->msgId) {
+            ELocMsgID eLocMsgid = mApiImpl.mPbufMsgConv.getEnumForPBELocMsgID(pbLocApiMsg.msgid());
+            string sockName = pbLocApiMsg.msocketname();
+            uint32_t msgVer = pbLocApiMsg.msgversion();
+            uint32_t payloadSize = pbLocApiMsg.payloadsize();
+            // pbLocApiMsg.payload() contains the payload data.
+
+            LOC_LOGi(">-- onReceive Rcvd msg id: %d, sockname: %s, payload size: %d", eLocMsgid,
+                    sockName.c_str(), payloadSize);
+            LocAPIMsgHeader locApiMsg(sockName.c_str(), eLocMsgid);
+
+            // throw away message that does not come from location hal daemon
+            if (false == locApiMsg.isValidServerMsg(payloadSize)) {
+                return;
+            }
+
+            switch (locApiMsg.msgId) {
             case E_LOCAPI_HAL_READY_MSG_ID:
                 LOC_LOGd("<<< HAL ready");
-                if (sizeof(LocAPIHalReadyIndMsg) != mMsgData.length()) {
-                    LOC_LOGw("payload size does not match for message with id: %d",
-                             pMsg->msgId);
-                }
                 // location hal daemon crashed and re-started
                 mApiImpl.processHalReadyMsg();
                 break;
@@ -332,64 +376,83 @@ void IpcListener::onReceive(const char* data, uint32_t length,
             case E_INTAPI_CONFIG_MIN_GPS_WEEK_MSG_ID:
             case E_INTAPI_CONFIG_DEAD_RECKONING_ENGINE_MSG_ID:
             case E_INTAPI_CONFIG_MIN_SV_ELEVATION_MSG_ID:
+            case E_INTAPI_CONFIG_ENGINE_RUN_STATE_MSG_ID:
+            case E_INTAPI_CONFIG_USER_CONSENT_TERRESTRIAL_POSITIONING_MSG_ID:
             case E_INTAPI_GET_ROBUST_LOCATION_CONFIG_REQ_MSG_ID:
             case E_INTAPI_GET_MIN_GPS_WEEK_REQ_MSG_ID:
             case E_INTAPI_GET_MIN_SV_ELEVATION_REQ_MSG_ID:
             case E_INTAPI_GET_CONSTELLATION_SECONDARY_BAND_CONFIG_REQ_MSG_ID:
             {
-                if (sizeof(LocAPIGenericRespMsg) != mMsgData.length()) {
-                    LOC_LOGw("payload size does not match for message with id: %d",
-                             pMsg->msgId);
+                PBLocAPIGenericRespMsg pbLocApiGenericRsp;
+                if (0 == pbLocApiGenericRsp.ParseFromString(pbLocApiMsg.payload())) {
+                    LOC_LOGe("Failed to parse pbLocApiGenericRsp from payload!!");
+                    return;
                 }
-                mApiImpl.processConfigRespCb((LocAPIGenericRespMsg*)pMsg);
+                LocAPIGenericRespMsg msg(sockName.c_str(), eLocMsgid, pbLocApiGenericRsp,
+                        &mApiImpl.mPbufMsgConv);
+                mApiImpl.processConfigRespCb((LocAPIGenericRespMsg*)&msg);
                 break;
             }
 
             case E_INTAPI_GET_MIN_GPS_WEEK_RESP_MSG_ID:
             {
-                if (sizeof(LocConfigGetMinGpsWeekRespMsg) != mMsgData.length()) {
-                    LOC_LOGw("payload size does not match for message with id: %d",
-                             pMsg->msgId);
+                PBLocConfigGetMinGpsWeekRespMsg configGeMinGpsWeek;
+                if (0 == configGeMinGpsWeek.ParseFromString(pbLocApiMsg.payload())) {
+                    LOC_LOGe("Failed to parse configGeMinGpsWeek from payload!!");
+                    return;
                 }
-                mApiImpl.processGetMinGpsWeekRespCb((LocConfigGetMinGpsWeekRespMsg*)pMsg);
+                LocConfigGetMinGpsWeekRespMsg msg(sockName.c_str(), configGeMinGpsWeek,
+                        &mApiImpl.mPbufMsgConv);
+                mApiImpl.processGetMinGpsWeekRespCb((LocConfigGetMinGpsWeekRespMsg*)&msg);
                 break;
             }
 
             case E_INTAPI_GET_ROBUST_LOCATION_CONFIG_RESP_MSG_ID:
             {
-                if (sizeof(LocConfigGetRobustLocationConfigRespMsg) != mMsgData.length()) {
-                    LOC_LOGw("payload size does not match for message with id: %d",
-                             pMsg->msgId);
+                PBLocConfigGetRobustLocationConfigRespMsg configGetRobustLoc;
+                if (0 == configGetRobustLoc.ParseFromString(pbLocApiMsg.payload())) {
+                    LOC_LOGe("Failed to parse configGetRobustLoc from payload!!");
+                    return;
                 }
+
+                LocConfigGetRobustLocationConfigRespMsg msg(sockName.c_str(), configGetRobustLoc,
+                        &mApiImpl.mPbufMsgConv);
                 mApiImpl.processGetRobustLocationConfigRespCb(
-                        (LocConfigGetRobustLocationConfigRespMsg*)pMsg);
+                        (LocConfigGetRobustLocationConfigRespMsg*)&msg);
                 break;
             }
 
             case E_INTAPI_GET_MIN_SV_ELEVATION_RESP_MSG_ID:
             {
-                if (sizeof(LocConfigGetMinSvElevationRespMsg) != mMsgData.length()) {
-                    LOC_LOGw("payload size does not match for message with id: %d",
-                             pMsg->msgId);
+                PBLocConfigGetMinSvElevationRespMsg configGetMinSvElev;
+                if (0 == configGetMinSvElev.ParseFromString(pbLocApiMsg.payload())) {
+                    LOC_LOGe("Failed to parse configGetMinSvElev from payload!!");
+                    return;
                 }
-                mApiImpl.processGetMinSvElevationRespCb((LocConfigGetMinSvElevationRespMsg*)pMsg);
+
+                LocConfigGetMinSvElevationRespMsg msg(sockName.c_str(), configGetMinSvElev,
+                        &mApiImpl.mPbufMsgConv);
+                mApiImpl.processGetMinSvElevationRespCb((LocConfigGetMinSvElevationRespMsg*)&msg);
                 break;
             }
 
             case E_INTAPI_GET_CONSTELLATION_SECONDARY_BAND_CONFIG_RESP_MSG_ID:
             {
-                if (sizeof(LocConfigGetConstellationSecondaryBandConfigRespMsg) !=
-                        mMsgData.length()) {
-                    LOC_LOGw("payload size does not match for message with id: %d",
-                             pMsg->msgId);
+                PBLocConfigGetConstltnSecondaryBandConfigRespMsg cfgGetConstlnSecBandCfgRespMsg;
+                if (0 == cfgGetConstlnSecBandCfgRespMsg.ParseFromString(pbLocApiMsg.payload())) {
+                    LOC_LOGe("Failed to parse cfgGetConstlnSecBandCfgRespMsg from payload!!");
+                    return;
                 }
+
+                LocConfigGetConstellationSecondaryBandConfigRespMsg msg(sockName.c_str(),
+                        cfgGetConstlnSecBandCfgRespMsg, &mApiImpl.mPbufMsgConv);
                 mApiImpl.processGetConstellationSecondaryBandConfigRespCb(
-                        (LocConfigGetConstellationSecondaryBandConfigRespMsg*)pMsg);
+                        (LocConfigGetConstellationSecondaryBandConfigRespMsg*)&msg);
                 break;
             }
 
             default:
-                LOC_LOGw("<<< unknown message %d", pMsg->msgId);
+                LOC_LOGw("<<< unknown message %d", locApiMsg.msgId);
                 break;
             }
         }
@@ -417,17 +480,23 @@ uint32_t LocationIntegrationApiImpl::configConstellations(
                 mBlacklistSvConfig(blacklistSvConfig) {}
         virtual ~ConfigConstellationsReq() {}
         void proc() const {
+            string pbStr;
             LocConfigSvConstellationReqMsg msg(mApiImpl->mSocketName,
                                                mConstellationEnablementConfig,
-                                               mBlacklistSvConfig);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_CONSTELLATIONS,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
-           // cache the last config to be used when hal daemon restarts
-            mApiImpl->mSvConfigInfo.isValid = true;
-            mApiImpl->mSvConfigInfo.constellationEnablementConfig =
-                    mConstellationEnablementConfig;
-            mApiImpl->mSvConfigInfo.blacklistSvConfig = mBlacklistSvConfig;
+                                               mBlacklistSvConfig,
+                                               &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_CONSTELLATIONS,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+               // cache the last config to be used when hal daemon restarts
+                mApiImpl->mSvConfigInfo.isValid = true;
+                mApiImpl->mSvConfigInfo.constellationEnablementConfig =
+                        mConstellationEnablementConfig;
+                mApiImpl->mSvConfigInfo.blacklistSvConfig = mBlacklistSvConfig;
+            } else {
+                LOC_LOGe("LocConfigSvConstellationReqMsg serializeToProtobuf failed");
+            }
         }
 
         LocationIntegrationApiImpl* mApiImpl;
@@ -449,15 +518,21 @@ uint32_t LocationIntegrationApiImpl::configConstellationSecondaryBand(
                 mSecondaryBandConfig(secondaryBandConfig) {}
         virtual ~ConfigConstellationSecondaryBandReq() {}
         void proc() const {
+            string pbStr;
             LocConfigConstellationSecondaryBandReqMsg msg(
                     mApiImpl->mSocketName,
-                    mSecondaryBandConfig);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_CONSTELLATION_SECONDARY_BAND,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
-           // cache the last config to be used when hal daemon restarts
-            mApiImpl->mSvConfigInfo.isValid = true;
-            mApiImpl->mSvConfigInfo.secondaryBandConfig = mSecondaryBandConfig;
+                    mSecondaryBandConfig,
+                    &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_CONSTELLATION_SECONDARY_BAND,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+               // cache the last config to be used when hal daemon restarts
+                mApiImpl->mSvConfigInfo.isValid = true;
+                mApiImpl->mSvConfigInfo.secondaryBandConfig = mSecondaryBandConfig;
+            } else {
+                LOC_LOGe("LocConfigConstellationSecondaryBandReqMsg serializeToProtobuf failed");
+            }
         }
 
         LocationIntegrationApiImpl* mApiImpl;
@@ -474,10 +549,16 @@ uint32_t LocationIntegrationApiImpl::getConstellationSecondaryBandConfig() {
                 mApiImpl(apiImpl) {}
         virtual ~GetConstellationSecondaryBandConfigReq() {}
         void proc() const {
-            LocConfigGetConstellationSecondaryBandConfigReqMsg msg(mApiImpl->mSocketName);
-            mApiImpl->sendConfigMsgToHalDaemon(GET_CONSTELLATION_SECONDARY_BAND_CONFIG,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+            string pbStr;
+            LocConfigGetConstellationSecondaryBandConfigReqMsg msg(mApiImpl->mSocketName,
+                    &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(GET_CONSTELLATION_SECONDARY_BAND_CONFIG,
+                                   reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                   pbStr.size());
+            } else {
+                LOC_LOGe("LocCgGetCnstlSecondaryBandConfigReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
     };
@@ -506,16 +587,22 @@ uint32_t LocationIntegrationApiImpl::configConstrainedTimeUncertainty(
                 mEnergyBudget(energyBudget) {}
         virtual ~ConfigConstrainedTuncReq() {}
         void proc() const {
+            string pbStr;
             LocConfigConstrainedTuncReqMsg msg(mApiImpl->mSocketName,
-                                               mEnable, mTuncThreshold, mEnergyBudget);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_CONSTRAINED_TIME_UNCERTAINTY,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
-           // cache the last config to be used when hal daemon restarts
-            mApiImpl->mTuncConfigInfo.isValid = true;
-            mApiImpl->mTuncConfigInfo.enable = mEnable;
-            mApiImpl->mTuncConfigInfo.tuncThresholdMs = mTuncThreshold;
-            mApiImpl->mTuncConfigInfo.energyBudget = mEnergyBudget;
+                                               mEnable, mTuncThreshold, mEnergyBudget,
+                                               &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_CONSTRAINED_TIME_UNCERTAINTY,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+               // cache the last config to be used when hal daemon restarts
+                mApiImpl->mTuncConfigInfo.isValid = true;
+                mApiImpl->mTuncConfigInfo.enable = mEnable;
+                mApiImpl->mTuncConfigInfo.tuncThresholdMs = mTuncThreshold;
+                mApiImpl->mTuncConfigInfo.energyBudget = mEnergyBudget;
+            } else {
+                LOC_LOGe("LocConfigConstrainedTuncReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         bool mEnable;
@@ -537,14 +624,20 @@ uint32_t LocationIntegrationApiImpl::configPositionAssistedClockEstimator(bool e
                 mEnable(enable) {}
         virtual ~ConfigPositionAssistedClockEstimatorReq() {}
         void proc() const {
+            string pbStr;
             LocConfigPositionAssistedClockEstimatorReqMsg msg(mApiImpl->mSocketName,
-                                                              mEnable);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_POSITION_ASSISTED_CLOCK_ESTIMATOR,
-                                         reinterpret_cast<uint8_t*>(&msg),
-                                         sizeof(msg));
-           // cache the last config to be used when hal daemon restarts
-            mApiImpl->mPaceConfigInfo.isValid = true;
-            mApiImpl->mPaceConfigInfo.enable = mEnable;
+                                                              mEnable,
+                                                              &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_POSITION_ASSISTED_CLOCK_ESTIMATOR,
+                                        reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                        pbStr.size());
+               // cache the last config to be used when hal daemon restarts
+                mApiImpl->mPaceConfigInfo.isValid = true;
+                mApiImpl->mPaceConfigInfo.enable = mEnable;
+            } else {
+                LOC_LOGe("LocConfigPositionAssistedClockEstimatorReqMsg serializeToProtobuf fail");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         bool mEnable;
@@ -564,11 +657,17 @@ uint32_t LocationIntegrationApiImpl::gnssDeleteAidingData(
                 mAidingData(aidingData) {}
         virtual ~DeleteAidingDataReq() {}
         void proc() const {
+            string pbStr;
             LocConfigAidingDataDeletionReqMsg msg(mApiImpl->mSocketName,
-                                                  const_cast<GnssAidingData&>(mAidingData));
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_AIDING_DATA_DELETION,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+                                                  const_cast<GnssAidingData&>(mAidingData),
+                                                  &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_AIDING_DATA_DELETION,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigAidingDataDeletionReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         GnssAidingData mAidingData;
@@ -587,12 +686,18 @@ uint32_t LocationIntegrationApiImpl::configLeverArm(
                 mConfigInfo(configInfo) {}
         virtual ~ConfigLeverArmReq() {}
         void proc() const {
-            LocConfigLeverArmReqMsg msg(mApiImpl->mSocketName, mConfigInfo);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_LEVER_ARM,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
-            // cache the last config to be used when hal daemon restarts
-            mApiImpl->mLeverArmConfigInfo = mConfigInfo;
+            string pbStr;
+            LocConfigLeverArmReqMsg msg(mApiImpl->mSocketName, mConfigInfo,
+                    &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_LEVER_ARM,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+                // cache the last config to be used when hal daemon restarts
+                mApiImpl->mLeverArmConfigInfo = mConfigInfo;
+            } else {
+                LOC_LOGe("LocConfigLeverArmReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         LeverArmConfigInfo mConfigInfo;
@@ -616,13 +721,19 @@ uint32_t LocationIntegrationApiImpl::configRobustLocation(
                 mEnableForE911(enableForE911){}
         virtual ~ConfigRobustLocationReq() {}
         void proc() const {
-            LocConfigRobustLocationReqMsg msg(mApiImpl->mSocketName, mEnable, mEnableForE911);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_ROBUST_LOCATION,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
-            mApiImpl->mRobustLocationConfigInfo.isValid = true;
-            mApiImpl->mRobustLocationConfigInfo.enable = mEnable;
-            mApiImpl->mRobustLocationConfigInfo.enableForE911 = mEnableForE911;
+            string pbStr;
+            LocConfigRobustLocationReqMsg msg(mApiImpl->mSocketName, mEnable,
+                    mEnableForE911, &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_ROBUST_LOCATION,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+                mApiImpl->mRobustLocationConfigInfo.isValid = true;
+                mApiImpl->mRobustLocationConfigInfo.enable = mEnable;
+                mApiImpl->mRobustLocationConfigInfo.enableForE911 = mEnableForE911;
+            } else {
+                LOC_LOGe("LocConfigRobustLocationReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         bool mEnable;
@@ -642,10 +753,16 @@ uint32_t LocationIntegrationApiImpl::getRobustLocationConfig() {
                 mApiImpl(apiImpl) {}
         virtual ~GetRobustLocationConfigReq() {}
         void proc() const {
-            LocConfigGetRobustLocationConfigReqMsg msg(mApiImpl->mSocketName);
-            mApiImpl->sendConfigMsgToHalDaemon(GET_ROBUST_LOCATION_CONFIG,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+            string pbStr;
+            LocConfigGetRobustLocationConfigReqMsg msg(mApiImpl->mSocketName,
+                    &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(GET_ROBUST_LOCATION_CONFIG,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigGetRobustLocationConfigReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
     };
@@ -668,10 +785,16 @@ uint32_t LocationIntegrationApiImpl::configMinGpsWeek(uint16_t minGpsWeek) {
                 mMinGpsWeek(minGpsWeek) {}
         virtual ~ConfigMinGpsWeekReq() {}
         void proc() const {
-            LocConfigMinGpsWeekReqMsg msg(mApiImpl->mSocketName, mMinGpsWeek);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_MIN_GPS_WEEK,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+            string pbStr;
+            LocConfigMinGpsWeekReqMsg msg(mApiImpl->mSocketName,
+                    mMinGpsWeek, &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_MIN_GPS_WEEK,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigMinGpsWeekReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         uint16_t mMinGpsWeek;
@@ -688,10 +811,15 @@ uint32_t LocationIntegrationApiImpl::getMinGpsWeek() {
                 mApiImpl(apiImpl) {}
         virtual ~GetMinGpsWeekReq() {}
         void proc() const {
-            LocConfigGetMinGpsWeekReqMsg msg(mApiImpl->mSocketName);
-            mApiImpl->sendConfigMsgToHalDaemon(GET_MIN_GPS_WEEK,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+            string pbStr;
+            LocConfigGetMinGpsWeekReqMsg msg(mApiImpl->mSocketName, &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(GET_MIN_GPS_WEEK,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigGetMinGpsWeekReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
     };
@@ -715,13 +843,19 @@ uint32_t LocationIntegrationApiImpl::configDeadReckoningEngineParams(
                 mDreConfig(dreConfig){}
         virtual ~ConfigDrEngineParamsReq() {}
         void proc() const {
+            string pbStr;
             mApiImpl->mDreConfigInfo.isValid = true;
             mApiImpl->mDreConfigInfo.dreConfig = mDreConfig;
             LocConfigDrEngineParamsReqMsg msg(mApiImpl->mSocketName,
-                                              mApiImpl->mDreConfigInfo.dreConfig);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_DEAD_RECKONING_ENGINE,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+                                              mApiImpl->mDreConfigInfo.dreConfig,
+                                              &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_DEAD_RECKONING_ENGINE,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigDrEngineParamsReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         ::DeadReckoningEngineConfig mDreConfig;
@@ -740,10 +874,16 @@ uint32_t LocationIntegrationApiImpl::configMinSvElevation(uint8_t minSvElevation
                 mApiImpl(apiImpl), mMinSvElevation(minSvElevation){}
         virtual ~ConfigMinSvElevationReq() {}
         void proc() const {
-            LocConfigMinSvElevationReqMsg msg(mApiImpl->mSocketName, mMinSvElevation);
-            mApiImpl->sendConfigMsgToHalDaemon(CONFIG_MIN_SV_ELEVATION,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+            string pbStr;
+            LocConfigMinSvElevationReqMsg msg(mApiImpl->mSocketName,
+                    mMinSvElevation, &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_MIN_SV_ELEVATION,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigMinSvElevationReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
         uint8_t mMinSvElevation;
@@ -760,10 +900,15 @@ uint32_t LocationIntegrationApiImpl::getMinSvElevation() {
                 mApiImpl(apiImpl) {}
         virtual ~GetMinSvElevationReq() {}
         void proc() const {
-            LocConfigGetMinSvElevationReqMsg msg(mApiImpl->mSocketName);
-            mApiImpl->sendConfigMsgToHalDaemon(GET_MIN_SV_ELEVATION,
-                                               reinterpret_cast<uint8_t*>(&msg),
-                                               sizeof(msg));
+            string pbStr;
+            LocConfigGetMinSvElevationReqMsg msg(mApiImpl->mSocketName, &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(GET_MIN_SV_ELEVATION,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigGetMinSvElevationReqMsg serializeToProtobuf failed");
+            }
         }
         LocationIntegrationApiImpl* mApiImpl;
     };
@@ -775,6 +920,73 @@ uint32_t LocationIntegrationApiImpl::getMinSvElevation() {
     }
     mMsgTask.sendMsg(new (nothrow) GetMinSvElevationReq(this));
 
+    return 0;
+}
+
+uint32_t LocationIntegrationApiImpl::configEngineRunState(
+        PositioningEngineMask engType, LocEngineRunState engState) {
+
+    struct ConfigEngineRunStateReq : public LocMsg {
+        ConfigEngineRunStateReq(LocationIntegrationApiImpl* apiImpl,
+                                PositioningEngineMask engType,
+                                LocEngineRunState engState) :
+                mApiImpl(apiImpl), mEngType(engType), mEngState(engState) {}
+        virtual ~ConfigEngineRunStateReq() {}
+        void proc() const {
+            if (mApiImpl->mEngRunStateConfigMap.find(mEngType) ==
+                        std::end(mApiImpl->mEngRunStateConfigMap)) {
+                mApiImpl->mEngRunStateConfigMap.emplace(mEngType, mEngState);
+            } else {
+                // change the state for the eng
+                mApiImpl->mEngRunStateConfigMap[mEngType] = mEngState;
+            }
+
+            string pbStr;
+            LocConfigEngineRunStateReqMsg msg(mApiImpl->mSocketName,
+                    mEngType, mEngState, &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_ENGINE_RUN_STATE,
+                                            reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()),
+                                            pbStr.size());
+            } else {
+                LOC_LOGe("LocConfigEngineRunStateReqMsg serializeToProtobuf failed");
+            }
+        }
+
+        LocationIntegrationApiImpl* mApiImpl;
+        PositioningEngineMask mEngType;
+        LocEngineRunState mEngState;
+    };
+
+    mMsgTask.sendMsg(new (nothrow) ConfigEngineRunStateReq(this, engType, engState));
+    return 0;
+}
+
+uint32_t LocationIntegrationApiImpl::setUserConsentForTerrestrialPositioning(bool userConsent) {
+    struct SetUserConsentReq : public LocMsg {
+        SetUserConsentReq(LocationIntegrationApiImpl* apiImpl,
+                          bool userConsent) :
+                mApiImpl(apiImpl), mUserConsent(userConsent) {}
+        virtual ~SetUserConsentReq() {}
+        void proc() const {
+            string pbStr;
+            mApiImpl->mGtpUserConsentConfigInfo.isValid = true;
+            mApiImpl->mGtpUserConsentConfigInfo.userConsent = mUserConsent;
+            LocConfigUserConsentTerrestrialPositioningReqMsg msg(
+                    mApiImpl->mSocketName, mUserConsent, &mApiImpl->mPbufMsgConv);
+            if (msg.serializeToProtobuf(pbStr)) {
+                mApiImpl->sendConfigMsgToHalDaemon(CONFIG_USER_CONSENT_TERRESTRIAL_POSITIONING,
+                        reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()), pbStr.size());
+            } else {
+                LOC_LOGe("serializeToProtobuf failed");
+            }
+        }
+
+        LocationIntegrationApiImpl* mApiImpl;
+        bool mUserConsent;
+    };
+
+    mMsgTask.sendMsg(new (nothrow) SetUserConsentReq(this, userConsent));
     return 0;
 }
 
@@ -803,12 +1015,17 @@ void LocationIntegrationApiImpl::sendConfigMsgToHalDaemon(
 }
 
 void LocationIntegrationApiImpl::sendClientRegMsgToHalDaemon(){
-
-    LocAPIClientRegisterReqMsg msg(mSocketName, LOCATION_INTEGRATION_API);
-    bool rc = sendMessage(reinterpret_cast<uint8_t *>(&msg), sizeof(msg));
-    LOC_LOGd(">>> onListenerReady::ClientRegisterReqMsg rc=%d", rc);
-    if (true == rc) {
-        mHalRegistered = true;
+    string pbStr;
+    LocAPIClientRegisterReqMsg msg(mSocketName, LOCATION_INTEGRATION_API, &mPbufMsgConv);
+    if (msg.serializeToProtobuf(pbStr)) {
+        bool rc = sendMessage(reinterpret_cast<uint8_t *>((uint8_t *)pbStr.c_str()),
+                pbStr.size());
+        LOC_LOGd(">>> onListenerReady::ClientRegisterReqMsg rc=%d", rc);
+        if (true == rc) {
+            mHalRegistered = true;
+        }
+    } else {
+        LOC_LOGe("LocAPIClientRegisterReqMsg serializeToProtobuf failed");
     }
 }
 
@@ -823,60 +1040,123 @@ void LocationIntegrationApiImpl::processHalReadyMsg() {
 
     // send cached configuration to hal daemon
     if (mSvConfigInfo.isValid) {
+        string pbStrLocConfigSvConst;
         LocConfigSvConstellationReqMsg msg(mSocketName,
                                            mSvConfigInfo.constellationEnablementConfig,
-                                           mSvConfigInfo.blacklistSvConfig);
-        sendConfigMsgToHalDaemon(CONFIG_CONSTELLATIONS,
-                                 reinterpret_cast<uint8_t*>(&msg),
-                                 sizeof(msg), false);
+                                           mSvConfigInfo.blacklistSvConfig,
+                                           &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocConfigSvConst)) {
+            sendConfigMsgToHalDaemon(CONFIG_CONSTELLATIONS,
+                    reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocConfigSvConst.c_str()),
+                    pbStrLocConfigSvConst.size());
+        } else {
+            LOC_LOGe("LocConfigSvConstellationReqMsg serializeToProtobuf failed");
+        }
     }
 
     if (mSvConfigInfo.secondaryBandConfig.size != 0) {
+        string pbStrLocConfigConstSecndBandReq;
         LocConfigConstellationSecondaryBandReqMsg msg(
-                    mSocketName, mSvConfigInfo.secondaryBandConfig);
-        sendConfigMsgToHalDaemon(CONFIG_CONSTELLATION_SECONDARY_BAND,
-                                 reinterpret_cast<uint8_t*>(&msg),
-                                 sizeof(msg), false);
+                    mSocketName, mSvConfigInfo.secondaryBandConfig, &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocConfigConstSecndBandReq)) {
+            sendConfigMsgToHalDaemon(CONFIG_CONSTELLATION_SECONDARY_BAND,
+                    reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocConfigConstSecndBandReq.c_str()),
+                    pbStrLocConfigConstSecndBandReq.size());
+        } else {
+            LOC_LOGe("LocConfigConstellationSecondaryBandReqMsg serializeToProtobuf failed");
+        }
     }
 
     if (mTuncConfigInfo.isValid) {
+        string pbStrLocConfigConstTunc;
         LocConfigConstrainedTuncReqMsg msg(mSocketName,
                                            mTuncConfigInfo.enable,
                                            mTuncConfigInfo.tuncThresholdMs,
-                                           mTuncConfigInfo.energyBudget);
-        sendConfigMsgToHalDaemon(CONFIG_CONSTRAINED_TIME_UNCERTAINTY,
-                                 reinterpret_cast<uint8_t*>(&msg),
-                                 sizeof(msg), false);
+                                           mTuncConfigInfo.energyBudget,
+                                           &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocConfigConstTunc)) {
+            sendConfigMsgToHalDaemon(CONFIG_CONSTRAINED_TIME_UNCERTAINTY,
+                    reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocConfigConstTunc.c_str()),
+                    pbStrLocConfigConstTunc.size());
+        } else {
+            LOC_LOGe("LocConfigConstrainedTuncReqMsg serializeToProtobuf failed");
+        }
     }
     if (mPaceConfigInfo.isValid) {
+        string pbStrLocConfigPosAsstdClockEst;
         LocConfigPositionAssistedClockEstimatorReqMsg msg(mSocketName,
-                                                          mPaceConfigInfo.enable);
-        sendConfigMsgToHalDaemon(CONFIG_POSITION_ASSISTED_CLOCK_ESTIMATOR,
-                                 reinterpret_cast<uint8_t*>(&msg),
-                                 sizeof(msg), false);
+                                                          mPaceConfigInfo.enable,
+                                                          &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocConfigPosAsstdClockEst)) {
+            sendConfigMsgToHalDaemon(CONFIG_POSITION_ASSISTED_CLOCK_ESTIMATOR,
+                    reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocConfigPosAsstdClockEst.c_str()),
+                    pbStrLocConfigPosAsstdClockEst.size());
+        } else {
+            LOC_LOGe("LocConfigPositionAssistedClockEstimatorReqMsg serializeToProtobuf failed");
+        }
     }
     if (mLeverArmConfigInfo.leverArmValidMask) {
-        LocConfigLeverArmReqMsg msg(mSocketName, mLeverArmConfigInfo);
-        sendConfigMsgToHalDaemon(CONFIG_LEVER_ARM,
-                                 reinterpret_cast<uint8_t*>(&msg),
-                                 sizeof(msg));
+        string pbStrLocConfigLeverArm;
+        LocConfigLeverArmReqMsg msg(mSocketName, mLeverArmConfigInfo, &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocConfigLeverArm)) {
+            sendConfigMsgToHalDaemon(CONFIG_LEVER_ARM,
+                    reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocConfigLeverArm.c_str()),
+                    pbStrLocConfigLeverArm.size());
+        } else {
+            LOC_LOGe("LocConfigLeverArmReqMsg serializeToProtobuf failed");
+        }
     }
     if (mRobustLocationConfigInfo.isValid) {
+        string pbStrLocConfigRobustLoc;
         LocConfigRobustLocationReqMsg msg(mSocketName,
                                           mRobustLocationConfigInfo.enable,
-                                          mRobustLocationConfigInfo.enableForE911);
-        sendConfigMsgToHalDaemon(CONFIG_ROBUST_LOCATION,
-                                 reinterpret_cast<uint8_t*>(&msg),
-                                 sizeof(msg));
+                                          mRobustLocationConfigInfo.enableForE911,
+                                          &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocConfigRobustLoc)) {
+            sendConfigMsgToHalDaemon(CONFIG_ROBUST_LOCATION,
+                    reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocConfigRobustLoc.c_str()),
+                    pbStrLocConfigRobustLoc.size());
+        } else {
+            LOC_LOGe("LocConfigRobustLocationReqMsg serializeToProtobuf failed");
+        }
     }
     // Do not reconfigure min gps week, as min gps week setting
     // can be overwritten by modem over  time
 
     if (mDreConfigInfo.isValid) {
-        LocConfigDrEngineParamsReqMsg msg(mSocketName, mDreConfigInfo.dreConfig);
-        sendConfigMsgToHalDaemon(CONFIG_DEAD_RECKONING_ENGINE,
-                                 reinterpret_cast<uint8_t*>(&msg),
-                                 sizeof(msg));
+        string pbStrLocCfgDrEngParam;
+        LocConfigDrEngineParamsReqMsg msg(mSocketName, mDreConfigInfo.dreConfig, &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocCfgDrEngParam)) {
+            sendConfigMsgToHalDaemon(CONFIG_DEAD_RECKONING_ENGINE,
+                             reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocCfgDrEngParam.c_str()),
+                             pbStrLocCfgDrEngParam.size());
+        } else {
+            LOC_LOGe("LocConfigDrEngineParamsReqMsg serializeToProtobuf failed");
+        }
+    }
+
+    if (mGtpUserConsentConfigInfo.isValid) {
+        string pbStr;
+        LocConfigUserConsentTerrestrialPositioningReqMsg msg(
+                    mSocketName, mGtpUserConsentConfigInfo.userConsent, &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStr)) {
+            sendConfigMsgToHalDaemon(CONFIG_USER_CONSENT_TERRESTRIAL_POSITIONING,
+                        reinterpret_cast<uint8_t*>((uint8_t *)pbStr.c_str()), pbStr.size());
+        } else {
+            LOC_LOGe("serializeToProtobuf failed");
+        }
+    }
+
+    // send down engine state config request
+    for (auto it = mEngRunStateConfigMap.begin(); it != mEngRunStateConfigMap.end(); ++it) {
+        string pbStrLocCfgEngineRunState;
+        LocConfigEngineRunStateReqMsg msg(mSocketName, it->first, it->second, &mPbufMsgConv);
+        if (msg.serializeToProtobuf(pbStrLocCfgEngineRunState)) {
+            sendConfigMsgToHalDaemon(
+                    CONFIG_ENGINE_RUN_STATE,
+                    reinterpret_cast<uint8_t*>((uint8_t *)pbStrLocCfgEngineRunState.c_str()),
+                    pbStrLocCfgEngineRunState.size());
+        }
     }
 }
 

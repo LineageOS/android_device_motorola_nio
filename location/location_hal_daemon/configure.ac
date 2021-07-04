@@ -45,6 +45,10 @@ PKG_CHECK_MODULES([GPSUTILS], [gps-utils])
 AC_SUBST([GPSUTILS_CFLAGS])
 AC_SUBST([GPSUTILS_LIBS])
 
+PKG_CHECK_MODULES([LOCAPIMSGPROTO], [location-api-msg-proto])
+AC_SUBST([LOCAPIMSGPROTO_CFLAGS])
+AC_SUBST([LOCAPIMSGPROTO_LIBS])
+
 AC_ARG_WITH([pwrmgrlib],
     AC_HELP_STRING([--with-pwrmgrlib], [with power manager library]))
 
