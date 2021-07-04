@@ -281,6 +281,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     apdr.conf \
     flp.conf \
+    gnss_antenna_info.conf \
     gps.conf \
     izat.conf \
     lowi.conf \
