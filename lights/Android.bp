@@ -14,30 +14,10 @@
 // limitations under the License.
 
 cc_binary {
-    name: "android.hardware.light@2.0-service.odessa",
-    defaults: ["hidl_defaults"],
-    init_rc: ["hidl/android.hardware.light@2.0-service.odessa.rc"],
-    vintf_fragments: ["hidl/android.hardware.light@2.0-service.odessa.xml"],
-    srcs: [
-        "hidl/service.cpp",
-        "hidl/Light.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libhidlbase",
-        "liblog",
-        "libutils",
-        "android.hardware.light@2.0",
-    ],
+    name: "android.hardware.lights-service.motokona",
     relative_install_path: "hw",
-    vendor: true,
-}
-
-cc_binary {
-    name: "android.hardware.lights-service.odessa",
-    relative_install_path: "hw",
-    init_rc: ["aidl/android.hardware.lights.odessa.rc"],
-    vintf_fragments: ["aidl/android.hardware.lights.odessa.xml"],
+    init_rc: ["android.hardware.lights.motokona.rc"],
+    vintf_fragments: ["android.hardware.lights.motokona.xml"],
     vendor: true,
     shared_libs: [
         "libbase",
@@ -47,7 +27,7 @@ cc_binary {
         "android.hardware.light-ndk_platform",
     ],
     srcs: [
-        "aidl/Lights.cpp",
-        "aidl/main.cpp",
+        "Lights.cpp",
+        "main.cpp",
     ],
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.lights-service.odessa"
+#define LOG_TAG "android.hardware.lights-service.motokona"
 
 #include "Lights.h"
 #include <android-base/file.h>
