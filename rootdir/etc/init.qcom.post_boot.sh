@@ -4254,6 +4254,110 @@ case "$target" in
             ;;
         esac
 
+        #power/perf tunings for khaje
+        case "$soc_id" in
+                 "518" )
+
+            # Core control parameters on big
+            echo 0 > /sys/devices/system/cpu/cpu0/core_ctl/enable
+            echo 2 > /sys/devices/system/cpu/cpu4/core_ctl/min_cpus
+            echo 40 > /sys/devices/system/cpu/cpu4/core_ctl/busy_down_thres
+            echo 60 > /sys/devices/system/cpu/cpu4/core_ctl/busy_up_thres
+            echo 100 > /sys/devices/system/cpu/cpu4/core_ctl/offline_delay_ms
+            echo 4 > /sys/devices/system/cpu/cpu4/core_ctl/task_thres
+
+            # Setting b.L scheduler parameters
+            echo 65 > /proc/sys/kernel/sched_downmigrate
+            echo 71 > /proc/sys/kernel/sched_upmigrate
+            echo 85 > /proc/sys/kernel/sched_group_downmigrate
+            echo 100 > /proc/sys/kernel/sched_group_upmigrate
+
+            # cpuset settings
+            echo 0-3 > /dev/cpuset/background/cpus
+            echo 0-3 > /dev/cpuset/system-background/cpus
+
+
+            # configure governor settings for little cluster
+            echo "schedutil" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+            echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/up_rate_limit_us
+            echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/down_rate_limit_us
+            echo 1516800 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/hispeed_freq
+            echo 691200 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+            echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/rtg_boost_freq
+
+            # configure governor settings for big cluster
+            echo "schedutil" > /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor
+            echo 0 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/up_rate_limit_us
+            echo 0 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/down_rate_limit_us
+            echo 1344000 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/hispeed_freq
+            echo 1056000 > /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq
+            echo 0 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/rtg_boost_freq
+
+            echo "0:1190000" > /sys/devices/system/cpu/cpu_boost/input_boost_freq
+            echo 80 > /sys/devices/system/cpu/cpu_boost/input_boost_ms
+
+	    echo 1 > /proc/sys/kernel/sched_walt_rotate_big_tasks
+
+            # sched_load_boost as -6 is equivalent to target load as 85. It is per cpu tunable.
+            echo -6 >  /sys/devices/system/cpu/cpu0/sched_load_boost
+            echo -6 >  /sys/devices/system/cpu/cpu1/sched_load_boost
+            echo -6 >  /sys/devices/system/cpu/cpu2/sched_load_boost
+            echo -6 >  /sys/devices/system/cpu/cpu3/sched_load_boost
+            echo -6 >  /sys/devices/system/cpu/cpu4/sched_load_boost
+            echo -6 >  /sys/devices/system/cpu/cpu5/sched_load_boost
+            echo -6 >  /sys/devices/system/cpu/cpu6/sched_load_boost
+            echo -6 >  /sys/devices/system/cpu/cpu7/sched_load_boost
+            echo 85 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/hispeed_load
+            echo 85 > /sys/devices/system/cpu/cpu4/cpufreq/schedutil/hispeed_load
+
+            # Set Memory parameters
+            configure_memory_parameters
+
+            # Enable bus-dcvs
+
+            for device in /sys/devices/platform/soc
+            do
+                for cpubw in $device/*cpu-cpu-ddr-bw/devfreq/*cpu-cpu-ddr-bw
+                do
+                    echo "bw_hwmon" > $cpubw/governor
+                    echo 50 > $cpubw/polling_interval
+                    echo 762 > $cpubw/min_freq
+                    echo "2288 3440 4173 5195 5859 7759 10322 11863 13763 15960" > $cpubw/bw_hwmon/mbps_zones
+                    echo 85 > $cpubw/bw_hwmon/io_percent
+                    echo 4 > $cpubw/bw_hwmon/sample_ms
+                    echo 90 > $cpubw/bw_hwmon/decay_rate
+                    echo 190 > $cpubw/bw_hwmon/bw_step
+                    echo 20 > $cpubw/bw_hwmon/hist_memory
+                    echo 0 > $cpubw/bw_hwmon/hyst_length
+                    echo 80 > $cpubw/bw_hwmon/down_thres
+                    echo 0 > $cpubw/bw_hwmon/guard_band_mbps
+                    echo 250 > $cpubw/bw_hwmon/up_scale
+                   echo 1600 > $cpubw/bw_hwmon/idle_mbps
+                done
+
+            done
+            # memlat specific settings are moved to seperate file under
+            # device/target specific folder
+            setprop vendor.dcvs.prop 1
+
+            # colcoation v3 disabled
+            echo 0 > /proc/sys/kernel/sched_min_task_util_for_boost
+            echo 0 > /proc/sys/kernel/sched_min_task_util_for_colocation
+
+            # Turn off scheduler boost at the end
+            echo 0 > /proc/sys/kernel/sched_boost
+
+            # Turn on sleep modes
+            echo 0 > /sys/module/lpm_levels/parameters/sleep_disabled
+
+            # Turn off sleep modes, core-control till bring up
+            # remove below two lines post bring up
+            echo 1 > /sys/module/lpm_levels/parameters/sleep_disabled
+            echo 4 > /sys/devices/system/cpu/cpu4/core_ctl/min_cpus
+
+            ;;
+        esac
+
         # Scuba perf/power tunings
         case "$soc_id" in
              "441" | "471" | "473" | "474" )
