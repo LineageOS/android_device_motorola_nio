@@ -383,7 +383,6 @@ service vendor.batt_health /vendor/bin/batt_health
 
 on property:sys.boot_completed=1
     start vendor.batt_health
-    swapon_all /vendor/etc/fstab.qcom
     write /proc/sys/vm/swappiness 100
     setprop sys.sysctl.swappiness 100
 
