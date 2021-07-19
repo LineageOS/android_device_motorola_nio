@@ -437,4 +437,7 @@
 
     <!-- Enable Zram writeback feature to allow unused pages in zram be written to flash. -->
     <bool name="config_zramWriteback">true</bool>
+
+    <!-- Whether to show a warning notification when device's skin temperature is high. -->
+    <integer name="config_showTemperatureWarning">1</integer>
 </resources>
