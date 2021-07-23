@@ -4350,11 +4350,6 @@ case "$target" in
             # Turn on sleep modes
             echo 0 > /sys/module/lpm_levels/parameters/sleep_disabled
 
-            # Turn off sleep modes, core-control till bring up
-            # remove below two lines post bring up
-            echo 1 > /sys/module/lpm_levels/parameters/sleep_disabled
-            echo 4 > /sys/devices/system/cpu/cpu4/core_ctl/min_cpus
-
             ;;
         esac
 
