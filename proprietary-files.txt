@@ -737,7 +737,6 @@ vendor/bin/qmi_motext_hook
 vendor/bin/rmt_storage
 vendor/bin/tftp_server
 vendor/etc/data/dsi_config.xml
-vendor/etc/data/netmgr_config.xml
 vendor/etc/init/netmgrd.rc
 vendor/etc/init/qcrild.rc
 vendor/etc/init/ipa_fws.rc

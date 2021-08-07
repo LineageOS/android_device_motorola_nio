@@ -399,6 +399,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     netutils-wrapper-1.0
 
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/netmgr_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/data/netmgr_config.xml
+
 # NFC
 PRODUCT_PACKAGES += \
     com.android.nfc_extras \
