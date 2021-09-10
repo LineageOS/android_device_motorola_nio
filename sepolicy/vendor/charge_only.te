@@ -81,6 +81,10 @@ allow charge_only persist_chargeonly_file:file r_file_perms;
 # Allow access to vendor dir
 allow charge_only mnt_vendor_file:dir r_dir_perms;
 
+# Allow access to utags partition
+allow charge_only block_device:dir search;
+allow charge_only vendor_utags_block_device:blk_file rw_file_perms;
+
 # Exec shell scripts
 allow charge_only vendor_shell_exec:file rx_file_perms;
 
