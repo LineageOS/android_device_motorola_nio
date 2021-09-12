@@ -192,11 +192,11 @@ PRODUCT_PACKAGES += \
     fstab.qcom.zramwb \
     init.class_main.sh \
     init.crda.sh \
+    init.gadgethal.sh \
     init.mdm.sh \
     init.mmi.chipset.rc \
     init.mmi.rc \
     init.mmi.touch.sh \
-    init.mmi.usb.rc \
     init.mmi.usb.sh \
     init.oem.hw.sh \
     init.qcom.class_core.sh \
@@ -212,6 +212,7 @@ PRODUCT_PACKAGES += \
     init.qti.fm.sh \
     init.qti.ims.sh \
     init.recovery.qcom.rc \
+    init.qcom.usb.rc \
     init.target.rc \
     ueventd.qcom.rc
 
@@ -463,6 +464,10 @@ PRODUCT_PACKAGES += \
     librmnetctl \
     libxml2
 
+# USB HAL
+PRODUCT_PACKAGES += \
+    android.hardware.usb@1.2-service.kona
+
 # Vendor libstdc++
 PRODUCT_PACKAGES += \
     libstdc++.vendor
@@ -486,7 +491,9 @@ PRODUCT_PACKAGES += \
 
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
-    $(LOCAL_PATH)
+    $(LOCAL_PATH) \
+    hardware/google/interfaces \
+    hardware/google/pixel
 
 # Telephony
 PRODUCT_PACKAGES += \
@@ -521,10 +528,6 @@ PRODUCT_PACKAGES_DEBUG += \
 # Trust HAL
 PRODUCT_PACKAGES += \
     vendor.lineage.trust@1.0-service
-
-# USB
-PRODUCT_PACKAGES += \
-    android.hardware.usb@1.2-service-qti
 
 # VNDK
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := strict
