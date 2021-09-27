@@ -495,7 +495,6 @@ vendor/lib/libllvm-glnext.so|48bac363542d3f33c56850df1d320804c7ce5a9b
 vendor/lib/libllvm-qcom.so|51b9f1272764285b64407781052ff020459a5ee9
 vendor/lib/libOpenCL.so|a96f5797b16b5dd690af173e120b9d596aef051e
 vendor/lib/libqseed3.so|027a017e4f242055bfd6abfa429e907a4586b23b
-vendor/lib/libsdedrm.so|78b3951da3420571435adfded38e96fe9b0f0888
 vendor/lib/libsdm-color.so|cb6f03f3b58365de920aeb595daec1f5bdc8cfa2
 vendor/lib/libsdm-diag.so|a5ec55b36fc6165b44b9286ce0b405827836b54c
 vendor/lib/libtinyxml2_1.so|2e4ee5ab72b1e135cb53d3b1b2af137535ff0ea4
@@ -522,7 +521,6 @@ vendor/lib64/libllvm-glnext.so|a18d2819f204da9c91c787ee933b0825176fd0fb
 vendor/lib64/libllvm-qcom.so|72b64c58de7441de35d4a1439283c8baebe67ae0
 vendor/lib64/libOpenCL.so|c43e299c6ab0aecef4316fd0cbedc797cfc8ad6b
 vendor/lib64/libqseed3.so|c9fb729cf48278d0c87d27c0af17ae3a8ccb1bf7
-vendor/lib64/libsdedrm.so|27d3e7c36ede9bf36455ddc217ee413a80132638
 vendor/lib64/libsdm-color.so|33abd16d74d132322470f3d0c5a4a60851ec524a
 vendor/lib64/libsdm-diag.so|a237a8e628026fef25ca9eaa3ebcbbf56489be9a
 vendor/lib64/libtinyxml2_1.so|fb0a2b16e5cfd28515268edc5c2345190d1ef4e5
@@ -550,7 +548,6 @@ vendor/lib64/libkeymasterdeviceutils.so|519e1f501c2d625fcabf3125efc8b1fa89fd6013
 vendor/lib64/libkeymasterprovision.so|2605bfa33737ed68a7cfc1f13d3d38740c2045f4
 vendor/lib64/libkeymasterutils.so|bbda5a3868c21261bee179056ef8650332d10857
 vendor/lib64/libkeystore-engine-wifi-hidl.so|a1aeb233a6fc66919956339fe0a94555b846cf46
-vendor/lib64/libkeystore-wifi-hidl.so|a426a3cbeef891b1fe4df24a2e5f46708fa10c21
 vendor/lib64/libqcbor.so|7da5294a577f5a71ede5b3804a026bf69bd025ee
 vendor/lib64/libqtikeymaster4.so|3091036aa1094b655fff9953ae1a4869ea36e216
 vendor/lib64/libspcom.so|14f69e1c6ad4a6bbb5ea0b7e38e027ef1e7fc12a
@@ -698,15 +695,9 @@ vendor/bin/motobox|0dc638f31ff851e32a11b8172f517ed79c737c77
 system_ext/lib/libqti-perfd-client_system.so|d1de3a002b63c974634ef7baafdf68294da1da82
 system_ext/lib/libqti-util_system.so|3d193471ad84ce05c3951b7833a1097da92bf8c9
 system_ext/lib/libqti_performance.so|7b053fddc8729a331d76c041dd6b091044550666
-system_ext/lib/vendor.qti.hardware.perf@2.0.so|84f85d858bf6b60f7dceea4f5c045c9bace86272
-system_ext/lib/vendor.qti.hardware.perf@2.1.so|0360e4a0761ed6182eccf5f077833998c194a545
-system_ext/lib/vendor.qti.hardware.perf@2.2.so|166429d2a9baf3f38e5ad6935aa6353875b5e220
 system_ext/lib64/libqti-perfd-client_system.so|61659f8e72c4166e2b8c71de3461cd4f75854863
 system_ext/lib64/libqti-util_system.so|f0c8df713b1eb1224e1e0a08255ded6bdc1b2c5d
 system_ext/lib64/libqti_performance.so|f19e4f5e37b8a397d349a97bf990ec7bd7fc7d7b
-system_ext/lib64/vendor.qti.hardware.perf@2.0.so|db9e62369dcc0401f9976a7f040e798aa2539436
-system_ext/lib64/vendor.qti.hardware.perf@2.1.so|b2c409cb9cf4d0bddee509d1e82c57a61be61ac6
-system_ext/lib64/vendor.qti.hardware.perf@2.2.so|01ec552af8d14c5c88396e9a41e62583ca4e9186
 vendor/bin/hw/vendor.qti.hardware.perf@2.2-service|13370441096e292311336ebd41f0b381cb9e58d5
 vendor/bin/msm_irqbalance|2ac477da6216b8bf616db5a205dac4059b6d73a4
 vendor/etc/init/vendor.qti.hardware.perf@2.2-service.rc|459b4c23550a56ac545f78c6d391f3d7dd9ba45b
@@ -724,9 +715,6 @@ vendor/lib/libqti-perfd-client.so|254e56ff199892bf0aff5b3aa00516c3dc96656a
 vendor/lib/libqti-perfd.so|c499c1cad932d5bc02a3304c1a566b487f8ca11a
 vendor/lib/libqti-util.so|0f1445bece8319e17107672c340d38b58861ad38
 vendor/lib/libqti-utils.so|0e6846e8f402bec7cb036966489ef790f01aaf26
-vendor/lib/vendor.qti.hardware.perf@2.0.so|b1be884c88ab28429cf834fd7ff19008b4dc4c39
-vendor/lib/vendor.qti.hardware.perf@2.1.so|b358409a00b3ccacedc7e1255cab61cfb7b50d1f
-vendor/lib/vendor.qti.hardware.perf@2.2.so|1b620e5ec93a2439f69cc418aa2074720a9e5a72
 vendor/lib64/libadaptlaunch.so|2b54537bfa34aa85ce3303eab0d33e182f349683
 vendor/lib64/libappclassifier.so|297a63a2e30ea287ed901b7ee6de4b63f70fd04b
 vendor/lib64/libgameoptfeature.so|df596abb2c3e0958885a8af9d3ed7c4df728bdb4
@@ -739,9 +727,6 @@ vendor/lib64/libqti-perfd-client.so|210f7ea0befb457d721eaaff95f4b2ee9350bf64
 vendor/lib64/libqti-perfd.so|e7fa454c0950ccb849f09c8afd9e8e203f0cc4d6
 vendor/lib64/libqti-util.so|75c1e92a5ce1e52d8a79711958bd152c42d04ca1
 vendor/lib64/libqti-utils.so|a33b3c774ef3cc1bfb7cca4b1554ec545a4bdb36
-vendor/lib64/vendor.qti.hardware.perf@2.0.so|d78b47fc602d1fc7909cd5eacc088a9a783b55b0
-vendor/lib64/vendor.qti.hardware.perf@2.1.so|ab5c77b0b3845066106fc8514ffe5cc4b19058fe
-vendor/lib64/vendor.qti.hardware.perf@2.2.so|1d50e29a8f1ee6f3704d946d49f3bb9d1053abc3
 
 # Perf-IOP - from pstar
 system_ext/lib/vendor.qti.hardware.iop@2.0.so|2bcd527492207b3cddadf209cd7816e51b9c5e8f
