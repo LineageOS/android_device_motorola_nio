@@ -371,7 +371,6 @@ case "$target" in
                 setprop vendor.netflix.bsp_rev ""
                 ;;
              518)
-                setprop vendor.netflix.bsp_rev ""
                 ;;
             *)
                 # default case is for bengal
