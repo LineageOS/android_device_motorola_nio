@@ -1,4 +1,4 @@
-# All unpinned blobs below are extracted from Nio RRN31.Q1-20-17-1-1
+# All unpinned blobs below are extracted from nio RRN31.Q3-1-11-1
 
 # ACDB
 vendor/etc/acdbdata/adsp_avs_config.acdb
@@ -269,6 +269,7 @@ vendor/lib/libvidhance_horizon_correction.so
 vendor/lib/libvidhance_stabilizer.so
 vendor/lib/libvl53l1_daemon.so
 vendor/lib/motorola.hardware.camera.desktop@1.0.so
+vendor/lib/motorola.hardware.camera.desktop@2.0.so
 vendor/lib/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
 vendor/lib/vendor.qti.hardware.camera.postproc@1.0.so
 vendor/lib64/android.hardware.camera.provider@2.4-external.so
@@ -416,6 +417,7 @@ vendor/lib64/libvidhance_horizon_correction.so
 vendor/lib64/libvidhance_stabilizer.so
 vendor/lib64/libvl53l1_daemon.so
 vendor/lib64/motorola.hardware.camera.desktop@1.0.so
+vendor/lib64/motorola.hardware.camera.desktop@2.0.so
 vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
 vendor/lib64/vendor.qti.hardware.camera.postproc@1.0.so
 
@@ -746,7 +748,6 @@ vendor/bin/hw/android.hardware.biometrics.fingerprint@2.1-service-ets
 vendor/bin/hw/android.hardware.biometrics.fingerprint@2.1-service-fpc
 vendor/etc/init/android.hardware.biometrics.fingerprint@2.1-service-ets2.rc
 vendor/etc/init/android.hardware.biometrics.fingerprint@2.1-service-fpc2.rc
-vendor/lib/vendor.egistec.hardware.fingerprint@2.0.so
 vendor/lib/vendor.qti.hardware.fingerprint@1.0.so
 vendor/lib64/com.motorola.hardware.biometric.fingerprint@1.0.so
 vendor/lib64/com.fingerprints.extension@1.0.so
@@ -1566,7 +1567,6 @@ vendor/etc/sensors/proto/mot_proxcal.proto
 vendor/etc/sensors/proto/mot_stowed.proto
 vendor/etc/sensors/proto/mot_vsync.proto
 vendor/etc/sensors/proto/nanopb.proto
-vendor/etc/sensors/proto/qti_gravity.proto
 vendor/etc/sensors/proto/sns_accel.proto
 vendor/etc/sensors/proto/sns_accel_cal.proto
 vendor/etc/sensors/proto/sns_activity_recognition.proto
@@ -1574,24 +1574,17 @@ vendor/etc/sensors/proto/sns_ambient_light.proto
 vendor/etc/sensors/proto/sns_ambient_temperature.proto
 vendor/etc/sensors/proto/sns_amd.proto
 vendor/etc/sensors/proto/sns_aont.proto
-vendor/etc/sensors/proto/sns_async_com_port.proto
 vendor/etc/sensors/proto/sns_basic_gestures.proto
 vendor/etc/sensors/proto/sns_bring_to_ear.proto
 vendor/etc/sensors/proto/sns_cal.proto
-vendor/etc/sensors/proto/sns_ccd_ttw.proto
-vendor/etc/sensors/proto/sns_ccd_walk.proto
 vendor/etc/sensors/proto/sns_client.proto
 vendor/etc/sensors/proto/sns_cmc.proto
-vendor/etc/sensors/proto/sns_cmd.proto
-vendor/etc/sensors/proto/sns_dae.proto
-vendor/etc/sensors/proto/sns_data_acquisition_engine.proto
 vendor/etc/sensors/proto/sns_da_test.proto
 vendor/etc/sensors/proto/sns_device_mode.proto
 vendor/etc/sensors/proto/sns_device_orient.proto
 vendor/etc/sensors/proto/sns_diag.proto
 vendor/etc/sensors/proto/sns_diag_sensor.proto
 vendor/etc/sensors/proto/sns_direct_channel.proto
-vendor/etc/sensors/proto/sns_distance_bound.proto
 vendor/etc/sensors/proto/sns_dpc.proto
 vendor/etc/sensors/proto/sns_ext_svc.proto
 vendor/etc/sensors/proto/sns_facing.proto
@@ -1609,13 +1602,9 @@ vendor/etc/sensors/proto/sns_heart_beat.proto
 vendor/etc/sensors/proto/sns_heart_rate.proto
 vendor/etc/sensors/proto/sns_hinge_angle.proto
 vendor/etc/sensors/proto/sns_humidity.proto
-vendor/etc/sensors/proto/sns_interrupt.proto
 vendor/etc/sensors/proto/sns_mag.proto
 vendor/etc/sensors/proto/sns_mag_cal.proto
-vendor/etc/sensors/proto/sns_mcmd.proto
-vendor/etc/sensors/proto/sns_motion_detect.proto
 vendor/etc/sensors/proto/sns_mot_factory_cal.proto
-vendor/etc/sensors/proto/sns_multishake.proto
 vendor/etc/sensors/proto/sns_oem1.proto
 vendor/etc/sensors/proto/sns_offbody_detect.proto
 vendor/etc/sensors/proto/sns_panel_status.proto
@@ -1628,17 +1617,13 @@ vendor/etc/sensors/proto/sns_pressure.proto
 vendor/etc/sensors/proto/sns_proximity.proto
 vendor/etc/sensors/proto/sns_psmd.proto
 vendor/etc/sensors/proto/sns_registry.proto
-vendor/etc/sensors/proto/sns_remote_proc_state.proto
 vendor/etc/sensors/proto/sns_resampler.proto
 vendor/etc/sensors/proto/sns_rgb.proto
 vendor/etc/sensors/proto/sns_rmd.proto
 vendor/etc/sensors/proto/sns_rotv.proto
 vendor/etc/sensors/proto/sns_sar.proto
 vendor/etc/sensors/proto/sns_sensor_temperature.proto
-vendor/etc/sensors/proto/sns_signal_sensor.proto
 vendor/etc/sensors/proto/sns_sig_motion.proto
-vendor/etc/sensors/proto/sns_sim.proto
-vendor/etc/sensors/proto/sns_sim_legacy.proto
 vendor/etc/sensors/proto/sns_std.proto
 vendor/etc/sensors/proto/sns_std_event_gated_sensor.proto
 vendor/etc/sensors/proto/sns_std_sensor.proto
@@ -1649,7 +1634,6 @@ vendor/etc/sensors/proto/sns_thermopile.proto
 vendor/etc/sensors/proto/sns_threshold.proto
 vendor/etc/sensors/proto/sns_tilt.proto
 vendor/etc/sensors/proto/sns_tilt_to_wake.proto
-vendor/etc/sensors/proto/sns_timer.proto
 vendor/etc/sensors/proto/sns_ultra_violet.proto
 vendor/etc/sensors/proto/sns_wrist_tilt_gesture.proto
 vendor/etc/sensors/proto/tcs3708.proto
