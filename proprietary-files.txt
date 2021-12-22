@@ -1297,9 +1297,6 @@ vendor/radio/qcril_database/upgrade/7_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/8_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/9_version_qcrildb.sql
 
-# Radio - Telephony (qti-telephony-common)
--system_ext/framework/qti-telephony-common.jar
-
 # Radio - IMS (APK)
 -system_ext/priv-app/ims/ims.apk
 
