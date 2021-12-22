@@ -33,6 +33,11 @@ ro.vendor.fsg-id           u:object_r:moto_boot_prop:s0
 ro.vendor.zygote           u:object_r:moto_boot_prop:s0
 vendor.boot_completed      u:object_r:moto_boot_prop:s0
 
+# Motorola fingerprint
+persist.vendor.hardware.fingerprint            u:object_r:moto_fingerprint_prop:s0
+vendor.hw.fps.ident                            u:object_r:moto_fingerprint_prop:s0
+vendor.hw.fingerprint.status                   u:object_r:moto_fingerprint_prop:s0
+
 # AOV
 vendor.hw.aov.             u:object_r:vendor_aov_prop:s0
 

@@ -86,7 +86,8 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 
 # Camera
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.vendor.camera.expose.aux=1
+    persist.vendor.camera.expose.aux=1 \
+    persist.vendor.camera.physical.num=4
 
 # CNE
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -138,6 +139,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     drm.service.enabled=true
 
+# Firmware
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.vendor.hw.modem_version=.
+
+# FM
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.vendor.fm.use_audio_session=true
+
 # FRP
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.frp.pst=/dev/block/bootdevice/by-name/frp
@@ -159,6 +168,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     debug.sf.hw=0 \
     debug.sf.latch_unsignaled=1 \
     persist.demo.hdmirotationlock=false \
+    persist.sys.sf.color_mode=0 \
     persist.sys.sf.color_saturation=1.0 \
     persist.sys.sf.native_mode=1 \
     persist.sys.sf.force_brightness_capability=1 \
@@ -171,6 +181,13 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     ro.sf.blurs_are_expensive=1 \
     debug.sf.enable_hwc_vds=1
+
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.surface_flinger.set_idle_timer_ms=4000 \
+    ro.surface_flinger.set_touch_timer_ms=4000 \
+    ro.surface_flinger.set_display_power_timer_ms=1000 \
+    ro.surface_flinger.use_smart_90_for_video=true \
+    ro.surface_flinger.refresh_rate_switching=true
 
 # IMS
 PRODUCT_PROPERTY_OVERRIDES += \

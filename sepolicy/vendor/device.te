@@ -1,3 +1,6 @@
+# Fingerprint
+type fingerprint_device, dev_type;
+
 # VL53L1
 type vl53l1_device, dev_type;
 

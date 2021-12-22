@@ -5,6 +5,9 @@ genfscon sysfs /class/capsense                            u:object_r:vendor_sysf
 genfscon sysfs /kernel/aov                                                                  u:object_r:sysfs_adspd:s0
 genfscon sysfs /devices/platform/soc/988000.spi/spi_master/spi1/spi1.0/madera-extcon		    u:object_r:sysfs_adspd:s0
 
+# Fingerprint
+genfscon sysfs /devices/platform/egis_input               u:object_r:sysfs_fingerprint:s0
+
 # PowerHal
 genfscon sysfs /devices/platform/soc/ae00000.qcom,mdss_mdp                      u:object_r:sysfs_msm_subsys:s0
 genfscon sysfs /devices/platform/soc/1d84000.ufshc/clkgate_enable               u:object_r:sysfs_scsi_devices_0000:s0

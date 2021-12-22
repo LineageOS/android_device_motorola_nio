@@ -16,3 +16,4 @@ allow hal_audio_default self:fd use;
 
 allow hal_audio_default input_device:dir r_dir_perms;
 allow hal_audio_default input_device:chr_file { r_file_perms ioctl };
+allow hal_audio_default persist_audio_file:file r_file_perms;

@@ -19,12 +19,23 @@
 /(vendor|system/vendor)/bin/hw/motorola\.hardware\.audio\.adspd@1\.0-service           u:object_r:hal_audio_default_exec:s0
 /(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay@2\.0-service-sysfs\.motorola_kona    u:object_r:hal_lineage_livedisplay_sysfs_exec:s0
 #/(vendor|system/vendor)/bin/hw/vendor\.zuialarm\.hardware\.alarm@1\.0-service u:object_r:hal_zui_alarm_default_exec:s0
+/(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service-ets                   u:object_r:hal_fingerprint_default_exec:s0
+/(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service-fpc                   u:object_r:hal_fingerprint_default_exec:s0
+/(vendor|system/vendor)/bin/hw/egis_ident                                                                    u:object_r:hal_fingerprint_default_exec:s0
+/(vendor|system/vendor)/bin/hw/fpc_ident                                                                     u:object_r:hal_fingerprint_default_exec:s0
+
 
 # Vendor init scripts
 /(vendor|system/vendor)/bin/init\.mmi\.(touch|laser|usb)\.sh               u:object_r:vendor_qti_init_shell_exec:s0
 /(vendor|system/vendor)/bin/init\.oem\.hw\.sh                              u:object_r:vendor_qti_init_shell_exec:s0
 # USB Gadget script
 /vendor/bin/init\.gadgethal\.sh                                                         u:object_r:init_gadgethal_exec:s0
+/(vendor|system/vendor)/bin/init\.oem\.fingerprint2\.sh         u:object_r:vendor_init_fingerprint_exec:s0
+/(vendor|system/vendor)/bin/init\.oem\.fingerprint\.overlay\.sh u:object_r:vendor_init_fingerprint_exec:s0
+
+# Awinic
+/(mnt/vendor/persist|persist)/factory/audio/aw_cali.bin u:object_r:persist_audio_file:s0
+
 
 # Capsense
 /(vendor|system/vendor)/bin/capsense_reset                                 u:object_r:capsense_reset_exec:s0
@@ -68,3 +79,7 @@
 
 # Fingerprint
 /(mnt/vendor/persist|persist)/fps(/.*)?                 u:object_r:vendor_persist_fps_file:s0
+/data/vendor/fpc(/.*)?          u:object_r:fingerprint_vendor_data_file:s0
+/data/vendor/.fps(/.*)?         u:object_r:fingerprint_vendor_data_file:s0
+/dev/esfp0                      u:object_r:tee_device:s0
+/sys/devices/soc/0.et320(/.*)?  u:object_r:vendor_sysfs_fingerprint:s0
