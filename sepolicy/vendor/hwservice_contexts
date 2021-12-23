@@ -1,5 +1,8 @@
 # ADSPD
 motorola.hardware.audio.adspd::IADSP u:object_r:hal_audio_hwservice:s0
 
+# IFAA
+vendor.zui.hardware.ifaa::IIFAADevice u:object_r:hal_ifaa_hwservice:s0
+
 # ZUI Alarm
 vendor.zuialarm.hardware.alarm::IAlarm u:object_r:hal_zui_alarm_hwservice:s0

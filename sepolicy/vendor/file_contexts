@@ -83,3 +83,6 @@
 /data/vendor/.fps(/.*)?         u:object_r:fingerprint_vendor_data_file:s0
 /dev/esfp0                      u:object_r:tee_device:s0
 /sys/devices/soc/0.et320(/.*)?  u:object_r:vendor_sysfs_fingerprint:s0
+
+# IFAA
+/(vendor|system/vendor)/bin/hw/vendor\.zui\.hardware\.ifaa@1\.0-service     u:object_r:hal_ifaa_default_exec:s0

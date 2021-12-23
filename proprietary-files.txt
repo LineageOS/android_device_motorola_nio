@@ -888,6 +888,12 @@ vendor/firmware/a630_sqe.fw
 vendor/firmware/a650_gmu.bin
 vendor/firmware/a650_sqe.fw
 
+# IFAA
+-system_ext/app/IfaaService/IfaaService.apk
+vendor/bin/hw/vendor.zui.hardware.ifaa@1.0-service
+vendor/etc/init/vendor.zui.hardware.ifaa@1.0-service.rc
+vendor/lib64/vendor.zui.hardware.ifaa@1.0.so
+
 # Keymaster
 vendor/bin/hw/android.hardware.keymaster@4.0-service-qti
 vendor/bin/hw/android.hardware.keymaster@4.0-strongbox-service-qti
