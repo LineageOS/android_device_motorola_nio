@@ -485,10 +485,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_SOONG_NAMESPACES += vendor/qcom/opensource/usb/etc
 
-# Vendor libstdc++
-PRODUCT_PACKAGES += \
-    libstdc++.vendor
-
 # Vibrator
 PRODUCT_PACKAGES += \
     vendor.qti.hardware.vibrator.service
