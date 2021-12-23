@@ -191,12 +191,10 @@ PRODUCT_PACKAGES += \
     fstab.qcom.zramwb \
     init.class_main.sh \
     init.crda.sh \
-    init.gadgethal.sh \
     init.mdm.sh \
     init.mmi.chipset.rc \
     init.mmi.rc \
     init.mmi.touch.sh \
-    init.mmi.usb.sh \
     init.oem.hw.sh \
     init.qcom.class_core.sh \
     init.qcom.coex.sh \
@@ -211,7 +209,6 @@ PRODUCT_PACKAGES += \
     init.qti.fm.sh \
     init.qti.ims.sh \
     init.recovery.qcom.rc \
-    init.qcom.usb.rc \
     init.target.rc \
     ueventd.qcom.rc
 
@@ -478,7 +475,15 @@ PRODUCT_PACKAGES += \
 
 # USB HAL
 PRODUCT_PACKAGES += \
-    android.hardware.usb@1.2-service.kona
+    android.hardware.usb@1.2-service-qti \
+    init.qcom.usb.rc \
+    init.qcom.usb.sh
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    vendor.usb.diag.func.name=diag \
+    vendor.usb.use_ffs_mtp=0
+
+PRODUCT_SOONG_NAMESPACES += vendor/qcom/opensource/usb/etc
 
 # Vendor libstdc++
 PRODUCT_PACKAGES += \
@@ -508,9 +513,7 @@ PRODUCT_PACKAGES += \
 
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
-    $(LOCAL_PATH) \
-    hardware/google/interfaces \
-    hardware/google/pixel
+    $(LOCAL_PATH)
 
 # Telephony
 PRODUCT_PACKAGES += \
