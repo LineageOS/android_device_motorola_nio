@@ -117,10 +117,6 @@ lib64/libaptX_encoder.so
 lib64/libaptXHD_encoder.so
 
 # Camera
-vendor/bin/hw/android.hardware.camera.provider@2.4-service_64
-vendor/etc/init/android.hardware.camera.provider@2.4-service_64.rc
-vendor/lib/android.hardware.camera.provider@2.4-external.so
-vendor/lib/android.hardware.camera.provider@2.4-legacy.so
 vendor/lib/camera/com.mot.eeprom.mot_gt24p64b_ov16a1q_eeprom.so
 vendor/lib/camera/com.mot.eeprom.mot_ov02b1b_otp.so
 vendor/lib/camera/com.mot.eeprom.mot_ov16a10_gt9772.so
@@ -190,7 +186,6 @@ vendor/lib/camera/fdconfigpreview.bin
 vendor/lib/camera/fdconfigpreviewlite.bin
 vendor/lib/camera/fdconfigvideo.bin
 vendor/lib/camera/fdconfigvideolite.bin
-vendor/lib/hw/android.hardware.camera.provider@2.4-impl.so
 vendor/lib/hw/camera.qcom.so
 vendor/lib/hw/com.qti.chi.override.so
 vendor/lib/com.qti.feature2.anchorsync.so
@@ -231,7 +226,6 @@ vendor/lib/libcom.qti.chinodeutils.so
 vendor/lib/libcvp2.so
 vendor/lib/libcvp2_hfi.so
 vendor/lib/libfcell.so
-vendor/lib/libgui_vendor.so
 vendor/lib/libipebpsstriping.so
 vendor/lib/libmmcamera_faceproc.so
 vendor/lib/libmmcamera_faceproc2.so
@@ -266,9 +260,6 @@ vendor/lib/libvl53l1_daemon.so
 vendor/lib/motorola.hardware.camera.desktop@1.0.so
 vendor/lib/motorola.hardware.camera.desktop@2.0.so
 vendor/lib/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
-vendor/lib/vendor.qti.hardware.camera.postproc@1.0.so
-vendor/lib64/android.hardware.camera.provider@2.4-external.so
-vendor/lib64/android.hardware.camera.provider@2.4-legacy.so
 vendor/lib64/camera/com.mot.eeprom.mot_gt24p64b_ov16a1q_eeprom.so
 vendor/lib64/camera/com.mot.eeprom.mot_ov02b1b_otp.so
 vendor/lib64/camera/com.mot.eeprom.mot_ov16a10_gt9772.so
@@ -338,7 +329,6 @@ vendor/lib64/camera/fdconfigpreview.bin
 vendor/lib64/camera/fdconfigpreviewlite.bin
 vendor/lib64/camera/fdconfigvideo.bin
 vendor/lib64/camera/fdconfigvideolite.bin
-vendor/lib64/hw/android.hardware.camera.provider@2.4-impl.so
 vendor/lib64/hw/camera.qcom.so
 vendor/lib64/hw/com.qti.chi.override.so
 vendor/lib64/com.qti.feature2.anchorsync.so
@@ -378,7 +368,6 @@ vendor/lib64/libcom.qti.chinodeutils.so
 vendor/lib64/libcvp2.so
 vendor/lib64/libcvp2_hfi.so
 vendor/lib64/libfcell.so
-vendor/lib64/libgui_vendor.so
 vendor/lib64/libhdrdynamic.so
 vendor/lib64/libhdrdynamicootf.so
 vendor/lib64/libipebpsstriping.so
@@ -414,7 +403,6 @@ vendor/lib64/libvl53l1_daemon.so
 vendor/lib64/motorola.hardware.camera.desktop@1.0.so
 vendor/lib64/motorola.hardware.camera.desktop@2.0.so
 vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
-vendor/lib64/vendor.qti.hardware.camera.postproc@1.0.so
 
 # Camera-arcsoft
 vendor/lib/libarcsoft_distortion_correction.so
@@ -815,7 +803,6 @@ vendor/lib/libspcom.so
 vendor/lib64/libkeymasterdeviceutils.so
 vendor/lib64/libkeymasterprovision.so
 vendor/lib64/libkeymasterutils.so
-vendor/lib64/libkeystore-engine-wifi-hidl.so
 vendor/lib64/libqcbor.so
 vendor/lib64/libqtikeymaster4.so
 vendor/lib64/libspcom.so
@@ -1402,7 +1389,6 @@ vendor/etc/init/vendor.sensors.sscrpcd.rc
 vendor/etc/permissions/vendor-qti-hardware-sensorscalibrate.xml
 vendor/lib/hw/vendor.qti.hardware.sensorscalibrate@1.0-impl.so
 vendor/lib/libsensorcal.so
-vendor/lib/libsensorndkbridge.so
 vendor/lib/libsensorslog.so
 vendor/lib/libssc.so
 vendor/lib/libssc_default_listener.so
@@ -1411,7 +1397,6 @@ vendor/lib/sensors.ssc.so
 vendor/lib/vendor.qti.hardware.sensorscalibrate@1.0.so
 vendor/lib64/hw/vendor.qti.hardware.sensorscalibrate@1.0-impl.so
 vendor/lib64/libsensorcal.so
-vendor/lib64/libsensorndkbridge.so
 vendor/lib64/libsensorslog.so
 vendor/lib64/libssc.so
 vendor/lib64/libssc_default_listener.so

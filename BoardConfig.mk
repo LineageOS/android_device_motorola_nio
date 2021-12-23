@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-BUILD_BROKEN_DUP_RULES := true
-
 BOARD_VENDOR := motorola
 
 DEVICE_PATH := device/motorola/nio
