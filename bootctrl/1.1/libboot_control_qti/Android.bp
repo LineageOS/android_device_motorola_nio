@@ -1,21 +1,10 @@
-filegroup {
-    name: "libboot_control_qti_src",
-    srcs: ["libboot_control_qti.cpp"],
-}
-
-cc_library_headers {
-    name: "libboot_control_qti_headers",
-    vendor: true,
-    recovery_available: true,
-    export_include_dirs: ["."],
-}
-
-cc_defaults {
-    name: "libboot_control_qti_defaults",
+cc_library {
+    name: "libboot_control_qti",
     vendor: true,
     recovery_available: true,
     shared_libs: [
         "android.hardware.boot@1.1",
+        "librecovery_updater.nio",
         "libbase",
         "libcutils",
         "liblog",
@@ -32,7 +21,7 @@ cc_defaults {
         "-Werror",
     ],
     srcs: [
-        ":libboot_control_qti_src",
+        "libboot_control_qti.cpp",
     ],
-    header_libs: ["libboot_control_qti_headers"],
+    export_include_dirs: ["."],
 }
