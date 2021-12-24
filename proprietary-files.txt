@@ -49,35 +49,17 @@ vendor/lib64/vendor.qti.hardware.alarm@1.0.so
 vendor/bin/power_off_alarm|160bd6e3ae23b4aba3b73d5c1865074beac77e7c
 
 # Audio
-vendor/lib/hw/audio.bluetooth_qti.default.so
-vendor/lib/hw/vendor.qti.hardware.bluetooth_audio@2.0-impl.so
-vendor/lib/btaudio_offload_if.so
 vendor/lib/libacdb-fts.so
 vendor/lib/libacdbloader.so
 vendor/lib/libacdbrtac.so
 vendor/lib/libadiertac.so
 vendor/lib/libadm.so
+vendor/lib/libAndroidAlgSys.so
 vendor/lib/libaudcal.so
-vendor/lib/libaudioconfigstore.so
-vendor/lib/libaudioalsa.so
-vendor/lib/libaudioparsers.so
-vendor/lib/libbluetooth_audio_session_qti.so
-vendor/lib/libdrc.so
 vendor/lib/libqtigef.so
-vendor/lib/libsurround_3mic_proc.so
-vendor/lib64/hw/audio.bluetooth_qti.default.so
-vendor/lib64/hw/vendor.qti.hardware.bluetooth_audio@2.0-impl.so
-vendor/lib64/btaudio_offload_if.so
-vendor/lib64/libacdb-fts.so
-vendor/lib64/libacdbloader.so
-vendor/lib64/libacdbrtac.so
-vendor/lib64/libadiertac.so
-vendor/lib64/libaudcal.so
-vendor/lib64/libaudioconfigstore.so
-vendor/lib64/libaudioalsa.so
-vendor/lib64/libaudioparsers.so
-vendor/lib64/libbluetooth_audio_session_qti.so
-vendor/lib64/libqtigef.so
+vendor/lib/soundfx/libmaxxeffect-cembedded.so
+vendor/lib/soundfx/libmmieffectswrapper.so
+vendor/lib/soundfx/libspeakerbundle.so
 
 # Audio Firmware
 vendor/firmware/aw882xx_mono.bin
@@ -94,6 +76,12 @@ vendor/lib64/hw/vendor.qti.hardware.btconfigstore@2.0-impl.so
 vendor/lib64/libbtnv.so
 vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.0.so
 vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.1.so
+
+# Bluetooth (A2DP)
+vendor/lib/btaudio_offload_if.so
+vendor/lib/hw/audio.bluetooth_qti.default.so
+vendor/lib/hw/vendor.qti.hardware.bluetooth_audio@2.0-impl.so
+vendor/lib/libbluetooth_audio_session_qti.so
 
 # Bluetooth (aptX)
 lib64/libaptX_encoder.so
