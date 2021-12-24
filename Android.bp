@@ -1,6 +1,5 @@
 soong_namespace {
     imports: [
-        "vendor/nxp/opensource/pn5xx",
         "vendor/qcom/opensource/commonsys-intf/display"
     ],
 }

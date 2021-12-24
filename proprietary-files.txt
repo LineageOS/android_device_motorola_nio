@@ -942,6 +942,9 @@ vendor/lib64/unnhal-acc-common.so
 vendor/lib64/unnhal-acc-hta.so
 vendor/lib64/unnhal-acc-hvx.so
 
+# NFC
+vendor/lib64/libpn557_fw.so
+
 # OEM
 vendor/bin/motobox
 vendor/etc/vhw.xml
