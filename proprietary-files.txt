@@ -51,7 +51,6 @@ vendor/bin/power_off_alarm|160bd6e3ae23b4aba3b73d5c1865074beac77e7c
 # Audio
 vendor/lib/hw/audio.bluetooth_qti.default.so
 vendor/lib/hw/vendor.qti.hardware.bluetooth_audio@2.0-impl.so
-vendor/lib/hw/vendor.qti.hardware.bluetooth_sar@1.1-impl.so
 vendor/lib/btaudio_offload_if.so
 vendor/lib/libacdb-fts.so
 vendor/lib/libacdbloader.so
@@ -66,11 +65,8 @@ vendor/lib/libbluetooth_audio_session_qti.so
 vendor/lib/libdrc.so
 vendor/lib/libqtigef.so
 vendor/lib/libsurround_3mic_proc.so
-vendor/lib/vendor.qti.hardware.bluetooth_sar@1.0.so
-vendor/lib/vendor.qti.hardware.bluetooth_sar@1.1.so
 vendor/lib64/hw/audio.bluetooth_qti.default.so
 vendor/lib64/hw/vendor.qti.hardware.bluetooth_audio@2.0-impl.so
-vendor/lib64/hw/vendor.qti.hardware.bluetooth_sar@1.1-impl.so
 vendor/lib64/btaudio_offload_if.so
 vendor/lib64/libacdb-fts.so
 vendor/lib64/libacdbloader.so
@@ -82,8 +78,6 @@ vendor/lib64/libaudioalsa.so
 vendor/lib64/libaudioparsers.so
 vendor/lib64/libbluetooth_audio_session_qti.so
 vendor/lib64/libqtigef.so
-vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.0.so
-vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.1.so
 
 # Audio Firmware
 vendor/firmware/aw882xx_mono.bin
@@ -93,17 +87,13 @@ vendor/firmware/aw882xx_spk_reg.bin
 # Bluetooth
 vendor/bin/hw/android.hardware.bluetooth@1.0-service-qti
 vendor/etc/init/android.hardware.bluetooth@1.0-service-qti.rc
-vendor/lib/hw/android.hardware.bluetooth@1.0-impl-qti.so
-vendor/lib/hw/vendor.qti.hardware.btconfigstore@1.0-impl.so
-vendor/lib/hw/vendor.qti.hardware.btconfigstore@2.0-impl.so
-vendor/lib/libbt-hidlclient.so
-vendor/lib/libbtnv.so
 vendor/lib64/hw/android.hardware.bluetooth@1.0-impl-qti.so
+vendor/lib64/hw/vendor.qti.hardware.bluetooth_sar@1.1-impl.so
 vendor/lib64/hw/vendor.qti.hardware.btconfigstore@1.0-impl.so
 vendor/lib64/hw/vendor.qti.hardware.btconfigstore@2.0-impl.so
-system_ext/lib64/com.qualcomm.qti.ant@1.0.so
-vendor/lib64/libbt-hidlclient.so
 vendor/lib64/libbtnv.so
+vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.0.so
+vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.1.so
 
 # Bluetooth (aptX)
 lib64/libaptX_encoder.so
