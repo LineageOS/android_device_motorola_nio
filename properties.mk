@@ -7,14 +7,17 @@ PRODUCT_PROPERTY_OVERRIDES += \
     af.fast_track_multiplier=2 \
     audio.deep_buffer.media=true \
     audio.offload.video=true \
+    persist.bluetooth.a2dp_offload.cap=sbc-aac-aptx-aptxhd-ldac \
+    persist.bluetooth.a2dp_offload.disabled=false \
     persist.vendor.audio.dualmic.config=endfire \
+    persist.vendor.audio.fluence.speaker=false \
     persist.vendor.audio.fluence.voicecall=true \
     persist.vendor.audio.fluence.voicecomm=true \
     persist.vendor.audio.fluence.voicerec=false \
-    persist.vendor.audio.fluence.speaker=false \
+    ro.bluetooth.a2dp_offload.supported=true \
     ro.vendor.audio.sdk.fluencetype=fluence \
     ro.vendor.audio.sdk.ssr=false \
-    vendor.audio_hal.period_size=240
+    vendor.audio_hal.period_size=240 \
     vendor.voice.path.for.pcm.voip=true
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -79,7 +82,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     vendor.qcom.bluetooth.soc=hastings
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
-    ro.bluetooth.a2dp_offload.supported=true \
     ro.bluetooth.library_name=libbluetooth_qti.so \
     ro.vendor.bluetooth.wipower=false \
     vendor.bluetooth.soc=hastings
