@@ -40,20 +40,13 @@ vendor/lib/rfsa/adsp/libSuperSensor_skel.so
 
 # Alarm
 vendor/bin/hw/vendor.qti.hardware.alarm@1.0-service
-vendor/bin/hw/vendor.zuialarm.hardware.alarm@1.0-service
-vendor/bin/zui_power_off_alarm
-vendor/etc/init/init.zuipoweroffalarm.rc
 vendor/etc/init/vendor.qti.hardware.alarm@1.0-service.rc
-vendor/etc/init/vendor.zuialarm.hardware.alarm@1.0-service.rc
--vendor/etc/vintf/manifest/vendor.zuialarm.hardware.alarm@1.0-service.xml
-vendor/lib/hw/vendor.qti.hardware.alarm@1.0-impl.so
-vendor/lib/hw/vendor.zuialarm.hardware.alarm@1.0-impl.so
-vendor/lib/vendor.qti.hardware.alarm@1.0.so
-vendor/lib/vendor.zuialarm.hardware.alarm@1.0.so
 vendor/lib64/hw/vendor.qti.hardware.alarm@1.0-impl.so
-vendor/lib64/hw/vendor.zuialarm.hardware.alarm@1.0-impl.so
 vendor/lib64/vendor.qti.hardware.alarm@1.0.so
-vendor/lib64/vendor.zuialarm.hardware.alarm@1.0.so
+
+# Alarm - from lmi-user 11 RKQ1.200826.002
+-product/app/PowerOffAlarm/PowerOffAlarm.apk|5885c09b8446d8b0c1f665bd9522792d79201cd7
+vendor/bin/power_off_alarm|160bd6e3ae23b4aba3b73d5c1865074beac77e7c
 
 # Audio
 vendor/lib/hw/audio.bluetooth_qti.default.so

@@ -68,6 +68,9 @@ function blob_fixup() {
         product/etc/permissions/vendor.qti.hardware.data.connection-V1.0-java.xml | product/etc/permissions/vendor.qti.hardware.data.connection-V1.1-java.xml)
             sed -i 's/xml version="2.0"/xml version="1.0"/' "${2}"
             ;;
+        vendor/etc/init/vendor.qti.hardware.alarm@1.0-service.rc)
+            sed -i "/disabled/d" "${2}"
+            ;;
     esac
 }
 
