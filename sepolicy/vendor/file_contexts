@@ -1,12 +1,16 @@
 # A/B partitions
+/dev/block/platform/soc/1d84000\.ufshc/by-name/fsg_[ab]         u:object_r:vendor_modem_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/logo_[ab]        u:object_r:vendor_custom_ab_block_device:s0
 /dev/block/platform/soc/1d84000\.ufshc/by-name/mdm1m9kefs3_[ab] u:object_r:vendor_modem_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/sd[df]                u:object_r:vendor_gpt_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/fsg_[ab]      u:object_r:vendor_modem_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/logo_[ab]     u:object_r:vendor_custom_ab_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/prov_[ab]     u:object_r:vendor_custom_ab_block_device:s0
-/dev/block/platform/soc/1d84000\.ufshc/by-name/storsec_[ab]  u:object_r:vendor_custom_ab_block_device:s0
-/dev/block/platform/soc/1d84000.ufshc/by-name/utags          u:object_r:vendor_utags_block_device:s0
-/dev/block/platform/soc/1d84000.ufshc/by-name/utagsBackup    u:object_r:vendor_utags_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/prov_[ab]        u:object_r:vendor_custom_ab_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/spss_[ab]        u:object_r:vendor_custom_ab_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/storsec_[ab]     u:object_r:vendor_custom_ab_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/vendor_boot_[ab] u:object_r:boot_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/sd[df]                   u:object_r:vendor_gpt_block_device:s0
+
+# UFS Devices
+/dev/block/platform/soc/1d84000\.ufshc/by-name/utags            u:object_r:vendor_utags_block_device:s0
+/dev/block/platform/soc/1d84000\.ufshc/by-name/utagsBackup      u:object_r:vendor_utags_block_device:s0
 
 # Partition Mountpoints
 /(vendor|system/vendor)/fsg          u:object_r:fsg_firmware_file:s0
