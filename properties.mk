@@ -108,14 +108,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.crypto.volume.options=::v2
 
 # Dalvik
+$(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 PRODUCT_PROPERTY_OVERRIDES += \
-    dalvik.vm.dex2oat64.enabled=true \
     dalvik.vm.dex2oat-threads=6 \
-    dalvik.vm.heapmaxfree=8m \
-    dalvik.vm.heapminfree=512k \
-    dalvik.vm.heapsize=512m \
-    dalvik.vm.heapstartsize=8m \
-    dalvik.vm.heaptargetutilization=0.75
+    dalvik.vm.dex2oat64.enabled=true
 
 # Display
 PRODUCT_PROPERTY_OVERRIDES += \
