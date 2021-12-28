@@ -16,3 +16,8 @@ allowxperm init loop_device:blk_file ioctl {
 
 # Product persist
 allow init mnt_product_file:dir mounton;
+
+recovery_only(`
+  allow init self:capability sys_module;
+  allow init rootfs:system module_load;
+')

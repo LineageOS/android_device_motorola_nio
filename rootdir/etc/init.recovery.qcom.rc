@@ -25,6 +25,13 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+on early-init
+    insmod /lib/modules/sensors_class.ko
+    insmod /lib/modules/aw8695.ko
+    insmod /lib/modules/nova_0flash_mmi.ko
+    insmod /lib/modules/qpnp-smbcharger-mmi.ko
+    insmod /lib/modules/qpnp_adaptive_charge.ko
+
 on init
     write /sys/class/backlight/panel0-backlight/brightness 200
     setprop sys.usb.configfs 1
