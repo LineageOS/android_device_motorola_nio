@@ -67,7 +67,7 @@ PRODUCT_BUILD_SUPER_PARTITION := false
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 
 # Properties
--include $(LOCAL_PATH)/properties.mk
+$(call inherit-product, $(LOCAL_PATH)/properties.mk)
 
 # Permissions
 PRODUCT_COPY_FILES += \
@@ -455,10 +455,6 @@ PRODUCT_PACKAGES += \
     android.hardware.usb@1.2-service-qti \
     init.qcom.usb.rc \
     init.qcom.usb.sh
-
-PRODUCT_PROPERTY_OVERRIDES += \
-    vendor.usb.diag.func.name=diag \
-    vendor.usb.use_ffs_mtp=0
 
 PRODUCT_SOONG_NAMESPACES += vendor/qcom/opensource/usb/etc
 
