@@ -252,6 +252,10 @@ ro.af.client_heap_size_kbyte=7168
 PRODUCT_PRODUCT_PROPERTIES += \
 media.stagefright.audio.deep=false
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.audio.dualmic.config=endfire \
+    ro.config.vc_call_vol_steps=8
+
 ############### Bluetooth ###############
 PRODUCT_PROPERTY_OVERRIDES += \
     vendor.qcom.bluetooth.soc=hastings
@@ -278,6 +282,11 @@ PRODUCT_PROPERTY_OVERRIDES += persist.vendor.qcom.bluetooth.aac_vbr_ctl.enabled=
 PRODUCT_PROPERTY_OVERRIDES += persist.vendor.qcom.bluetooth.aptxadaptiver2_1_support=false
 #HearingAid support
 PRODUCT_PROPERTY_OVERRIDES += persist.sys.fflag.override.settings_bluetooth_hearing_aid=true
+
+############### Camera ###############
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.camera.expose.aux=1 \
+    persist.vendor.camera.physical.num=5
 
 ############### Dalvik ###############
 $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
@@ -330,8 +339,17 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.has_HDR_display=true
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.use_color_management=true
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.wcg_composition_dataspace=143261696
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.protected_contents=true
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.set_touch_timer_ms=200
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.set_touch_timer_ms=1000
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.force_hwc_copy_for_virtual_displays=true
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    vendor.display.idle_time=0 \
+    vendor.display.disable_idle_time_hdr=1 \
+    vendor.display.disable_idle_time_video=1
+
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.surface_flinger.set_idle_timer_ms=250 \
+    ro.surface_flinger.use_smart_90_for_video=true
 
 # Recovery is enabled, logging is disabled
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -352,7 +370,16 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.frp.pst=/dev/block/bootdevice/by-name/frp
 
+############### IMS ###############
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.ims.playout_delay=50 \
+    persist.vendor.ims.cam_sensor_delay=20 \
+    persist.vendor.ims.display_delay=40 \
+
 ############### Keymaster ###############
+PRODUCT_PROPERTY_OVERRIDES += \
+    vendor.gatekeeper.disable_spu=true
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.crypto.volume.filenames_mode = "aes-256-cts" \
     ro.crypto.dm_default_key.options_format.version = 2 \
@@ -389,10 +416,37 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.multisim.config=dsds \
     persist.vendor.radio.rat_on=combine
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.data.iwlan.enable=true \
+    persist.vendor.radio.no_wait_for_card=1 \
+    persist.vendor.radio.dfr_mode_set=1 \
+    persist.vendor.radio.oem_ind_to_both=0 \
+    persist.vendor.radio.qcril_uim_vcc_feature=1 \
+    persist.vendor.radio.0x9e_not_callname=1 \
+    persist.vendor.radio.mt_sms_ack=30 \
+    persist.vendor.radio.force_get_pref=1 \
+    persist.vendor.radio.eri64_as_home=1 \
+    persist.vendor.radio.data_con_rprt=1 \
+    persist.vendor.radio.add_power_save=1 \
+    persist.vendor.radio.msgtunnel.start=true \
+    persist.vendor.radio.lte_vrte_ltd=1 \
+    persist.vendor.radio.sar_sensor=1 \
+    persist.vendor.radio.fi_supported=0 \
+    persist.vendor.radio.data_ltd_sys_ind=1 \
+    ro.vendor.radio.imei.sv=1
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.radio.aosp_usr_pref_sel=true \
+    persist.vendor.radio.flexmap_type=none \
+    persist.vendor.radio.enable_temp_dds=true
+
 ############### Sensors ###############
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.sensors.sync_request=true \
     persist.vendor.sensors.allow_non_default_discovery=true
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.vendor.sensors.glance_approach=false
 
 ############### USB ###############
 PRODUCT_PROPERTY_OVERRIDES += vendor.usb.diag.func.name=diag
