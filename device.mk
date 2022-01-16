@@ -134,13 +134,18 @@ PRODUCT_PACKAGES += \
     audio.usb.default \
     libaudio-resampler \
     libaudioroute \
-    libhdmiedid \
-    libhfp \
-    libsndmonitor \
     tinymix \
     libtinycompress \
     libtinycompress.vendor \
     sound_trigger.primary.kona
+
+PRODUCT_PACKAGES += \
+    liba2dpoffload \
+    libbatterylistener \
+    libhdmiedid \
+    libhdmipassthru \
+    libhfp \
+    libsndmonitor
 
 PRODUCT_PACKAGES += \
     libqcomvoiceprocessing
@@ -176,7 +181,6 @@ PRODUCT_PACKAGES += \
 
 # Bluetooth
 PRODUCT_PACKAGES += \
-    liba2dpoffload \
     vendor.qti.hardware.bluetooth_audio@2.0.vendor \
     vendor.qti.hardware.btconfigstore@1.0.vendor \
     vendor.qti.hardware.btconfigstore@2.0.vendor
