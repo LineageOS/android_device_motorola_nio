@@ -85,7 +85,7 @@ TARGET_MODULE_ALIASES += \
 
 # Kernel modules - WLAN
 TARGET_MODULE_ALIASES += \
-    wlan.ko:qca_cld3_wlan.ko
+    wlan.ko:qca_cld3_qca6390.ko
 
 # Platform
 BOARD_USES_QCOM_HARDWARE := true
