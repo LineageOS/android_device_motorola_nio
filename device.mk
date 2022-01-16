@@ -133,10 +133,7 @@ PRODUCT_PACKAGES += \
     audio.r_submix.default \
     audio.usb.default \
     libaudio-resampler \
-    libaudioroute \
     tinymix \
-    libtinycompress \
-    libtinycompress.vendor \
     sound_trigger.primary.kona
 
 PRODUCT_PACKAGES += \
@@ -218,7 +215,6 @@ PRODUCT_PACKAGES += \
     init.qcom.sensors.sh \
     init.qcom.sh \
     init.qti.dcvs.sh \
-    init.qti.fm.sh \
     init.qti.ims.sh \
     init.recovery.qcom.rc \
     init.target.rc \
@@ -237,14 +233,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
 
-# Configstore
-PRODUCT_PACKAGES += \
-    disable_configstore
-
-# Cryptfshw
-PRODUCT_PACKAGES += \
-    vendor.qti.hardware.cryptfshw@1.0.vendor
-
 # Dependencies
 PRODUCT_PACKAGES += \
     libavservices_minijail.vendor \
@@ -257,13 +245,9 @@ PRODUCT_PACKAGES += \
     android.hardware.memtrack@1.0-impl \
     android.hardware.memtrack@1.0-service \
     gralloc.kona \
-    libdisplayconfig \
     libdisplayconfig.qti \
-    libdisplayconfig.vendor \
     libqdMetaData \
     libqdMetaData.system \
-    libtinyxml \
-    libvulkan \
     memtrack.kona \
     vendor.display.config@1.15.vendor \
     vendor.qti.hardware.display.allocator-service \
@@ -301,6 +285,12 @@ PRODUCT_PACKAGES += \
     libvndfwk_detect_jni.qti \
     libvndfwk_detect_jni.qti.vendor
 
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.vendor.qti.va_aosp.support=1
+
+PRODUCT_ODM_PROPERTIES += \
+    ro.vendor.qti.va_odm.support=1
+
 # GPS
 PRODUCT_PACKAGES += \
     android.hardware.gnss@2.1-impl-qti \
@@ -330,18 +320,11 @@ PRODUCT_PACKAGES += \
 # IPACM
 PRODUCT_PACKAGES += \
     ipacm \
-    IPACM_cfg.xml \
-    libipanat \
-    liboffloadhal
+    IPACM_cfg.xml
 
 # IPC router config
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sec_config:$(TARGET_COPY_OUT_VENDOR)/etc/sec_config
-
-# IPv6
-PRODUCT_PACKAGES += \
-    ethertypes \
-    libebtc
 
 # Lights
 PRODUCT_PACKAGES += \
@@ -378,11 +361,6 @@ PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_c2_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_c2_video.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_c2.xml
 
-# Misc
-PRODUCT_PACKAGES += \
-    libchrome \
-    libchrome.vendor
-
 # MotoActions
 PRODUCT_PACKAGES += \
     MotoActions
@@ -405,9 +383,6 @@ PRODUCT_COPY_FILES += \
 
 # OMX
 PRODUCT_PACKAGES += \
-    libavservices_minijail \
-    libavservices_minijail.vendor \
-    libavservices_minijail_vendor \
     libc2dcolorconvert \
     libcodec2_hidl@1.0.vendor \
     libcodec2_vndk.vendor \
@@ -435,23 +410,9 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/qti_whitelist.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/sysconfig/qti_whitelist.xml \
     $(LOCAL_PATH)/configs/qti_whitelist_system_ext.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/sysconfig/qti_whitelist_system_ext.xml
 
-# QMI
-PRODUCT_PACKAGES += \
-    libjson \
-    libqti_vndfwk_detect \
-    libqti_vndfwk_detect.vendor
-
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    ro.vendor.qti.va_aosp.support=1
-
-PRODUCT_ODM_PROPERTIES += \
-    ro.vendor.qti.va_odm.support=1
-
 # RIL
 PRODUCT_PACKAGES += \
-    android.hardware.radio@1.2 \
-    android.hardware.radio.config@1.0 \
-    android.hardware.secure_element@1.0 \
+    libjson \
     libprotobuf-cpp-full \
     librmnetctl \
     libxml2
@@ -515,10 +476,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES_DEBUG += \
     update_engine_client
 
-# Trust HAL
-PRODUCT_PACKAGES += \
-    vendor.lineage.trust@1.0-service
-
 # VNDK
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := strict
 
@@ -528,12 +485,7 @@ PRODUCT_PACKAGES += \
     hostapd \
     libqsap_sdk \
     libwpa_client \
-    libwifi-hal-ctrl \
     libwifi-hal-qcom \
-    vendor.qti.hardware.wifi.hostapd@1.0.vendor \
-    vendor.qti.hardware.wifi.hostapd@1.1.vendor \
-    vendor.qti.hardware.wifi.supplicant@2.0.vendor \
-    vendor.qti.hardware.wifi.supplicant@2.1.vendor \
     WifiOverlay \
     wpa_supplicant \
     wpa_supplicant.conf
