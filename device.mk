@@ -39,6 +39,17 @@ PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += \
     $(LOCAL_PATH)/overlay-lineage/packages/apps/Snap
 
 PRODUCT_PACKAGES += \
+    FrameworksResCommon \
+    CarrierConfigResCommon \
+    CellBroadcastReceiverResCommon \
+    SystemUIResCommon \
+    TelecommResCommon \
+    TelephonyResCommon \
+    WifiResCommon \
+    FrameworksResTarget \
+    WifiResTarget
+
+PRODUCT_PACKAGES += \
     NoCutoutOverlay
 
 # A/B
