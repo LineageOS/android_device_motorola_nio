@@ -50,6 +50,7 @@ PRODUCT_PACKAGES += \
     WifiResTarget
 
 PRODUCT_PACKAGES += \
+    FrameworksResNio \
     NoCutoutOverlay
 
 # A/B
