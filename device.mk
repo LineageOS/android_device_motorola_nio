@@ -51,7 +51,8 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     FrameworksResNio \
-    NoCutoutOverlay
+    NoCutoutOverlay \
+    SystemUIResNio
 
 # A/B
 AB_OTA_UPDATER := true
