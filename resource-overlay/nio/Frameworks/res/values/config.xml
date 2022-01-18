@@ -165,11 +165,11 @@
          @see https://www.w3.org/TR/SVG/paths.html#PathData
          -->
     <string translatable="false" name="config_mainBuiltInDisplayCutout">
-        M -1040,0
-        L -840,0
-        L -840,115
-        L -1040,115
+        M 0,0
+        h 240
+        v 115
+        h -240
         Z
-        @right
+        @left
     </string>
 </resources>
