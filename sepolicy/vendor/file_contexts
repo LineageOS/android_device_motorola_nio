@@ -23,8 +23,7 @@
 /(vendor|system/vendor)/bin/hw/vendor\.lineage\.livedisplay@2\.0-service-sysfs\.motorola_kona    u:object_r:hal_lineage_livedisplay_sysfs_exec:s0
 /(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service-ets                   u:object_r:hal_fingerprint_default_exec:s0
 /(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service-fpc                   u:object_r:hal_fingerprint_default_exec:s0
-/(vendor|system/vendor)/bin/hw/egis_ident                                                                    u:object_r:hal_fingerprint_default_exec:s0
-/(vendor|system/vendor)/bin/hw/fpc_ident                                                                     u:object_r:hal_fingerprint_default_exec:s0
+/(vendor|system/vendor)/bin/fpc_ident                                                                     u:object_r:hal_fingerprint_default_exec:s0
 
 
 # Vendor init scripts

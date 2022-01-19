@@ -229,8 +229,6 @@ PRODUCT_PACKAGES += \
     ueventd.qcom.rc
 
 PRODUCT_PACKAGES += \
-    egis_ident \
-    fpc_ident \
     fstab.ramdisk.qcom \
     init.mmi.laser.sh \
     init.oem.fingerprint.sh \
