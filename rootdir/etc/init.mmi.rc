@@ -453,13 +453,13 @@ on property:persist.vendor.qc.sub.rdump.on=*
 
 # translate MMI property in order to keep the consistent with QCOM
 on property:ro.vendor.hw.dualsim=true
-   setprop persist.radio.multisim.config dsds
+   setprop persist.vendor.radio.multisim.config dsds
 
 on property:persist.vendor.qc.sub.rdump.on=*
    setprop persist.vendor.ssr.enable_ramdumps ${persist.vendor.qc.sub.rdump.on}
 
 on property:ro.vendor.hw.dualsim=false
-   setprop persist.radio.multisim.config ""
+   setprop persist.vendor.radio.multisim.config ""
 
 on property:sys.sysctl.swappiness=*
     write /proc/sys/vm/swappiness ${sys.sysctl.swappiness}

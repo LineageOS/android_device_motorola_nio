@@ -205,36 +205,24 @@ PRODUCT_PACKAGES += \
 # Common init scripts
 PRODUCT_PACKAGES += \
     fstab.qcom \
-    fstab.qcom.zramwb \
     init.class_main.sh \
-    init.crda.sh \
     init.mdm.sh \
     init.mmi.chipset.rc \
+    init.mmi.laser.sh \
+    init.mmi.overlay.rc \
     init.mmi.rc \
     init.mmi.touch.sh \
+    init.oem.fingerprint.overlay.sh \
+    init.oem.fingerprint2.sh \
     init.oem.hw.sh \
-    init.qcom.class_core.sh \
-    init.qcom.coex.sh \
     init.qcom.early_boot.sh \
-    init.qcom.efs.sync.sh \
     init.qcom.post_boot.sh \
     init.qcom.rc \
-    init.qcom.sdio.sh \
-    init.qcom.sensors.sh \
     init.qcom.sh \
     init.qti.dcvs.sh \
-    init.qti.ims.sh \
     init.recovery.qcom.rc \
     init.target.rc \
     ueventd.qcom.rc
-
-PRODUCT_PACKAGES += \
-    fstab.ramdisk.qcom \
-    init.mmi.laser.sh \
-    init.oem.fingerprint.sh \
-    init.mmi.overlay.rc \
-    init.oem.fingerprint2.sh \
-    init.oem.fingerprint.overlay.sh
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom

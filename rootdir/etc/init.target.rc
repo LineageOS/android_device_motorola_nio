@@ -69,39 +69,15 @@ on late-fs
     exec_start wait_for_keymaster
     mount_all /vendor/etc/fstab.qcom --late
 
-    # Start services for bootanim
-    start surfaceflinger
-    start bootanim
-    start vendor.qti.hardware.display.composer
-    start vendor.qti.hardware.display.allocator
-
 on post-fs-data
     mkdir /vendor/data/tombstones 0771 system system
     # Enable WLAN cold boot calibration
     write /sys/devices/platform/soc/b0000000.qcom,cnss-qca6390/fs_ready 1
 
-# Motorola: disable vendor.sensors by default and move the start to init.qcom.rc
-# Disabling by default will ensure that we do not start vendor.sensors in
-# Charge-Only-Mode
-#on early-boot
-#    start vendor.sensors
+on early-boot
+    start vendor.sensors
 
 on boot
-    # CPUset policy is "spread" for foreground/top, "pack" for background/system
-    # Cores 0-3 are silver, 4-6 are gold, 7 is gold+
-    # Keep 1 reserved for top (gold+)
-    # Keep 1 for system/background (silver)
-    write /dev/cpuset/top-app/cpus 0-7
-    write /dev/cpuset/foreground/cpus 1-6
-    write /dev/cpuset/background/cpus 0-3
-    write /dev/cpuset/system-background/cpus 0-3
-    # Give top-app a 10% schedtune boost
-    write /dev/stune/top-app/schedtune.boost 10
-    write /dev/stune/top-app/schedtune.prefer_idle 1
-    write /dev/stune/rt/schedtune.boost 30
-    # Give them a kick on input
-    write /sys/devices/system/cpu/cpu_boost/sched_boost_on_input 1
-
     write /dev/cpuset/audio-app/cpus 1-2
     # Add a cpuset for the camera daemon
     # We want all cores for camera
@@ -121,12 +97,6 @@ on boot
     # Load all wlan drivers
     exec_background u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules/ qca_cld3_qca6390 qca_cld3_qca6490
 
-    # Disable serial console
-    stop console
-
-    # DT2W
-    chown system system /sys/class/sensors/dt-gesture/enable
-
 on property:vendor.display.lcd_density=560
    setprop dalvik.vm.heapgrowthlimit 256m
 
@@ -135,9 +105,6 @@ on property:vendor.display.lcd_density=640
 
 on boot && property:persist.vendor.usb.controller.default=*
     setprop vendor.usb.controller ${persist.vendor.usb.controller.default}
-
-on property:vendor.usb.controller=*
-    setprop sys.usb.controller ${vendor.usb.controller}
 
 on charger
     start vendor.power_off_alarm
@@ -171,7 +138,7 @@ service vendor.per_proxy /vendor/bin/pm-proxy
 
 service vendor.mdm_helper /vendor/bin/mdm_helper
     class core
-    group log system wakelock diag vendor_rfs
+    group system wakelock
     disabled
 
 service vendor.mdm_launcher /vendor/bin/sh /vendor/bin/init.mdm.sh
@@ -184,18 +151,14 @@ on property:init.svc.vendor.per_mgr=running
 on property:sys.shutdown.requested=*
     stop vendor.per_proxy
 
-on property:vendor.vold.post_fs_data_done=1 && property:ro.debuggable=1
-   start vendor.wlan_logging
+on property:vold.decrypt=trigger_restart_framework
+   start vendor.cnss_diag
 
-on property:vendor.vold.post_fs_data_done=1 && property:persist.wlan.debug_log=1
-   start vendor.wlan_logging
-
-service vendor.wlan_logging /system/vendor/bin/cnss_diag -q -f -b 128 -t HELIUM
+service vendor.cnss_diag /system/vendor/bin/cnss_diag -q -f -b 128 -t HELIUM
    class main
    user system
    group system wifi inet sdcard_rw media_rw diag
    oneshot
-   disabled
 
 service dcvs-sh /vendor/bin/init.qti.dcvs.sh
     class late_start
@@ -206,8 +169,3 @@ service dcvs-sh /vendor/bin/init.qti.dcvs.sh
 
 on property:vendor.dcvs.prop=1
    start dcvs-sh
-
-on property:vendor.post_boot.parsed=1
-    # Report max frequency to unity tasks
-    write /proc/sys/kernel/sched_lib_name "UnityMain,libunity.so"
-    write /proc/sys/kernel/sched_lib_mask_force 255
