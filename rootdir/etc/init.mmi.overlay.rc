@@ -1,5 +1,7 @@
 # NFC ST21NFC
 # import /vendor/etc/init/hw/init.vendor.st21nfc.rc
+on early-init
+   setprop ro.vendor.device_edition ${ro.boot.edition}
 
 on early-init && property:ro.bootmode=mot-factory
    insmod /vendor/lib/modules/moto_f_usbnet.ko
@@ -49,11 +51,8 @@ on post-fs
 on post-fs-data
    setprop vendor.mmi_init.stage complete
 
-#fps dual sensor
-service vendor.ident-fps-overlay-sh /vendor/bin/init.oem.fingerprint.overlay.sh
-    class core
+service vendor.mmi_modules /vendor/bin/init.mmi.modules.sh
     user root
-    group drmrpc system
     oneshot
     disabled
 
@@ -68,15 +67,13 @@ service vendor.mmi-laser-sh /vendor/bin/init.mmi.laser.sh
     user root
     oneshot
 
+
 service vendor.ftmipcd2 /vendor/bin/ftmipcd2
     user radio
     group radio net_raw inet oem_2901
     capabilities NET_RAW
     disabled
     oneshot
-
-on post-fs-data
-    exec_start vendor.ident-fps-overlay-sh
 
 on property:ro.bootmode=factory
     start vendor.ftmipcd2
@@ -157,10 +154,10 @@ on boot
    write /proc/sys/kernel/hung_task_timeout_secs 120
 
 #fps dual sensor
-service vendor.ident-fps /vendor/bin/init.oem.fingerprint.sh
+service vendor.ident-fps-overlay-sh /vendor/bin/init.oem.fingerprint.overlay.sh
     class core
     user root
-    group system
+    group drmrpc system
     oneshot
     disabled
 
@@ -169,7 +166,7 @@ on property:ro.bootmode=mot-factory
     write /sys/class/leds/charging/brightness 255
 
 on post-fs-data
-    exec_start vendor.ident-fps
+    exec_start vendor.ident-fps-overlay-sh
 
 service vendor.qrtr-lookup-sh /vendor/bin/init.mmi.qrtr-lookup.sh
     class late_start
@@ -180,8 +177,3 @@ service vendor.qrtr-lookup-sh /vendor/bin/init.mmi.qrtr-lookup.sh
 
 on property:sys.boot_completed=1
     start vendor.qrtr-lookup-sh
-    write /sys/kernel/debug/tracing/events/enable 0
-    write /sys/kernel/debug/tracing/trace ""
-    write /sys/kernel/debug/tracing/events/block/enable 1
-    write /sys/kernel/debug/tracing/events/scsi/enable 1
-    write /sys/kernel/debug/tracing/tracing_on 1

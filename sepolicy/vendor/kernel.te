@@ -1,6 +1,6 @@
 allow kernel block_device:blk_file { open read write };
 allow kernel block_device:dir search;
-allow kernel fsg_firmware_file:file read;
+allow kernel fsg_file:file read;
 allow kernel kernel:capability kill;
 allow kernel per_boot_file:file r_file_perms;
 allow kernel vendor_utags_block_device:blk_file { open read write };

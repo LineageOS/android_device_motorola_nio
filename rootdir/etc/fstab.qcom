@@ -52,4 +52,4 @@ vendor                                                  /vendor                e
 /dev/block/bootdevice/by-name/bluetooth                 /vendor/bt_firmware    ext4    ro,nosuid,nodev,barrier=1,context=u:object_r:bt_firmware_file:s0 wait,slotselect
 
 /dev/block/bootdevice/by-name/prodpersist               /mnt/product/persist     ext4    noatime,nosuid,nodev,data=ordered,barrier=1          wait,formattable,nofail
-/dev/block/bootdevice/by-name/fsg                       /vendor/fsg              ext4    ro,nosuid,nodev,context=u:object_r:fsg_firmware_file:s0       wait,slotselect
+/dev/block/bootdevice/by-name/fsg                       /vendor/fsg              ext4    ro,nosuid,nodev,context=u:object_r:fsg_file:s0       wait,slotselect

@@ -1,7 +1,7 @@
 # Super modem mounting
-allow fsg_firmware_file self:filesystem associate;
-allow init fsg_firmware_file:dir mounton;
-allow init fsg_firmware_file:filesystem { getattr mount relabelfrom unmount };
+allow fsg_file self:filesystem associate;
+allow init fsg_file:dir mounton;
+allow init fsg_file:filesystem { getattr mount relabelfrom unmount };
 allow init firmware_file:filesystem unmount;
 
 # Allow init to access loop devices

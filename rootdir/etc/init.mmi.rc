@@ -68,6 +68,9 @@ on early-init
     # Trigger priority stage of MMI init
     trigger mmi-priority
 
+    # Log kernel wake-up source
+    write /sys/module/msm_show_resume_irq/parameters/debug_mask 1
+
 on fs
     insmod /vendor/lib/modules/cci_intf.ko
     mkdir /mnt/vendor/persist/fps 0770 system system
@@ -87,51 +90,51 @@ on post-fs && property:ro.vendor.hw.modem_super_image=yes
 
 on post-fs && property:ro.vendor.hw.fsg_super_image=yes
     umount /vendor/fsg
-    mount ext4 /dev/block/bootdevice/by-name/fsg${ro.boot.slot_suffix} /vendor/super_fsg ro nosuid nodev context=u:object_r:fsg_firmware_file:s0
-    mount ext4 loop@/vendor/super_fsg/${ro.vendor.hw.fsg_mount_file} /vendor/fsg ro nosuid nodev context=u:object_r:fsg_firmware_file:s0
+    mount ext4 /dev/block/bootdevice/by-name/fsg${ro.boot.slot_suffix} /vendor/super_fsg ro nosuid nodev context=u:object_r:fsg_file:s0
+    mount ext4 loop@/vendor/super_fsg/${ro.vendor.hw.fsg_mount_file} /vendor/fsg ro nosuid nodev context=u:object_r:fsg_file:s0
 
 on post-fs
-    mkdir /mnt/vendor/persist/camera 0755 oem_5004 oem_5004
-    mkdir /mnt/vendor/persist/camera/dualcal 0775 camera oem_5004
-    mkdir /mnt/vendor/persist/camera/focus 0775 camera oem_5004
-    mkdir /mnt/vendor/persist/camera/ledcal 0775 camera oem_5004
+    mkdir /mnt/vendor/persist/camera 0755 vendor_tcmd vendor_tcmd
+    mkdir /mnt/vendor/persist/camera/dualcal 0775 camera vendor_tcmd
+    mkdir /mnt/vendor/persist/camera/focus 0775 camera vendor_tcmd
+    mkdir /mnt/vendor/persist/camera/ledcal 0775 camera vendor_tcmd
     mkdir /mnt/vendor/persist/camera/mot_ledcal 0775 camera camera
     mkdir /mnt/vendor/persist/camera/mot_gyrocal 0775 camera camera
-    mkdir /mnt/vendor/persist/batt_health 0775 oem_5001 oem_5001
+    mkdir /mnt/vendor/persist/batt_health 0775 vendor_pwric vendor_pwric
     mkdir /mnt/vendor/persist/mdm 0770 radio radio
-    mkdir /mnt/vendor/persist/factory 0755 oem_5004 oem_5004
-    mkdir /mnt/vendor/persist/factory/audio 0755 oem_5004 system
-    mkdir /mnt/vendor/persist/factory/wlan 0755 oem_5004 oem_5004
-    mkdir /mnt/vendor/persist/factory/regulatory 0755 oem_5004 system
-    mkdir /mnt/vendor/persist/public 0755 oem_5004 oem_5004
-    mkdir /mnt/vendor/persist/public/att_dm 0775 radio oem_5004
-    mkdir /mnt/vendor/persist/public/hiddenmenu 0775 radio oem_5004
-    mkdir /mnt/vendor/persist/public/hiddenmenu/data 0775 system oem_5004
+    mkdir /mnt/vendor/persist/factory 0755 vendor_tcmd vendor_tcmd
+    mkdir /mnt/vendor/persist/factory/audio 0755 vendor_tcmd system
+    mkdir /mnt/vendor/persist/factory/wlan 0755 vendor_tcmd vendor_tcmd
+    mkdir /mnt/vendor/persist/factory/regulatory 0755 vendor_tcmd system
+    mkdir /mnt/vendor/persist/public 0755 vendor_tcmd vendor_tcmd
+    mkdir /mnt/vendor/persist/public/att_dm 0775 radio vendor_tcmd
+    mkdir /mnt/vendor/persist/public/hiddenmenu 0775 radio vendor_tcmd
+    mkdir /mnt/vendor/persist/public/hiddenmenu/data 0775 system vendor_tcmd
     mkdir /persist/public/locale 0700 system system
     mkdir /persist/public/omadm 0700 radio radio
     mkdir /persist/public/svcs 0770 system system
-    mkdir /mnt/vendor/persist/wifi 0755 oem_5004 oem_5004
-    mkdir /mnt/vendor/persist/bt 0755 oem_5004 bluetooth
+    mkdir /mnt/vendor/persist/wifi 0755 vendor_tcmd vendor_tcmd
+    mkdir /mnt/vendor/persist/bt 0755 vendor_tcmd bluetooth
     mkdir /persist/public/usc_dm 0775 radio radio
     mkdir /mnt/vendor/persist/rfs/msm/mpss/mot_rfs 0771 vendor_rfs system
     mkdir /mnt/vendor/persist/rfs/mdm/mpss/mot_rfs 0771 vendor_rfs system
 
     # This dir is used to store any OMA(both DM and CP) files in persist partition
-    # Any app with radio UID or oem_5004 GID can read/write/execute files in this dir.
-    mkdir /mnt/vendor/persist/public/oma 0775 radio oem_5004
+    # Any app with radio UID or vendor_tcmd GID can read/write/execute files in this dir.
+    mkdir /mnt/vendor/persist/public/oma 0775 radio vendor_tcmd
 
-    chown oem_5004 oem_5004 /mnt/vendor/persist/factory/fti
+    chown vendor_tcmd vendor_tcmd /mnt/vendor/persist/factory/fti
     chmod 0664 /mnt/vendor/persist/factory/fti
-    chown oem_5004 oem_5004 /mnt/vendor/persist/factory/byte
+    chown vendor_tcmd vendor_tcmd /mnt/vendor/persist/factory/byte
     chmod 0660 /mnt/vendor/persist/factory/byte
     chmod 0660 /mnt/vendor/persist/wifi/wlan_mac.bin
-    chown oem_5004 oem_5004 /mnt/vendor/persist/bt/bt_bdaddr
+    chown vendor_tcmd vendor_tcmd /mnt/vendor/persist/bt/bt_bdaddr
     chmod 0664 /mnt/vendor/persist/bt/bt_bdaddr
 
     # Set life_calls and life_timer file permissions
-    chown radio oem_5004 /mnt/vendor/persist/public/hiddenmenu/life_calls
+    chown radio vendor_tcmd /mnt/vendor/persist/public/hiddenmenu/life_calls
     chmod 0775 /mnt/vendor/persist/public/hiddenmenu/life_calls
-    chown radio oem_5004 /mnt/vendor/persist/public/hiddenmenu/life_timer
+    chown radio vendor_tcmd /mnt/vendor/persist/public/hiddenmenu/life_timer
     chmod 0775 /mnt/vendor/persist/public/hiddenmenu/life_timer
 
     chmod 0711 /mnt/vendor/persist/rfs
@@ -141,8 +144,6 @@ on post-fs
     chmod 0711 /mnt/vendor/persist/rfs/mdm
     chmod 0711 /mnt/vendor/persist/rfs/mdm/mpss
     chmod 0771 /mnt/vendor/persist/rfs/mdm/mpss/mot_rfs
-
-    write /proc/sys/vm/page-cluster 0 
 
     # Set dm-verity property for system partition
     verity_update_state
@@ -156,58 +157,58 @@ on post-fs-data
 
     # Setup folders for security
     mkdir /mnt/vendor/persist/security 02770 drmrpc drmrpc
-    mkdir /data/vendor/dbvc 0750 oem_5004 shell
-    chown drmrpc oem_5004 /mnt/vendor/persist/security
+    mkdir /data/vendor/dbvc 0750 vendor_tcmd shell
+    chown drmrpc vendor_tcmd /mnt/vendor/persist/security
 
     # Setup folder for Pre-Activation Kill Switch app (PAKS)
-    mkdir /mnt/vendor/persist/paks 02770 oem_5004 oem_5004
+    mkdir /mnt/vendor/persist/paks 02770 vendor_tcmd vendor_tcmd
 
     # Create directory used by power_supply_logger
-    mkdir /data/vendor/power_supply_logger 0750 oem_5001 log
+    mkdir /data/vendor/power_supply_logger 0750 vendor_pwric log
     # Create directory power_supply_logger used by memtest and batt_health
     mkdir /data/vendor_de/power_supply_logger 0770 root log
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/cycle_count
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/cycle_count
     chmod 0664 /sys/class/power_supply/battery/cycle_count
     chmod 0664 /sys/class/power_supply/battery/charge_control_limit
 
     # Permissions for Factory Test of Charging Paths
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_auto_enable
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_ibatt
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_itrick
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_iusb
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_idc
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_usb_suspend
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_fail_clear
-    chown oem_5001 oem_5001 /sys/class/power_supply/battery/device/force_chg_usb_otg_ctl
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_auto_enable
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_ibatt
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_itrick
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_iusb
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_idc
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_usb_suspend
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_fail_clear
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/battery/device/force_chg_usb_otg_ctl
 
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_auto_enable
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_ibatt
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_itrick
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_iusb
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_idc
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_usb_suspend
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_fail_clear
-    chown oem_5001 oem_5001 /sys/class/power_supply/mmi_battery/device/force_chg_usb_otg_ctl
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_auto_enable
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_ibatt
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_itrick
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_iusb
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_idc
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_usb_suspend
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_fail_clear
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/mmi_battery/device/force_chg_usb_otg_ctl
 
-    chown oem_5001 oem_5001 /sys/class/power_supply/wireless/device/chip_id
-    chown oem_5001 oem_5001 /sys/class/power_supply/wireless/current_now
-    chown oem_5001 oem_5001 /sys/class/power_supply/wireless/voltage_now
-    chown oem_5001 oem_5001 /sys/class/power_supply/wireless/voltage_max
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/wireless/device/chip_id
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/wireless/current_now
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/wireless/voltage_now
+    chown vendor_pwric vendor_pwric /sys/class/power_supply/wireless/voltage_max
     chmod 0664 /sys/class/power_supply/wireless/voltage_max
-    chown oem_5001 oem_5001 /sys/kernel/debug/pmic-votable/CHG_DISABLE/force_val
+    chown vendor_pwric vendor_pwric /sys/kernel/debug/pmic-votable/CHG_DISABLE/force_val
     chmod 0664 /sys/kernel/debug/pmic-votable/CHG_DISABLE/force_val
-    chown oem_5001 oem_5001 /sys/kernel/debug/pmic-votable/CHG_DISABLE/force_active
+    chown vendor_pwric vendor_pwric /sys/kernel/debug/pmic-votable/CHG_DISABLE/force_active
     chmod 0664 /sys/kernel/debug/pmic-votable/CHG_DISABLE/force_active
-    chown oem_5001 oem_5001 /sys/kernel/debug/regulator/smb5-vconn/enable
+    chown vendor_pwric vendor_pwric /sys/kernel/debug/regulator/smb5-vconn/enable
     chmod 0664 /sys/kernel/debug/regulator/smb5-vconn/enable
 
-    chown root oem_5020 /sys/module/qpnp_smbcharger_mmi/parameters/eb_rechrg_start_soc
-    chown root oem_5020 /sys/module/qpnp_smbcharger_mmi/parameters/eb_rechrg_stop_soc
-    chown root oem_5020 /sys/module/qpnp_smbcharger_mmi/parameters/eb_attach_start_soc
-    chown root oem_5020 /sys/module/qpnp_smbcharger_mmi/parameters/eb_attach_stop_soc
-    chown root oem_5020 /sys/module/qpnp_smbcharger_mmi/parameters/eb_low_start_soc
-    chown root oem_5020 /sys/module/qpnp_smbcharger_mmi/parameters/eb_low_stop_soc
-    chown root oem_5020 /sys/module/qpnp_smbcharger_mmi/parameters/eb_on_sw
+    chown root vendor_mod /sys/module/qpnp_smbcharger_mmi/parameters/eb_rechrg_start_soc
+    chown root vendor_mod /sys/module/qpnp_smbcharger_mmi/parameters/eb_rechrg_stop_soc
+    chown root vendor_mod /sys/module/qpnp_smbcharger_mmi/parameters/eb_attach_start_soc
+    chown root vendor_mod /sys/module/qpnp_smbcharger_mmi/parameters/eb_attach_stop_soc
+    chown root vendor_mod /sys/module/qpnp_smbcharger_mmi/parameters/eb_low_start_soc
+    chown root vendor_mod /sys/module/qpnp_smbcharger_mmi/parameters/eb_low_stop_soc
+    chown root vendor_mod /sys/module/qpnp_smbcharger_mmi/parameters/eb_on_sw
 
     chmod 0664 /sys/module/qpnp_smbcharger_mmi/parameters/eb_rechrg_start_soc
     chmod 0664 /sys/module/qpnp_smbcharger_mmi/parameters/eb_rechrg_stop_soc
@@ -217,11 +218,11 @@ on post-fs-data
     chmod 0664 /sys/module/qpnp_smbcharger_mmi/parameters/eb_low_stop_soc
     chmod 0664 /sys/module/qpnp_smbcharger_mmi/parameters/eb_on_sw
 
-    chown root oem_5020 /sys/class/power_supply/usb/usb_priority
+    chown root vendor_mod /sys/class/power_supply/usb/usb_priority
     chmod 0660 /sys/class/power_supply/usb/usb_priority
-    chown root oem_5020 /sys/module/dwc3_msm/parameters/usb_priority
+    chown root vendor_mod /sys/module/dwc3_msm/parameters/usb_priority
     chmod 0660 /sys/module/dwc3_msm/parameters/usb_priority
-    chown root oem_5020 /sys/module/usbnet/parameters/force_on
+    chown root vendor_mod /sys/module/usbnet/parameters/force_on
     chmod 0666 /sys/module/usbnet/parameters/force_on
 
     # Setup folder for native to transfer data to NativeDropBoxAgent
@@ -305,7 +306,7 @@ on boot
    chmod 0660 /sys/class/leds/vibrator/seq
    chown system system /sys/class/leds/vibrator/extra
    chmod 0660 /sys/class/leds/vibrator/extra
-   chown root oem_5020 /sys/bus/i2c/devices/2-005a/reduce
+   chown root vendor_mod /sys/bus/i2c/devices/2-005a/reduce
 
    # Change ownership of aov related sysfs entries
    chown audio audio /sys/kernel/aov/trigger
@@ -322,7 +323,7 @@ on boot
    chmod 0660 /mnt/vendor/persist/chargeonly/cooldown
 
    # Change owner ship of l5 laser calibration
-   chown camera oem_5004 /mnt/vendor/persist/camera/focus/offset_cal
+   chown camera vendor_tcmd /mnt/vendor/persist/camera/focus/offset_cal
    chmod 0660 /mnt/vendor/persist/camera/focus/offset_cal
 
    # change ownership of capsensor related sysfs node
@@ -352,19 +353,11 @@ service vendor.bl_logs_copy /vendor/bin/apanic_copy.sh -i
     oneshot
     disabled
 
-on late-fs-charger
-    class_start early_hal
-    wait_for_prop hwservicemanager.ready true
-    exec_start wait_for_keymaster
-    mount_all /vendor/etc/fstab.qcom --late
-    # Boot time fs tune
-    write /sys/block/dm-9/queue/read_ahead_kb 2048
-
 on charger
     trigger early-fs
     trigger fs
     trigger post-fs
-    trigger late-fs-charger
+    trigger late-fs
     trigger post-fs-data
     trigger moto-charger
     class_stop main
@@ -378,12 +371,16 @@ service vendor.apanic_annotate /vendor/bin/apanic_save.sh build
 
 service vendor.batt_health /vendor/bin/batt_health
     class late_start
-    user oem_5001
-    group oem_5001 cache net_admin log
+    user vendor_pwric
+    group vendor_pwric cache net_admin log
     disabled
 
 on property:sys.boot_completed=1
     start vendor.batt_health
+
+on property:sys.boot_completed=1 && property:ro.vendor.zram.product_swapon=""
+    write /proc/sys/vm/page-cluster 0
+    swapon_all /vendor/etc/fstab.qcom
     write /proc/sys/vm/swappiness 100
     setprop sys.sysctl.swappiness 100
 
@@ -489,6 +486,12 @@ service vendor.mmi-touch-sh /vendor/bin/init.mmi.touch.sh
     user root
     oneshot
 
+service vendor.touchUpg /vendor/bin/touchUpg
+    class core
+    user root
+    oneshot
+    disabled
+
 service vendor.oem-hw-sh /vendor/bin/init.oem.hw.sh
     class core
     user root
@@ -548,7 +551,6 @@ on property:vendor.hw.touch.status="ready"
 service vendor.charge_only_mode /vendor/bin/charge_only_mode
     user root
     group graphics system input
-    capabilities SYS_BOOT
     disabled
 
 service vendor.thermal-com /vendor/bin/thermal-engine --minimode
@@ -574,6 +576,7 @@ service vendor.touchRec /vendor/bin/touchRec
     class late_start
     user input
     group input
+    oneshot
     disabled
 
 on property:vendor.wifi.tethering=false
@@ -612,3 +615,9 @@ on property:persist.sys.locale=*
 # IKSWQ-149109: Force shutter tone on Japan softbank carrier
 on property:ro.carrier=softbank
     setprop audio.camerasound.force true
+
+on property:ro.sys.force_max_chrg_temp=*
+    write /sys/class/power_supply/battery/device/force_max_chrg_temp ${ro.sys.force_max_chrg_temp}
+
+on property:ro.sys.force_demo_mode=*
+    write /sys/class/power_supply/battery/device/force_demo_mode ${ro.sys.force_demo_mode}

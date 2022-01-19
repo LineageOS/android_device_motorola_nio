@@ -545,9 +545,6 @@ vendor/lib64/libqcbor.so
 vendor/lib64/libqtikeymaster4.so
 vendor/lib64/libspcom.so
 
-# Init scripts
-vendor/bin/init.mmi.block_perm.sh
-
 # Listen
 vendor/lib/libadpcmdec.so
 vendor/lib/libcapiv2svacnn.so
