@@ -31,7 +31,6 @@ on early-init
     # Map oem properties, this must follow
     # execution of vendor.oem-hw-sh to set
     # required properties.
-    setprop ro.carrier ${ro.boot.carrier}
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.vendor.fsg-id ${ro.boot.fsg-id}
     setprop ro.vendor.hw.device ${ro.boot.device}
@@ -590,10 +589,6 @@ on property:persist.sys.locale=*
     write /mnt/vendor/persist/chargeonly/locale ${persist.sys.locale}
     chown system system /mnt/vendor/persist/chargeonly/locale
     chmod 0660 /mnt/vendor/persist/chargeonly/locale
-
-# IKSWQ-149109: Force shutter tone on Japan softbank carrier
-on property:ro.carrier=softbank
-    setprop audio.camerasound.force true
 
 on property:ro.sys.force_max_chrg_temp=*
     write /sys/class/power_supply/battery/device/force_max_chrg_temp ${ro.sys.force_max_chrg_temp}
