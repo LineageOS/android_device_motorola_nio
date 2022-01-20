@@ -1,6 +1,3 @@
-# Chipset-specific file
-import /vendor/etc/init/hw/init.mmi.chipset.rc
-
 # Target-specific file
 import /vendor/etc/init/hw/init.mmi.overlay.rc
 
@@ -32,6 +29,8 @@ on early-init && property:ro.vendor.build.motfactory=1
     setprop ro.vendor.mot.factory true
 
 on early-init
+    exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules exfat
+
     # Need to wait for platform path for UTAGs driver to succeed
     wait /dev/block/platform/soc/${ro.boot.bootdevice}/by-name/hw
 
