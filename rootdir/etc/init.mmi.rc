@@ -362,6 +362,7 @@ service vendor.batt_health /vendor/bin/batt_health
 
 on property:sys.boot_completed=1
     start vendor.batt_health
+    setprop vendor.boot_completed ${sys.boot_completed}
 
 on property:sys.boot_completed=1 && property:ro.vendor.zram.product_swapon=""
     write /proc/sys/vm/page-cluster 0
