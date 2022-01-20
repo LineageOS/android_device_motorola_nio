@@ -1,10 +1,6 @@
 # Target-specific file
 import /vendor/etc/init/hw/init.mmi.overlay.rc
 
-# Carrier specific script
-import /vendor/etc/init/carrier/init.${ro.boot.carrier}.rc
-import /vendor/etc/init/carrier/init.default.rc
-
 on early-boot
     write /sys/module/subsystem_restart/parameters/disable_restart_work 0x0
 
@@ -22,20 +18,11 @@ on init
     write /proc/sys/kernel/sched_lib_name "UnityMain,libunity.so"
     write /proc/sys/kernel/sched_lib_mask_force 255
 
-on early-init && property:ro.bootmode=mot-factory
-    setprop ro.vendor.mot.factory true
-
-on early-init && property:ro.vendor.build.motfactory=1
-    setprop ro.vendor.mot.factory true
-
 on early-init
     exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules exfat
 
     # Need to wait for platform path for UTAGs driver to succeed
     wait /dev/block/platform/soc/${ro.boot.bootdevice}/by-name/hw
-
-    # initialize ro.vendor.mot.factory with default value when it is not set
-    setprop ro.vendor.mot.factory false
 
     # If utags driver is DLKM, script will load it,
     # otherwise it has to be already loaded
