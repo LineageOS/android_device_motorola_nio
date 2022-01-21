@@ -44,11 +44,6 @@
 /data/vendor/misc/cutback(/.*)?                         u:object_r:cutback_data_file:s0
 /dev/socket/cutback                                     u:object_r:cutback_socket:s0
 
-# Charger
-/data/vendor/chargeonly(/.*)?                           u:object_r:chargeonly_data_file:s0
-/(mnt/vendor/persist|persist)/chargeonly(/.*)?          u:object_r:persist_chargeonly_file:s0
-/(vendor|system/vendor)/bin/charge_only_mode            u:object_r:charge_only_exec:s0
-
 # Camera
 /(vendor|system/vendor)/bin/vl53l1_daemon               u:object_r:vl53l1_exec:s0
 /dev/laser                                              u:object_r:vl53l1_device:s0
