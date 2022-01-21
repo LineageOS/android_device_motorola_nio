@@ -1,6 +1,8 @@
 # Target-specific file
 import /vendor/etc/init/hw/init.mmi.overlay.rc
 
+import /vendor/etc/init/hw/init.mmi.charge_only.rc
+
 on early-boot
     write /sys/module/subsystem_restart/parameters/disable_restart_work 0x0
 

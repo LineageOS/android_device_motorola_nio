@@ -208,6 +208,7 @@ PRODUCT_PACKAGES += \
     init.class_main.sh \
     init.mdm.sh \
     init.mmi.block_perm.sh \
+    init.mmi.charge_only.rc \
     init.mmi.laser.sh \
     init.mmi.overlay.rc \
     init.mmi.rc \

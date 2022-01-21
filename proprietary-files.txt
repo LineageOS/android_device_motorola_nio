@@ -333,7 +333,6 @@ vendor/lib64/hw/vendor.qti.hardware.capabilityconfigstore@1.0-impl.so
 # Charger
 vendor/bin/charge_only_mode
 vendor/etc/charger_fstab.qti
-vendor/etc/init/hw/init.mmi.charge_only.rc
 
 # Display
 vendor/lib64/libdisp-aba.so
