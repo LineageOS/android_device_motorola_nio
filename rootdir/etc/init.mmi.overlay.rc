@@ -48,11 +48,6 @@ on post-fs
 on post-fs-data
    setprop vendor.mmi_init.stage complete
 
-service vendor.mmi_modules /vendor/bin/init.mmi.modules.sh
-    user root
-    oneshot
-    disabled
-
 service vendor.vl53l1_daemon /vendor/bin/vl53l1_daemon
     class late_start
     user root
@@ -147,13 +142,3 @@ service vendor.ident-fps-overlay-sh /vendor/bin/init.oem.fingerprint.overlay.sh
 
 on post-fs-data
     exec_start vendor.ident-fps-overlay-sh
-
-service vendor.qrtr-lookup-sh /vendor/bin/init.mmi.qrtr-lookup.sh
-    class late_start
-    user root
-    group log system
-    oneshot
-    disabled
-
-on property:sys.boot_completed=1
-    start vendor.qrtr-lookup-sh
