@@ -18,8 +18,6 @@ on fs
    insmod /vendor/lib/modules/mmi_info.ko
    insmod /vendor/lib/modules/mmi_annotate.ko
    insmod /vendor/lib/modules/mmi_sys_temp.ko
-   # install wireless charger before smbcharger
-   insmod /vendor/lib/modules/p938x_charger.ko
    insmod /vendor/lib/modules/qpnp-smbcharger-mmi.ko
    insmod /vendor/lib/modules/qpnp-power-on-mmi.ko
    insmod /vendor/lib/modules/mmi_annotate.ko
