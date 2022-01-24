@@ -5282,14 +5282,11 @@ case "$target" in
 		echo 85 85 > /proc/sys/kernel/sched_downmigrate
 		echo 100 > /proc/sys/kernel/sched_group_upmigrate
 		echo 10 > /proc/sys/kernel/sched_group_downmigrate
-		echo 1 > /proc/sys/kernel/sched_walt_rotate_big_tasks
 
 		echo 0-3 > /dev/cpuset/background/cpus
 		echo 0-3 > /dev/cpuset/system-background/cpus
 
 
-		# Turn off scheduler boost at the end
-		echo 0 > /proc/sys/kernel/sched_boost
 
 		# configure governor settings for silver cluster
 		echo "schedutil" > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor
@@ -5381,6 +5378,10 @@ case "$target" in
 	                      done
 	           done
 	fi
+	# Turn off scheduler boost at the end
+	echo 0 > /proc/sys/kernel/sched_boost
+	echo 1 > /proc/sys/kernel/sched_walt_rotate_big_tasks
+
 	# memlat specific settings are moved to seperate file under
 	# device/target specific folder
 	setprop vendor.dcvs.prop 1
