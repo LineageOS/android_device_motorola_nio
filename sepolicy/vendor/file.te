@@ -1,16 +1,12 @@
 # Partitions
 type fsg_file, file_type, contextmount_type, vendor_file_type;
 
-# ADSPD
-type sysfs_adspd, sysfs_type, fs_type;
-
 # Awinic
 type persist_audio_file, file_type, data_file_type;
 
 # Cutback
 type cutback_data_file, file_type, data_file_type;
 type cutback_socket, file_type;
-type audio_cutback_data_file, file_type, data_file_type;
 
 # Power
 type sysfs_msm_subsys, sysfs_type, fs_type;

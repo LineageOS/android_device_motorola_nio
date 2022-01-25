@@ -44,18 +44,12 @@ persist.vendor.hardware.fingerprint            u:object_r:moto_fingerprint_prop:
 vendor.hw.fps.ident                            u:object_r:moto_fingerprint_prop:s0
 vendor.hw.fingerprint.status                   u:object_r:moto_fingerprint_prop:s0
 
-# AOV
-vendor.hw.aov.             u:object_r:vendor_aov_prop:s0
-
 # Power
 vendor.powerhal.state      u:object_r:power_prop:s0
 vendor.powerhal.audio      u:object_r:power_prop:s0
 vendor.powerhal.lpm        u:object_r:power_prop:s0
 vendor.powerhal.init       u:object_r:power_prop:s0
 vendor.powerhal.rendering  u:object_r:power_prop:s0
-
-# FM Radio
-ro.vendor.fm.              u:object_r:vendor_fm_prop:s0
 
 # Camera
 camera.mot.is.coming.cts   u:object_r:vendor_camera_prop:s0

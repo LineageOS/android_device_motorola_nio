@@ -2,11 +2,5 @@
 type moto_boot_prop, property_type;
 type moto_fingerprint_prop, property_type;
 
-# AOV
-type vendor_aov_prop, property_type;
-
 # Power
 type power_prop, property_type;
-
-# FM Radio
-type vendor_fm_prop, property_type;
