@@ -1,1 +1,2 @@
+type hal_cameradesktop_hwservice, hwservice_manager_type;
 type hal_ifaa_hwservice, hwservice_manager_type;

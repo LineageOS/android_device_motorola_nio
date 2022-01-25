@@ -37,12 +37,13 @@
 /dev/socket/cutback                                     u:object_r:cutback_socket:s0
 
 # Camera
+/(vendor|system/vendor)/bin/hw/motorola\.hardware\.camera\.desktop@2\.0-service u:object_r:hal_cameradesktop_default_exec:s0
 /(vendor|system/vendor)/bin/vl53l1_daemon               u:object_r:vl53l1_exec:s0
-/dev/laser                                              u:object_r:vl53l1_device:s0
 /data/vendor/misc/imager                                u:object_r:vendor_camera_data_file:s0
-/sys/devices/virtual/input/input[0-9]+/xtalk	        	u:object_r:vendor_sysfs_laser:s0
-/sys/devices/virtual/input/input[0-9]+/offset	        	u:object_r:vendor_sysfs_laser:s0
-/sys/devices/virtual/input/input[0-9]+/calibration_data	u:object_r:vendor_sysfs_laser:s0
+/dev/laser                                              u:object_r:vl53l1_device:s0
+/sys/devices/virtual/input/input[0-9]+/calibration_data u:object_r:vendor_sysfs_laser:s0
+/sys/devices/virtual/input/input[0-9]+/offset           u:object_r:vendor_sysfs_laser:s0
+/sys/devices/virtual/input/input[0-9]+/xtalk            u:object_r:vendor_sysfs_laser:s0
 
 # Thermal
 /dev/mmi_sys_temp                                       u:object_r:thermal_device:s0

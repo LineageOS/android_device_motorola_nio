@@ -1,3 +1,6 @@
+# Camera
+genfscon sysfs /devices/platform/cam_sync/video4linux/video1/name               u:object_r:sysfs_graphics:s0
+
 # Fingerprint
 genfscon sysfs /devices/platform/egis_input               u:object_r:sysfs_fingerprint:s0
 

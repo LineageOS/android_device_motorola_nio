@@ -227,8 +227,6 @@ vendor/lib64/libvidhance_face_stabilizer.so
 vendor/lib64/libvidhance_fbc.so
 vendor/lib64/libvidhance_horizon_correction.so
 vendor/lib64/libvidhance_stabilizer.so
-vendor/lib64/motorola.hardware.camera.desktop@1.0.so
-vendor/lib64/motorola.hardware.camera.desktop@2.0.so
 vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
 
 # Camera-configs
@@ -240,6 +238,12 @@ vendor/etc/camera/vidhance_calibration
 
 # Camera (Firmware)
 vendor/firmware/CAMERA_ICP.elf
+
+# Camera (Moto desktop)
+vendor/bin/hw/motorola.hardware.camera.desktop@2.0-service
+vendor/etc/init/motorola.hardware.camera.desktop@2.0-service.rc
+vendor/lib64/motorola.hardware.camera.desktop@1.0.so
+vendor/lib64/motorola.hardware.camera.desktop@2.0.so
 
 # Camera (Permissions)
 product/etc/permissions/com.motorola.camera3.content.ai.xml

@@ -1,3 +1,6 @@
+# Camera
+motorola.hardware.camera.desktop::ICameraDesktop                        u:object_r:hal_cameradesktop_hwservice:s0
+
 # Fingerprint
 com.motorola.hardware.biometric.fingerprint::IMotoFingerPrint           u:object_r:hal_fingerprint_hwservice:s0
 com.motorola.hardware.biometric.fingerprint::IMotoFingerPrintSensorTest u:object_r:hal_fingerprint_hwservice:s0

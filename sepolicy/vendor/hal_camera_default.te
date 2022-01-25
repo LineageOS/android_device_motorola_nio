@@ -32,3 +32,5 @@ allow hal_camera_default vendor_xdsp_device:chr_file rw_file_perms;
 
 # QSPM hal service for accessing camera info
 hal_client_domain(hal_camera_default, vendor_hal_qspmhal)
+
+hal_client_domain(hal_camera_default, hal_cameradesktop)
