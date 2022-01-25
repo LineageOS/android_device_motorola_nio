@@ -362,10 +362,6 @@ PRODUCT_PROPERTY_OVERRIDES += vendor.display.enable_async_powermode=1
 PRODUCT_PROPERTY_OVERRIDES += persist.vendor.dpmhalservice.enable=1
 PRODUCT_SYSTEM_EXT_PROPERTIES += persist.vendor.dpm.feature=11
 
-############### FM ###############
-PRODUCT_PROPERTY_OVERRIDES += \
-    vendor.hw.fm.init=0
-
 ############### FRP ###############
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.frp.pst=/dev/block/bootdevice/by-name/frp
