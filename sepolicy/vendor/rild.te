@@ -1,4 +1,3 @@
-get_prop(rild, moto_boot_prop)
 get_prop(rild, vendor_radio_prop)
 allow rild fwk_sensor_hwservice:hwservice_manager find;
 allow rild input_device:chr_file { r_file_perms ioctl };

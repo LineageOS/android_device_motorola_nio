@@ -464,4 +464,5 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.netflix.bsp_rev=Q8250-19134-1
 
 PRODUCT_PROPERTY_OVERRIDES += \
+    ro.mot.build.customerid=retcn \
     ro.vendor.mot.factory=false

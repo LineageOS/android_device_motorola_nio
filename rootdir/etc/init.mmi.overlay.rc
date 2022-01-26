@@ -2,7 +2,7 @@
 # import /vendor/etc/init/hw/init.vendor.st21nfc.rc
 on early-init
    setprop ro.vendor.device_edition ${ro.boot.edition}
-   exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules qpnp-smbcharger-mmi qpnp_adaptive_charge
+   exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules qpnp-smbcharger-mmi qpnp_adaptive_charge nova_0flash_mmi
 
 on mmi-priority
    # Only high priority MMI DLKMs loaded here
@@ -24,7 +24,6 @@ on fs
    insmod /vendor/lib/modules/mmi_info.ko
    insmod /vendor/lib/modules/tzlog_dump.ko
    insmod /vendor/lib/modules/watchdog_cpu_ctx.ko
-   insmod /vendor/lib/modules/nova_0flash_mmi.ko
    insmod /vendor/lib/modules/sx933x_sar.ko
    insmod /vendor/lib/modules/stmvl53l1.ko
    exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules aw882xx_k419.ko aw8695.ko

@@ -1,7 +1,3 @@
-get_prop(vendor_qti_init_shell, moto_boot_prop)
-set_prop(vendor_qti_init_shell, moto_boot_prop)
-allow vendor_qti_init_shell vendor_sysfs_laser:dir r_dir_perms;
-allow vendor_qti_init_shell vendor_sysfs_laser:file { setattr rw_file_perms };
 allow vendor_qti_init_shell sysfs_android_usb:dir r_dir_perms;
 allow vendor_qti_init_shell sysfs_android_usb:file rw_file_perms;
 allow vendor_qti_init_shell kmsg_device:chr_file { open write };

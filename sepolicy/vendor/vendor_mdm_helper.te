@@ -2,7 +2,6 @@ allow vendor_mdm_helper vendor_tombstone_data_file:fifo_file rw_file_perms;
 allow vendor_mdm_helper vendor_persist_rfs_file:file rw_file_perms;
 
 get_prop(vendor_mdm_helper, vendor_radio_prop)
-get_prop(vendor_mdm_helper, moto_boot_prop)
 
 allow vendor_mdm_helper mnt_vendor_file:dir search;
 allow vendor_mdm_helper vendor_persist_rfs_file:dir search;

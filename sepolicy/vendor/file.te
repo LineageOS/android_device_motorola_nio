@@ -4,6 +4,9 @@ type fsg_file, file_type, contextmount_type, vendor_file_type;
 # Awinic
 type persist_audio_file, file_type, data_file_type;
 
+# Camera
+type vendor_persist_laser_calib_file, file_type , vendor_persist_type;
+
 # Cutback
 type cutback_data_file, file_type, data_file_type;
 type cutback_socket, file_type;
@@ -15,6 +18,8 @@ type proc_sched_lib_mask_cpuinfo, proc_type, fs_type;
 
 # Motorola
 type proc_moto_boot, proc_type, fs_type;
+type vendor_motobox_exec, exec_type, vendor_file_type, file_type;
+type vendor_proc_hw, proc_type, fs_type;
 
 # Fingerprint
 type sysfs_fingerprint, sysfs_type, fs_type;
@@ -25,3 +30,6 @@ type sysfs_input, sysfs_type, fs_type;
 
 # Data files
 type per_boot_file, file_type, data_file_type, core_data_file_type;
+
+# Touchscreen
+type vendor_sysfs_touchpanel, fs_type, sysfs_type;

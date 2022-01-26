@@ -16,7 +16,6 @@ get_prop(hal_camera_default, exported_radio_prop)
 get_prop(hal_camera_default, media_variant_prop)
 get_prop(hal_camera_default, surfaceflinger_display_prop)
 get_prop(hal_camera_default, vendor_camera_prop)
-set_prop(hal_camera_default, moto_boot_prop)
 set_prop(hal_camera_default, vendor_camera_prop)
 
 # STM Prox Sensor
