@@ -1,6 +1,11 @@
-allow kernel block_device:blk_file { open read write };
 allow kernel block_device:dir search;
-allow kernel fsg_file:file read;
+
+# TODO: fix neverallow from kernel side
+#allow kernel mnt_vendor_file:dir search;
+#allow kernel persist_audio_file:file r_file_perms;
+
 allow kernel kernel:capability kill;
-allow kernel per_boot_file:file r_file_perms;
-allow kernel vendor_utags_block_device:blk_file { open read write };
+allow kernel {
+	vendor_hw_block_device
+	vendor_utags_block_device
+}:blk_file rw_file_perms;

@@ -1,10 +1,1 @@
-# For interfacing with PowerHAL
-hal_client_domain(hal_audio_default, hal_power)
-
-unix_socket_connect(hal_audio_default, property, init)
-allow hal_audio_default self:binder { call transfer };
-allow hal_audio_default self:fd use;
-
-allow hal_audio_default input_device:dir r_dir_perms;
-allow hal_audio_default input_device:chr_file { r_file_perms ioctl };
 allow hal_audio_default persist_audio_file:file r_file_perms;

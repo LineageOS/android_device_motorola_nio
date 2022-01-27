@@ -7,10 +7,10 @@ allow vendor_mmi_laser vendor_sysfs_laser:file { setattr rw_file_perms };
 
 allow vendor_mmi_laser self:capability { chown fsetid };
 
-allow vendor_mmi_laser sysfs_input:dir r_dir_perms;
+allow vendor_mmi_laser vendor_sysfs_input:dir r_dir_perms;
 
 allow vendor_mmi_laser mnt_vendor_file:dir search;
-allow vendor_mmi_laser vendor_persist_laser_calib_file:dir search;
-allow vendor_mmi_laser vendor_persist_laser_calib_file:file { setattr r_file_perms };
+allow vendor_mmi_laser vendor_persist_camera_file:dir search;
+allow vendor_mmi_laser vendor_persist_camera_file:file { setattr r_file_perms };
 
 allow vendor_mmi_laser vendor_toolbox_exec:file rx_file_perms;
