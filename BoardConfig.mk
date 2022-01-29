@@ -64,6 +64,7 @@ TARGET_MODULE_ALIASES += \
     mbhc_dlkm.ko:audio_mbhc.ko \
     native_dlkm.ko:audio_native.ko \
     pinctrl_lpi_dlkm.ko:audio_pinctrl_lpi.ko \
+    pinctrl_wcd_dlkm.ko:audio_pinctrl_wcd.ko \
     platform_dlkm.ko:audio_platform.ko \
     q6_dlkm.ko:audio_q6.ko \
     q6_notifier_dlkm.ko:audio_q6_notifier.ko \
