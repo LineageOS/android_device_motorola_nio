@@ -18,7 +18,7 @@ DEVICE_PROVISIONED=1
 # Set network mode to (NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA, NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA) for 8+8 mode device on DSDS mode
 ro.telephony.default_network=33,33
 
-dalvik.vm.heapsize=36m
+# dalvik.vm.heapsize=36m
 dev.pm.dyn_samplingrate=1
 
 #ro.hdmi.enable=true
