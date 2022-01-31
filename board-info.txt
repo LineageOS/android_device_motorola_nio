@@ -1,0 +1,1 @@
+require board=sm8250|nio|nio_retail|nio_retcn

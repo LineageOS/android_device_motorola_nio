@@ -11,6 +11,9 @@ DEVICE_PATH := device/motorola/nio
 # Bootloader
 TARGET_BOOTLOADER_BOARD_NAME := nio
 
+# Assertions
+TARGET_BOARD_INFO_FILE := device/motorola/nio/board-info.txt
+
 # Display
 TARGET_SCREEN_DENSITY := 480
 
