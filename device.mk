@@ -403,6 +403,10 @@ PRODUCT_PACKAGES += \
     librmnetctl \
     libxml2
 
+# Touch
+PRODUCT_PACKAGES += \
+    vendor.lineage.touch@1.0-service.nio
+
 # USB HAL
 PRODUCT_PACKAGES += \
     android.hardware.usb@1.2-service-qti \

@@ -61,6 +61,9 @@
 /data/vendor/misc/cutback(/.*)?                         u:object_r:cutback_data_file:s0
 /dev/socket/cutback                                     u:object_r:cutback_socket:s0
 
+# Touch
+/(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch@1\.0-service\.nio			u:object_r:hal_lineage_touch_default_exec:s0
+
 # Thermal
 /dev/mmi_sys_temp                                       u:object_r:vendor_thermal_device:s0
 
