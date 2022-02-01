@@ -1,2 +1,2 @@
-allow hal_power_default { vendor_sysfs_sensors vendor_sysfs_input }:dir search;
-allow hal_power_default vendor_sysfs_dt2w:file rw_file_perms;
+allow hal_power_default vendor_sysfs_touchpanel:dir search;
+allow hal_power_default vendor_sysfs_touchpanel:file rw_file_perms;

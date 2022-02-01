@@ -35,9 +35,6 @@
 /sys/devices/virtual/input/input[0-9]+/offset           u:object_r:vendor_sysfs_laser:s0
 /sys/devices/virtual/input/input[0-9]+/xtalk            u:object_r:vendor_sysfs_laser:s0
 
-# DT2W
-/sys/devices/virtual/input/input[0-9]+/dt-gesture/enable                                u:object_r:vendor_sysfs_dt2w:s0
-
 # Fingerprint
 /(mnt/vendor/persist|persist)/fps(/.*)?                 u:object_r:vendor_persist_fps_file:s0
 /(vendor|system/vendor)/bin/fpc_ident                   u:object_r:hal_fingerprint_default_exec:s0
