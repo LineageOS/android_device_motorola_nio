@@ -1,4 +1,4 @@
-# All unpinned blobs below are extracted from nio RRN31.Q3-1-11-1
+# All unpinned blobs below are extracted from nio RRN31.Q3-1-11-6
 
 # Touchscreen firmware
 vendor/firmware/novatek_ts_fw.bin:recovery/root/vendor/firmware/novatek_ts_fw.bin
