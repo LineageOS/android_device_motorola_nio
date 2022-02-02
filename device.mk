@@ -50,6 +50,7 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     FrameworksResNio \
+    SettingsResNio \
     SystemUIResNio
 
 # A/B
