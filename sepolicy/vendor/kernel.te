@@ -1,9 +1,5 @@
 allow kernel block_device:dir search;
 
-# TODO: fix neverallow from kernel side
-#allow kernel mnt_vendor_file:dir search;
-#allow kernel persist_audio_file:file r_file_perms;
-
 allow kernel kernel:capability kill;
 allow kernel {
 	vendor_hw_block_device
