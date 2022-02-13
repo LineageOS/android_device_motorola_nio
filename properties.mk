@@ -372,6 +372,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.ims.cam_sensor_delay=20 \
     persist.vendor.ims.display_delay=40 \
 
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.qcom.ims.use_moto_vt_ext=true
+
 ############### Keymaster ###############
 PRODUCT_PROPERTY_OVERRIDES += \
     vendor.gatekeeper.disable_spu=true
