@@ -52,6 +52,7 @@ TARGET_KERNEL_CONFIG := vendor/lineageos_nio_defconfig
 TARGET_KERNEL_SOURCE := kernel/motorola/sm8250
 TARGET_KERNEL_VERSION := 4.19
 TARGET_KERNEL_CLANG_COMPILE := true
+TARGET_KERNEL_ADDITIONAL_FLAGS := LLVM=1
 #KERNEL_TOOLCHAIN := $(PWD)/prebuilts/gcc/linux-x86/aarch64/arm64-gcc/bin
 #TARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-elf-
 
