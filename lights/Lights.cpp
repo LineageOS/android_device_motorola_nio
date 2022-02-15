@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2019 The Android Open Source Project
- * Copyright (C) 2020-2021 The LineageOS Project
+ * Copyright (C) 2020-2022 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,27 +21,26 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-namespace {
-
 /* clang-format off */
 #define PPCAT_NX(A, B) A/B
 #define PPCAT(A, B) PPCAT_NX(A, B)
 #define STRINGIFY_INNER(x) #x
 #define STRINGIFY(x) STRINGIFY_INNER(x)
 
-#define LEDS(x) PPCAT(/sys/class/leds, x)
-#define WHITE_ATTR(x) STRINGIFY(PPCAT(LEDS(charging), x))
+#define CHARGING_ATTR(x) STRINGIFY(PPCAT(/sys/class/leds/charging, x))
 /* clang-format on */
 
-using ::android::base::ReadFileToString;
-using ::android::base::WriteStringToFile;
+namespace aidl {
+namespace android {
+namespace hardware {
+namespace light {
 
-// Default max brightness
-constexpr auto kDefaultMaxLedBrightness = 255;
+namespace {
 
 // Write value to path and close file.
-bool WriteToFile(const std::string& path, uint32_t content) {
-    return WriteStringToFile(std::to_string(content), path);
+template <typename T>
+inline bool WriteToFile(const std::string& path, T content) {
+    return ::android::base::WriteStringToFile(std::to_string(content), path);
 }
 
 uint32_t RgbaToBrightness(uint32_t color) {
@@ -63,95 +62,70 @@ uint32_t RgbaToBrightness(uint32_t color) {
     return (77 * red + 150 * green + 29 * blue) >> 8;
 }
 
-inline uint32_t RgbaToBrightness(uint32_t color, uint32_t max_brightness) {
-    return RgbaToBrightness(color) * max_brightness / 0xFF;
-}
-
 inline bool IsLit(uint32_t color) {
     return color & 0x00ffffff;
 }
 
-}  // anonymous namespace
+void ApplyNotificationState(const HwLightState& state) {
+    auto brightness = RgbaToBrightness(state.color);
 
-namespace aidl {
-namespace android {
-namespace hardware {
-namespace light {
-
-Lights::Lights() {
-    std::map<int, std::function<void(int id, const HwLightState&)>> lights_{
-            {(int)LightType::NOTIFICATIONS,
-             [this](auto&&... args) { setLightNotification(args...); }},
-            {(int)LightType::BATTERY, [this](auto&&... args) { setLightNotification(args...); }},
-            {(int)LightType::BACKLIGHT, {}}};
-
-    std::vector<HwLight> availableLights;
-    for (auto const& pair : lights_) {
-        int id = pair.first;
-        HwLight hwLight{};
-        hwLight.id = id;
-        availableLights.emplace_back(hwLight);
-    }
-    mAvailableLights = availableLights;
-    mLights = lights_;
-
-    std::string buf;
-
-    if (ReadFileToString(WHITE_ATTR(max_brightness), &buf)) {
-        max_led_brightness_ = std::stoi(buf);
+    // Turn off the leds (initially)
+    WriteToFile(CHARGING_ATTR(breath), 0);
+    if (state.flashMode == FlashMode::TIMED && state.flashOnMs > 0 && state.flashOffMs > 0) {
+        WriteToFile(CHARGING_ATTR(delay_on), state.flashOnMs);
+        WriteToFile(CHARGING_ATTR(delay_off), state.flashOffMs);
+        WriteToFile(CHARGING_ATTR(breath), 1);
     } else {
-        max_led_brightness_ = kDefaultMaxLedBrightness;
-        LOG(ERROR) << "Failed to read max LED brightness, fallback to " << kDefaultMaxLedBrightness;
+        WriteToFile(CHARGING_ATTR(brightness), brightness);
     }
 }
 
+}  // anonymous namespace
+
 ndk::ScopedAStatus Lights::setLightState(int id, const HwLightState& state) {
-    auto it = mLights.find(id);
-    if (it == mLights.end()) {
+    static_assert(kAvailableLights.size() == std::tuple_size_v<decltype(notif_states_)>);
+
+    if (id == static_cast<int32_t>(LightType::BACKLIGHT)) {
+        // Stub backlight handling
+        return ndk::ScopedAStatus::ok();
+    }
+
+    // Update saved state first
+    bool found = false;
+    for (size_t i = 0; i < notif_states_.size(); ++i) {
+        if (kAvailableLights[i].id == id) {
+            notif_states_[i] = state;
+            LOG(DEBUG) << __func__ << ": updating id=" << id
+                       << ", type=" << toString(kAvailableLights[i].type);
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
         LOG(ERROR) << "Light not supported";
         return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
     }
 
-    it->second(id, state);
+    // Lit up in order or fallback to battery light if others are dim
+    for (size_t i = 0; i < notif_states_.size(); ++i) {
+        auto&& cur_state = notif_states_[i];
+        auto&& cur_light = kAvailableLights[i];
+        if (IsLit(cur_state.color) || cur_light.type == LightType::BATTERY) {
+            LOG(DEBUG) << __func__ << ": applying id=" << cur_light.id
+                       << ", type=" << toString(cur_light.type);
+            ApplyNotificationState(cur_state);
+            break;
+        }
+    }
 
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Lights::getLights(std::vector<HwLight>* lights) {
-    for (auto i = mAvailableLights.begin(); i != mAvailableLights.end(); i++) {
-        lights->push_back(*i);
-    }
+    lights->insert(lights->end(), kAvailableLights.begin(), kAvailableLights.end());
+    // We don't handle backlight but still need to report as supported.
+    lights->push_back({static_cast<int32_t>(LightType::BACKLIGHT), 0, LightType::BACKLIGHT});
     return ndk::ScopedAStatus::ok();
-}
-
-void Lights::setLightNotification(int id, const HwLightState& state) {
-    bool found = false;
-    for (auto&& [cur_id, cur_state] : notif_states_) {
-        if (cur_id == id) {
-            cur_state = state;
-        }
-
-        // Fallback to battery light
-        if (!found && (cur_id == (int)LightType::BATTERY || IsLit(cur_state.color))) {
-            found = true;
-            LOG(DEBUG) << __func__ << ": id=" << id;
-            applyNotificationState(cur_state);
-        }
-    }
-}
-
-void Lights::applyNotificationState(const HwLightState& state) {
-    int brightness = RgbaToBrightness(state.color, max_led_brightness_);
-
-    // Turn off the leds (initially)
-    WriteToFile(WHITE_ATTR(breath), 0);
-    if (state.flashMode == FlashMode::TIMED && state.flashOnMs > 0 && state.flashOffMs > 0) {
-        WriteToFile(WHITE_ATTR(delay_on), static_cast<uint32_t>(state.flashOnMs));
-        WriteToFile(WHITE_ATTR(delay_off), static_cast<uint32_t>(state.flashOffMs));
-        WriteToFile(WHITE_ATTR(breath), 1);
-    } else {
-        WriteToFile(WHITE_ATTR(brightness), brightness);
-    }
 }
 
 }  // namespace light
