@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 The Android Open Source Project
- * Copyright (C) 2020-2021 The LineageOS Project
+ * Copyright (C) 2020-2022 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,36 +18,27 @@
 #pragma once
 
 #include <aidl/android/hardware/light/BnLights.h>
-#include <hardware/hardware.h>
-#include <hardware/lights.h>
-#include <map>
-#include <sstream>
+#include <array>
 
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace light {
 
+// Keep sorted in the order of priority.
+constexpr std::array kAvailableLights = {
+        // id, ordinal, type
+        HwLight{static_cast<int32_t>(LightType::NOTIFICATIONS), 0, LightType::NOTIFICATIONS},
+        HwLight{static_cast<int32_t>(LightType::BATTERY), 0, LightType::BATTERY},
+};
+
 class Lights : public BnLights {
   public:
-    Lights();
     ndk::ScopedAStatus setLightState(int id, const HwLightState& state) override;
     ndk::ScopedAStatus getLights(std::vector<HwLight>* types) override;
 
   private:
-    void setLightNotification(int id, const HwLightState& state);
-    void applyNotificationState(const HwLightState& state);
-
-    uint32_t max_led_brightness_;
-
-    std::map<int, std::function<void(int id, const HwLightState&)>> mLights;
-    std::vector<HwLight> mAvailableLights;
-
-    // Keep sorted in the order of importance.
-    std::array<std::pair<int, HwLightState>, 2> notif_states_ = {{
-            {(int)LightType::NOTIFICATIONS, {}},
-            {(int)LightType::BATTERY, {}},
-    }};
+    std::array<HwLightState, kAvailableLights.size()> notif_states_;
 };
 
 }  // namespace light
