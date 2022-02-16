@@ -67,17 +67,30 @@ inline bool IsLit(uint32_t color) {
 }
 
 void ApplyNotificationState(const HwLightState& state) {
-    auto brightness = RgbaToBrightness(state.color);
+    bool blink = state.flashOnMs > 0 && state.flashOffMs > 0;
+    bool ok = false;
 
-    // Turn off the leds (initially)
-    WriteToFile(CHARGING_ATTR(breath), 0);
-    if (state.flashMode == FlashMode::TIMED && state.flashOnMs > 0 && state.flashOffMs > 0) {
-        WriteToFile(CHARGING_ATTR(delay_on), state.flashOnMs);
-        WriteToFile(CHARGING_ATTR(delay_off), state.flashOffMs);
-        WriteToFile(CHARGING_ATTR(breath), 1);
-    } else {
-        WriteToFile(CHARGING_ATTR(brightness), brightness);
+    switch (state.flashMode) {
+        case FlashMode::HARDWARE:
+            ok = WriteToFile(CHARGING_ATTR(breath), blink);
+            // fallback to timed blinking if breath is not supported
+            if (ok) break;
+            FALLTHROUGH_INTENDED;
+        case FlashMode::TIMED:
+            ok = WriteToFile(CHARGING_ATTR(delay_off), state.flashOffMs);
+            ok &= WriteToFile(CHARGING_ATTR(delay_on), state.flashOnMs);
+            // fallback to constant on if timed blinking is not supported
+            if (ok) break;
+            FALLTHROUGH_INTENDED;
+        case FlashMode::NONE:
+        default:
+            ok = WriteToFile(CHARGING_ATTR(brightness), RgbaToBrightness(state.color));
+            break;
     }
+
+    LOG(DEBUG) << __func__ << ": mode=" << toString(state.flashMode) << ", colorRGB=" << std::hex
+               << state.color << std::dec << ", onMS=" << state.flashOnMs
+               << ", offMS=" << state.flashOffMs << ", ok=" << ok;
 }
 
 }  // anonymous namespace
