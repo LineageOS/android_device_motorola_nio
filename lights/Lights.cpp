@@ -93,6 +93,11 @@ void ApplyNotificationState(const HwLightState& state) {
                << ", offMS=" << state.flashOffMs << ", ok=" << ok;
 }
 
+bool operator!=(const HwLightState& lhs, const HwLightState& rhs) {
+    return lhs.color != rhs.color || lhs.flashMode != rhs.flashMode ||
+           lhs.flashOffMs != rhs.flashOffMs || lhs.flashOnMs != rhs.flashOnMs;
+}
+
 }  // anonymous namespace
 
 ndk::ScopedAStatus Lights::setLightState(int id, const HwLightState& state) {
@@ -124,9 +129,12 @@ ndk::ScopedAStatus Lights::setLightState(int id, const HwLightState& state) {
         auto&& cur_state = notif_states_[i];
         auto&& cur_light = kAvailableLights[i];
         if (IsLit(cur_state.color) || cur_light.type == LightType::BATTERY) {
-            LOG(DEBUG) << __func__ << ": applying id=" << cur_light.id
-                       << ", type=" << toString(cur_light.type);
-            ApplyNotificationState(cur_state);
+            if (last_state_ != cur_state) {
+                last_state_ = cur_state;
+                LOG(DEBUG) << __func__ << ": applying id=" << cur_light.id
+                           << ", type=" << toString(cur_light.type);
+                ApplyNotificationState(cur_state);
+            }
             break;
         }
     }

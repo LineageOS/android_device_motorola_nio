@@ -39,6 +39,7 @@ class Lights : public BnLights {
 
   private:
     std::array<HwLightState, kAvailableLights.size()> notif_states_;
+    HwLightState last_state_;
 };
 
 }  // namespace light
