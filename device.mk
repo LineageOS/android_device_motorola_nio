@@ -238,6 +238,7 @@ PRODUCT_COPY_FILES += \
 # Dependencies
 PRODUCT_PACKAGES += \
     libavservices_minijail.vendor \
+    libhidltransport.vendor \
     libhwbinder.vendor
 
 # Display
@@ -248,6 +249,7 @@ PRODUCT_PACKAGES += \
     android.hardware.memtrack@1.0-service \
     gralloc.kona \
     libdisplayconfig.qti \
+    libdisplayconfig.system.qti \
     libqdMetaData \
     libqdMetaData.system \
     memtrack.kona \
@@ -303,6 +305,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.gnss@2.1-impl-qti \
     android.hardware.gnss@2.1-service-qti \
+    gnss@2.0-base.policy \
+    gnss@2.0-xtra-daemon.policy \
+    gnss@2.0-xtwifi-client.policy \
+    gnss@2.0-xtwifi-inet-agent.policy \
     libbatching \
     libgeofencing \
     libgnss \
@@ -521,6 +527,7 @@ PRODUCT_COPY_FILES += \
 
 # WiFi Display
 PRODUCT_PACKAGES += \
+    libavservices_minijail \
     libnl \
     libwfdaac_vendor
 
