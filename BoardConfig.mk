@@ -58,6 +58,7 @@ TARGET_KERNEL_VERSION := 4.19
 TARGET_KERNEL_CLANG_COMPILE := true
 #KERNEL_TOOLCHAIN := $(PWD)/prebuilts/gcc/linux-x86/aarch64/arm64-gcc/bin
 #TARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-elf-
+KERNEL_LTO := none
 
 # Kernel modules - Audio
 TARGET_MODULE_ALIASES += \
