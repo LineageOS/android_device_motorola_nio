@@ -1,4 +1,4 @@
-# All unpinned blobs below are extracted from nio RRN31.Q3-1-11-6
+# All unpinned blobs below are extracted from nio S1RN32.19
 
 # ACDB
 vendor/etc/acdbdata/adsp_avs_config.acdb
@@ -79,6 +79,7 @@ vendor/lib64/hw/vendor.qti.hardware.bluetooth_sar@1.1-impl.so
 vendor/lib64/hw/vendor.qti.hardware.btconfigstore@1.0-impl.so
 vendor/lib64/hw/vendor.qti.hardware.btconfigstore@2.0-impl.so
 vendor/lib64/libbtnv.so
+vendor/lib64/libsoc_helper.so
 vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.0.so
 vendor/lib64/vendor.qti.hardware.bluetooth_sar@1.1.so
 vendor/lib64/vendor.qti.hardware.fm@1.0.so
@@ -87,7 +88,9 @@ vendor/lib64/vendor.qti.hardware.fm@1.0.so
 vendor/lib/btaudio_offload_if.so
 vendor/lib/hw/audio.bluetooth_qti.default.so
 vendor/lib/hw/vendor.qti.hardware.bluetooth_audio@2.0-impl.so
+vendor/lib/hw/vendor.qti.hardware.bluetooth_audio@2.1-impl.so
 vendor/lib/libbluetooth_audio_session_qti.so
+vendor/lib/libbluetooth_audio_session_qti_2_1.so
 
 # Bluetooth (aptX)
 lib64/libaptX_encoder.so
@@ -435,8 +438,6 @@ vendor/bin/lowi-server
 vendor/bin/mlid
 vendor/bin/tloc_daemon
 vendor/bin/xtra-daemon
-vendor/bin/xtwifi-client
-vendor/bin/xtwifi-inet-agent
 vendor/etc/cacert_location.pem
 vendor/etc/init/tloc_daemon.rc
 -vendor/etc/vintf/manifest/vendor.qti.gnss@4.0-service.xml
@@ -562,6 +563,7 @@ vendor/lib/libdsd2pcm.so
 vendor/lib/libFlacSwDec.so
 vendor/lib/libmmosal.so
 vendor/lib/libMpeg4SwEncoder.so
+vendor/lib/libMpeghSwEnc.so
 vendor/lib/libOmxAacDec.so
 vendor/lib/libOmxAlacDec.so
 vendor/lib/libOmxAlacDecSw.so
@@ -586,6 +588,7 @@ vendor/lib64/libApeSwDec.so
 vendor/lib64/libFlacSwDec.so
 vendor/lib64/libmmosal.so
 vendor/lib64/libMpeg4SwEncoder.so
+vendor/lib64/libMpeghSwEnc.so
 vendor/lib64/libOmxAacDec.so
 vendor/lib64/libOmxAlacDec.so
 vendor/lib64/libOmxAlacDecSw.so
@@ -602,12 +605,8 @@ vendor/lib64/libswvdec.so
 
 # Media (Codec2)
 vendor/bin/hw/vendor.qti.media.c2@1.0-service
-vendor/etc/init/vendor.qti.media.c2@1.0-service.rc
-vendor/etc/media_codecs_c2.xml
-vendor/etc/media_codecs_performance_c2.xml
 vendor/etc/seccomp_policy/codec2.vendor.base-arm.policy
 vendor/etc/seccomp_policy/codec2.vendor.ext-arm.policy
--vendor/etc/vintf/manifest/c2_manifest_vendor.xml
 vendor/lib/libqcodec2_base.so
 vendor/lib/libqcodec2_basecodec.so
 vendor/lib/libqcodec2_core.so
@@ -736,10 +735,11 @@ product/etc/permissions/telephony_product_privapp-permissions-qti.xml
 -system_ext/app/atfwd/atfwd.apk
 -system_ext/app/datastatusnotification/datastatusnotification.apk
 -system_ext/app/QtiTelephonyService/QtiTelephonyService.apk
+system_ext/etc/permissions/com.qualcomm.location.xml
 system_ext/etc/permissions/privapp-permissions-qti-system-ext.xml
 system_ext/etc/permissions/qcrilhook.xml
 system_ext/etc/permissions/telephony_system-ext_privapp-permissions-qti.xml
-system_ext/etc/permissions/telephonyservice.xml
+system_ext/etc/sysconfig/qti_telephony_system_packages_config.xml
 system_ext/framework/qcrilhook.jar
 -system_ext/priv-app/qcrilmsgtunnel/qcrilmsgtunnel.apk
 vendor/bin/adpl
@@ -811,6 +811,7 @@ vendor/lib64/vendor.qti.hardware.radio.atcmdfwd@1.0.so
 vendor/lib64/vendor.qti.hardware.radio.internal.deviceinfo@1.0.so
 vendor/lib64/vendor.qti.hardware.radio.lpa@1.0.so
 vendor/lib64/vendor.qti.hardware.radio.lpa@1.1.so
+vendor/lib64/vendor.qti.hardware.radio.lpa@1.2.so
 vendor/lib64/vendor.qti.hardware.radio.qcrilhook@1.0.so
 vendor/lib64/vendor.qti.hardware.radio.qtiradio@1.0.so
 vendor/lib64/vendor.qti.hardware.radio.qtiradio@2.0.so
@@ -847,6 +848,10 @@ vendor/radio/qcril_database/upgrade/24_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/25_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/26_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/27_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/28_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/29_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/30_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/31_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/3_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/4_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/5_version_qcrildb.sql
