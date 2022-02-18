@@ -1194,9 +1194,9 @@ vendor/bin/cnss-daemon
 vendor/etc/wifi/aoa_cldb_falcon.bin
 vendor/etc/wifi/aoa_cldb_swl14.bin
 
-# WiFi Display - from lmi-user 11 RKQ1.200826.002
--framework/WfdCommon.jar|de1adc7a4adbb117123aa5bb116c5df83c686433
--system_ext/priv-app/WfdService/WfdService.apk|b7624c0f319cab12a0d424a14c5f9c68eb064f3c
+# WiFi Display - from lemonadep - SKQ1.210821.001
+-framework/WfdCommon.jar|9f431b56d7f38c71089333008695dd5f717e5034
+-system_ext/priv-app/WfdService/WfdService.apk|381e93aaa1943526cbeb9957656b5a0622b589d6
 
 # WiFi Display
 system_ext/bin/wfdservice
