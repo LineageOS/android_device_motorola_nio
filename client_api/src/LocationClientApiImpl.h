@@ -38,11 +38,8 @@
 #include <LocationClientApi.h>
 #include <MsgTask.h>
 #include <LocationApiMsg.h>
-#ifndef FEATURE_EXTERNAL_AP
-#include <LocDiagIface.h>
-#include <LocationClientApiLog.h>
-#endif
-
+#include <LocationApiPbMsgConv.h>
+#include <LCAReportLoggerUtil.h>
 #ifdef NO_UNORDERED_SET_OR_MAP
     #include <set>
     #include <map>
@@ -54,37 +51,8 @@
 using namespace std;
 using namespace loc_util;
 
-#ifndef FEATURE_EXTERNAL_AP
-typedef LocDiagIface* (getLocDiagIface_t)();
-#endif
-
 namespace location_client
 {
-#ifndef FEATURE_EXTERNAL_AP
-void translateDiagGnssLocationPositionDynamics(clientDiagGnssLocationPositionDynamics& out,
-        const GnssLocationPositionDynamics& in);
-static clientDiagGnssSystemTimeStructType parseDiagGnssTime(
-        const GnssSystemTimeStructType &halGnssTime);
-static clientDiagGnssGloTimeStructType parseDiagGloTime(const GnssGloTimeStructType &halGloTime);
-static void translateDiagSystemTime(clientDiagGnssSystemTime& out,
-        const GnssSystemTime& in);
-static clientDiagGnssLocationSvUsedInPosition parseDiagLocationSvUsedInPosition(
-        const GnssLocationSvUsedInPosition &halSv);
-static void translateDiagGnssSignalType(clientDiagGnssSignalTypeMask& out, GnssSignalTypeMask in);
-static clientDiagGnss_LocSvSystemEnumType parseDiagGnssConstellation(
-        Gnss_LocSvSystemEnumType gnssConstellation);
-static void translateDiagGnssMeasUsageInfo(clientDiagGnssMeasUsageInfo& out,
-        const GnssMeasUsageInfo& in);
-void populateClientDiagLocation(clientDiagGnssLocationStructType* diagGnssLocPtr,
-        const GnssLocation& gnssLocation);
-void populateClientDiagMeasurements(clientDiagGnssMeasurementsStructType* diagGnssMeasPtr,
-        const GnssMeasurements& gnssMeasurements);
-static void translateDiagGnssSv(clientDiagGnssSv& out, const GnssSv& in);
-void populateClientDiagGnssSv(clientDiagGnssSvStructType* diagGnssSvPtr,
-        std::vector<GnssSv>& gnssSvs);
-void populateClientDiagNmea(clientDiagGnssNmeaStructType *diagGnssNmeaPtr,
-        const LocAPINmeaSerializedPayload &nmeaSerializedPayload);
-#endif // FEATURE_EXTERNAL_AP
 
 enum ReportCbEnumType {
     REPORT_CB_TYPE_NONE   = 0,
@@ -129,7 +97,7 @@ public:
 
 class IpcListener;
 
-class LocationClientApiImpl : public ILocationAPI, public ILocationControlAPI {
+class LocationClientApiImpl : public ILocationAPI {
     friend IpcListener;
 public:
     LocationClientApiImpl(CapabilitiesCb capabitiescb);
@@ -169,19 +137,6 @@ public:
     //GNSS
     virtual void gnssNiResponse(uint32_t id, GnssNiResponse response) override;
 
-    // other
-    virtual uint32_t* gnssUpdateConfig(GnssConfig config) override;
-    virtual uint32_t gnssDeleteAidingData(GnssAidingData& data) override;
-    // config API
-    virtual uint32_t resetConstellationConfig() override;
-    virtual uint32_t configConstellations(const GnssSvTypeConfig& svTypeConfig,
-                                          const GnssSvIdConfig&   svIdConfig) override;
-    virtual uint32_t configConstrainedTimeUncertainty(
-            bool enable, float tuncThreshold, uint32_t energyBudget) override;
-    virtual uint32_t configPositionAssistedClockEstimator(bool enable) override;
-    virtual uint32_t configLeverArm(const LeverArmConfigInfo& configInfo) override;
-    virtual uint32_t configRobustLocation(bool enable, bool enableForE911) override;
-
     // other interface
     void updateNetworkAvailability(bool available);
     void updateCallbackFunctions(const ClientCallbacks&,
@@ -205,11 +160,20 @@ public:
     }
 
     void pingTest(PingTestCb pingTestCallback);
+    inline uint16_t getYearOfHw() {return mYearOfHw;}
+    void invokePositionSessionResponseCb(LocationResponse responseCode);
+
+    void getSingleTerrestrialPos(uint32_t timeoutMsec, TerrestrialTechMask techMask,
+                                 float horQoS, LocationCb terrestrialPositionCallback,
+                                 ResponseCb responseCallback);
 
 private:
     ~LocationClientApiImpl();
     void capabilitesCallback(ELocMsgID  msgId, const void* msgData);
     void updateTrackingOptionsSync(LocationClientApiImpl* pImpl, TrackingOptions& option);
+
+    // protobuf conversion util class
+    LocationApiPbMsgConv mPbufMsgConv;
 
     // internal session parameter
     static uint32_t         mClientIdGenerator;
@@ -229,6 +193,9 @@ private:
     LocationOptions            mLocationOptions;
     BatchingOptions            mBatchingOptions;
     LocationCapabilitiesMask   mCapsMask;
+    //Year of HW information, 0 is invalid
+    uint16_t                   mYearOfHw;
+    bool                       mPositionSessionResponseCbPending;
 
     // callbacks
     CapabilitiesCb          mCapabilitiesCb;
@@ -255,15 +222,16 @@ private:
     LocationSystemInfoCb    mLocationSysInfoCb;
     ResponseCb              mLocationSysInfoResponseCb;
 
-    MsgTask*                   mMsgTask;
+    // Terrestrial fix callback
+    LocationCb              mSingleTerrestrialPosCb;
+    ResponseCb              mSingleTerrestrialPosRespCb;
+
+    MsgTask                    mMsgTask;
 
     LocIpc                     mIpc;
     shared_ptr<LocIpcSender>   mIpcSender;
 
-#ifndef FEATURE_EXTERNAL_AP
-    // wrapper around diag interface to handle case when diag service starts late
-    LocDiagIface*           mDiagIface;
-#endif
+    LCAReportLoggerUtil        mLogger;
 };
 
 } // namespace location_client

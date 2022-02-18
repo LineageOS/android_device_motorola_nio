@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -802,6 +802,26 @@ typedef union
     const qmiLocSetRobustLocationReqMsgT_v02
             *pSetRobustLocationReq;
     /*QMI_LOC_SET_ROBUST_LOCATION_CONFIG_REQ*/
+
+    const qmiLocEventInjectEnvAidingReqMsgT_v02
+            *pEnvAidingReqMsg;
+    /*QMI_LOC_INJECT_ENV_AIDING_REQ_V02*/
+
+    const qmiLocSetMinGpsWeekNumberReqMsgT_v02
+            *pSetMinGpsWeekReq;
+    /*QMI_LOC_SET_MIN_GPS_WEEK_NUMBER_REQ_V02*/
+
+    const qmiLocSetParameterReqMsgT_v02
+            *pSetParameterReq;
+    /*QMI_LOC_SET_PARAMETER_REQ_V02*/
+
+    const qmiLocGetParameterReqMsgT_v02
+            *pGetParameterReq;
+    /*QMI_LOC_GET_PARAMETER_REQ_V02*/
+
+    const qmiLocSetMultibandConfigReqMsgT_v02
+            *pSetMultibandConfigReq;
+    /*QMI_LOC_SET_MULTIBAND_CONFIG_REQ_V02*/
 }locClientReqUnionType;
 
 
@@ -1127,6 +1147,13 @@ typedef union
    /** Sent by the engine to inform of location system info event
    QMI_LOC_LOCATION_REQUEST_NOTIFICATION_IND_V02 */
 
+   const qmiLocEventQueryXtraInfoReqIndMsgT_v02 *pLocQueryXtraReqEvent;
+   /** Sent by the engine to notify client about query reqest
+   QMI_LOC_EVENT_QUERY_XTRA_INFO_REQ_IND_V02 */
+
+   const qmiLocLatencyInformationIndMsgT_v02 *pLocLatencyInfoIndMsg;
+   /** Sent by the engine to inform of latency info
+    QMI_LOC_LATENCY_INFORMATION_IND_V02 */
 }locClientEventIndUnionType;
 
 

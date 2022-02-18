@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -114,12 +114,6 @@ public:
     virtual LocationError
         setServerSync(unsigned int ip, int port, LocServerType type);
 
-    virtual enum loc_api_adapter_err
-        setXtraData(char* data, int length);
-
-    virtual enum loc_api_adapter_err
-        requestXtraServer();
-
     virtual void
         atlOpenStatus(int handle, int is_succ, char* apn, uint32_t apnLen, AGpsBearerType bear,
                    LocAGpsType agpsType, LocApnTypeMask mask);
@@ -128,7 +122,7 @@ public:
 
     virtual enum loc_api_adapter_err setNMEATypesSync(uint32_t typesMask);
 
-    virtual LocationError setLPPConfigSync(GnssConfigLppProfile profile);
+    virtual LocationError setLPPConfigSync(GnssConfigLppProfileMask profileMask);
 
 
     virtual enum loc_api_adapter_err
@@ -161,13 +155,10 @@ public:
                                         LocApiResponse* adapterResponse=nullptr);
     virtual void setPositionAssistedClockEstimatorMode(bool enabled,
                                                        LocApiResponse* adapterResponse=nullptr);
-    virtual LocationError getGnssEnergyConsumed();
+    virtual void getGnssEnergyConsumed();
     virtual void requestForAidingData(GnssAidingDataSvMask svDataMask);
 
     virtual LocationError setXtraVersionCheckSync(uint32_t check);
-    virtual void installAGpsCert(const LocDerEncodedCertificate* pData,
-                               size_t length,
-                               uint32_t slotBitMask);
 
     virtual void startTimeBasedTracking(const TrackingOptions& options,
              LocApiResponse* adapterResponse);
@@ -178,13 +169,13 @@ public:
              LocApiResponse* adapterResponse = nullptr);
 
     virtual GnssConfigSuplVersion convertSuplVersion(const uint32_t suplVersion);
-    virtual GnssConfigLppProfile convertLppProfile(const uint32_t lppProfile);
     virtual GnssConfigLppeControlPlaneMask convertLppeCp(const uint32_t lppeControlPlaneMask);
     virtual GnssConfigLppeUserPlaneMask convertLppeUp(const uint32_t lppeUserPlaneMask);
 
     /* Requests for SV/Constellation Control */
     virtual LocationError setBlacklistSvSync(const GnssSvIdConfig& config);
-    virtual void setBlacklistSv(const GnssSvIdConfig& config);
+    virtual void setBlacklistSv(const GnssSvIdConfig& config,
+                                LocApiResponse* adapterResponse=nullptr);
     virtual void getBlacklistSv();
     virtual void setConstellationControl(const GnssSvTypeConfig& config,
                                          LocApiResponse *adapterResponse=nullptr);

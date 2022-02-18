@@ -33,16 +33,15 @@ PKG_CHECK_MODULES([GPSUTILS], [gps-utils])
 AC_SUBST([GPSUTILS_CFLAGS])
 AC_SUBST([GPSUTILS_LIBS])
 
+PKG_CHECK_MODULES([LOCAPIMSGPROTO], [location-api-msg-proto])
+AC_SUBST([LOCAPIMSGPROTO_CFLAGS])
+AC_SUBST([LOCAPIMSGPROTO_LIBS])
 
 AC_ARG_WITH([external_ap],
     AC_HELP_STRING([--with-external_ap=@<:@dir@:>@],
         [Using External Application Processor]),
     [],
     with_external_ap=no)
-
-if test "x$with_external_ap" != "xno"; then
-    CPPFLAGS="${CPPFLAGS} -DFEATURE_EXTERNAL_AP"
-fi
 
 AM_CONDITIONAL(USE_EXTERNAL_AP, test "x${with_external_ap}" = "xyes")
 

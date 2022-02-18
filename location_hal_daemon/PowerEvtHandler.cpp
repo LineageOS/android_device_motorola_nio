@@ -30,6 +30,7 @@
 #include <PowerEvtHandler.h>
 #include <LocationApiService.h>
 #include <log_util.h>
+#include <syslog.h>
 
 #define ACK_TIMEOUT_US 300000 // 300 msec
 
@@ -42,7 +43,8 @@ PowerEvtHandler* PowerEvtHandler::getPwrEvtHandler(LocationApiService* locServic
 }
 
 PowerEvtHandler::PowerEvtHandler() {
-    pwr_state_notification_register(PowerEvtHandler::pwrStateCb);
+    int ret = pwr_state_notification_register(PowerEvtHandler::pwrStateCb);
+    syslog(LOG_INFO, "PowerEvtHandler: register api returned: %d", ret);
 }
 
 PowerEvtHandler::~PowerEvtHandler() {
@@ -53,6 +55,7 @@ int PowerEvtHandler::pwrStateCb(power_state_t pwr_state) {
     client_ack.ack = ERR;
     PowerStateType powerState = POWER_STATE_UNKNOWN;
 
+    syslog(LOG_INFO, "PowerEvtHandler: pwrStateCb: %d", pwr_state.sys_state);
     switch (pwr_state.sys_state) {
         case SYS_SUSPEND:
             client_ack.ack = SUSPEND_ACK;
@@ -76,6 +79,7 @@ int PowerEvtHandler::pwrStateCb(power_state_t pwr_state) {
 
     //Allow some time to stop the session and write calibration data NVM.
     usleep(ACK_TIMEOUT_US);
+    syslog(LOG_INFO, "PowerEvtHandler: pwrStateCb sending ack");
     send_acknowledgement(client_ack);
 
     return 0;

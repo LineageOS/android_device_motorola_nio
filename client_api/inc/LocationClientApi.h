@@ -34,11 +34,38 @@
 #include <functional>
 #include <memory>
 
+// DEPRECATION - BACKWARD COMPATIBILITY SECTION
+#define GnssLocationPosTechMask LocationTechnologyMask
+#define LOCATION_POS_TECH_DEFAULT_BIT \
+         0
+#define LOCATION_POS_TECH_SATELLITE_BIT \
+         LOCATION_TECHNOLOGY_GNSS_BIT
+#define LOCATION_POS_TECH_CELLID_BIT \
+         LOCATION_TECHNOLOGY_CELL_BIT
+#define LOCATION_POS_TECH_WIFI_BIT \
+         LOCATION_TECHNOLOGY_WIFI_BIT
+#define LOCATION_POS_TECH_SENSORS_BIT \
+         LOCATION_TECHNOLOGY_SENSORS_BIT
+#define LOCATION_POS_TECH_REFERENCE_LOCATION_BIT \
+         LOCATION_TECHNOLOGY_REFERENCE_LOCATION_BIT
+#define LOCATION_POS_TECH_INJECTED_COARSE_POSITION_BIT \
+        LOCATION_TECHNOLOGY_INJECTED_COARSE_POSITION_BIT
+#define LOCATION_POS_TECH_AFLT_BIT \
+         LOCATION_TECHNOLOGY_AFLT_BIT
+#define LOCATION_POS_TECH_HYBRID_BIT \
+         LOCATION_TECHNOLOGY_HYBRID_BIT
+#define LOCATION_POS_TECH_PPE_BIT \
+         LOCATION_TECHNOLOGY_PPE_BIT
+// DEPRECATION - BACKWARD COMPATIBILITY SECTION
+
+using std::string;
+
 namespace location_client
 {
 class Geofence;
 
-enum LocationCapabilitiesMask {
+typedef uint64_t LocationCapabilitiesMask;
+enum ELocationCapabilitiesMask {
     /** LocationClientApi can support time-based tracking session
      *  via LocationClientApi::startPositionSession(uint32_t,
      *  LocReqEngineTypeMask, const EngineReportCbs&, ResponseCb)
@@ -68,6 +95,55 @@ enum LocationCapabilitiesMask {
     /** LocationClientApi can support trip batching via
      *  LocationClientApi::startTripBatchingSession(). <br/>   */
     LOCATION_CAPS_OUTDOOR_TRIP_BATCHING_BIT         = (1<<5),
+    /** LocationClientApi can support receiving GnssMeasurements
+     *  data in GnssMeasurementsCb when LocationClientApi is in
+     *  a positioning session.. <br/>   */
+    LOCATION_CAPS_GNSS_MEASUREMENTS_BIT             = (1<<6),
+    /** LocationIntegrationApi can support configure constellations
+     *  via LocationIntegrationApi::configConstellations.  <br/>   */
+     LOCATION_CAPS_CONSTELLATION_ENABLEMENT_BIT      = (1<<7),
+    /** Modem supports Carrier Phase for Precise Positioning
+     *  Measurement Engine (PPME).
+     *  This is a Standalone Feature.  <br/>   */
+    LOCATION_CAPS_CARRIER_PHASE_BIT                 = (1<<8),
+    /** Modem supports SV Polynomial for tightly coupled
+     *  external DR support.
+     *  This is a Standalone Feature.  <br/>   */
+    LOCATION_CAPS_SV_POLYNOMIAL_BIT                 = (1<<9),
+    /** Modem supports GNSS Single Frequency feature.
+     *  This is a Standalone Feature.  <br/>   */
+    LOCATION_CAPS_QWES_GNSS_SINGLE_FREQUENCY        = (1<<10),
+    /** Modem supports GNSS Multi Frequency feature. Multi
+     *  Frequency enables Single frequency also.  <br/>   */
+    LOCATION_CAPS_QWES_GNSS_MULTI_FREQUENCY         = (1<<11),
+    /** This mask indicates VEPP license bundle is enabled.
+     *  VEPP bundle include Carrier Phase and SV Polynomial
+     *  features.  <br/>   */
+    LOCATION_CAPS_QWES_VPE                          = (1<<12),
+    /** This mask indicates support for CV2X Location basic
+     *  features. This bundle includes features for GTS Time
+     *  & Freq, C-TUNC (Constrained Time uncertainity.
+     *  LocationIntegrationApi can support setting of C-TUNC
+     *  via configConstrainedTimeUncertainty. <br/> */
+    LOCATION_CAPS_QWES_CV2X_LOCATION_BASIC          = (1<<13),
+    /** This mask indicates support for CV2X Location premium
+     *  features. This bundle includes features for CV2X Location
+     *  Basic features, QDR3 feature, and PACE. (Position
+     *  Assisted Clock Estimator.
+     *  LocationIntegrationApi can support setting of C-TUNC
+     *  via configPositionAssistedClockEstimator. <br/> */
+    LOCATION_CAPS_QWES_CV2X_LOCATION_PREMIUM        = (1<<14),
+    /** This mask indicates that PPE (Precise Positioning Engine)
+     *  library is enabled or Precise Positioning Framework (PPF)
+     *  is available. This bundle includes features for Carrier
+     *  Phase and SV Ephermeris.  <br/>   */
+    LOCATION_CAPS_QWES_PPE                          = (1<<15),
+    /** This mask indicates QDR2_C license bundle is enabled.
+     *  This bundle includes features for SV Polynomial. <br/> */
+    LOCATION_CAPS_QWES_QDR2                         = (1<<16),
+    /** This mask indicates QDR3_C license bundle is enabled.
+     *  This bundle includes features for SV Polynomial. <br/> */
+    LOCATION_CAPS_QWES_QDR3                         = (1<<17),
 };
 
 /**
@@ -124,16 +200,36 @@ enum LocationFlagsMask {
 enum LocationTechnologyMask {
     /** GNSS-based technology was used to calculate
      *  Location. <br/>   */
-    LOCATION_TECHNOLOGY_GNSS_BIT     = (1<<0),
+    LOCATION_TECHNOLOGY_GNSS_BIT                     = (1<<0),
     /** Cell-based technology was used to calculate
      *  Location. <br/>   */
-    LOCATION_TECHNOLOGY_CELL_BIT     = (1<<1),
+    LOCATION_TECHNOLOGY_CELL_BIT                     = (1<<1),
     /** WiFi-based technology was used to calculate
      *  Location. <br/>   */
-    LOCATION_TECHNOLOGY_WIFI_BIT     = (1<<2),
+    LOCATION_TECHNOLOGY_WIFI_BIT                     = (1<<2),
     /** Sensor-based technology was used to calculate
      *  Location. <br/>   */
-    LOCATION_TECHNOLOGY_SENSORS_BIT  = (1<<3)
+    LOCATION_TECHNOLOGY_SENSORS_BIT                  = (1<<3),
+    /**  Reference location was used to calculate Location.
+     *   <br/> */
+    LOCATION_TECHNOLOGY_REFERENCE_LOCATION_BIT       = (1<<4),
+    /** Coarse position injected into the location engine
+     *  was used to calculate Location.  <br/>   */
+    LOCATION_TECHNOLOGY_INJECTED_COARSE_POSITION_BIT = (1<<5),
+    /** AFLT was used to calculate Location. <br/>   */
+    LOCATION_TECHNOLOGY_AFLT_BIT                     = (1<<6),
+    /** GNSS and network-provided measurements were
+     *  used to calculate Location. <br/>   */
+    LOCATION_TECHNOLOGY_HYBRID_BIT                   = (1<<7),
+    /** Precise position engine was used to calculate
+     *  Location. <br/>   */
+    LOCATION_TECHNOLOGY_PPE_BIT                      = (1<<8),
+    /** Vehicular data was used to calculate
+     *  Location. <br/>   */
+    LOCATION_TECHNOLOGY_VEH_BIT                      = (1<<9),
+    /** Visual data was used to calculate
+     *  Location. <br/>   */
+    LOCATION_TECHNOLOGY_VIS_BIT                      = (1<<10)
 };
 
 /** Specify the set of navigation solutions that contribute
@@ -159,43 +255,13 @@ enum GnssLocationNavSolutionMask {
     LOCATION_NAV_CORRECTION_RTK_BIT    = (1<<5),
     /** PPP correction was used to calculate
      *  GnssLocation. <br/>   */
-    LOCATION_NAV_CORRECTION_PPP_BIT    = (1<<6)
-};
-
-/**
- *  Specify the set of technologies that contribute to
- *  GnssLocation. <br/>
- */
-enum GnssLocationPosTechMask {
-    /** Technology used to generate GnssLocation
-     *  is unknown. <br/>   */
-    LOCATION_POS_TECH_DEFAULT_BIT                  = 0,
-    /** Satellites-based technology was used to generate
-     *  GnssLocation. <br/>   */
-    LOCATION_POS_TECH_SATELLITE_BIT                = (1<<0),
-    /** Cell towers were used to generate
-     *  GnssLocation. <br/>   */
-    LOCATION_POS_TECH_CELLID_BIT                   = (1<<1),
-    /** Wi-Fi access points were used to generate
-     *  GnssLocation. <br/>   */
-    LOCATION_POS_TECH_WIFI_BIT                     = (1<<2),
-    /** Sensors were used to generate
-     *  GnssLocation. <br/>   */
-    LOCATION_POS_TECH_SENSORS_BIT                  = (1<<3),
-    /**  Reference location was used to generate GnssLocation.
-     *   <br/> */
-    LOCATION_POS_TECH_REFERENCE_LOCATION_BIT       = (1<<4),
-    /** Coarse position injected into the location engine was used to
-     *  generate GnssLocation.  <br/>   */
-    LOCATION_POS_TECH_INJECTED_COARSE_POSITION_BIT = (1<<5),
-    /** AFLT was used to generate GnssLocation. <br/>   */
-    LOCATION_POS_TECH_AFLT_BIT                     = (1<<6),
-    /** GNSS and network-provided measurements were used to generate
-     *  GnssLocation. <br/>   */
-    LOCATION_POS_TECH_HYBRID_BIT                   = (1<<7),
-    /** Precise position engine was used to generate
-     *  GnssLocation. <br/>   */
-    LOCATION_POS_TECH_PPE_BIT                      = (1<<8)
+    LOCATION_NAV_CORRECTION_PPP_BIT    = (1<<6),
+    /** RTK fixed correction was used to to calculate
+        GnssLocation. <br/> */
+    LOCATION_NAV_CORRECTION_RTK_FIXED_BIT  = (1<<7),
+    /** Only SBAS corrected SVs was used to calculate
+        GnssLocation. <br/> */
+    LOCATION_NAV_CORRECTION_ONLY_SBAS_CORRECTED_SV_USED_BIT = (1<<8)
 };
 
 /** Specify the valid fields in
@@ -318,6 +384,12 @@ enum LocationResponse {
     LOCATION_RESPONSE_NOT_SUPPORTED = 2,
     /** LocationClientApi call has invalid parameter. <br/>   */
     LOCATION_RESPONSE_PARAM_INVALID = 3,
+    /** LocationClientApi call timeout */
+    LOCATION_RESPONSE_TIMEOUT = 4,
+    /** LocationClientApi is busy. */
+    LOCATION_RESPONSE_REQUEST_ALREADY_IN_PROGRESS = 5,
+    /** System is not ready, e.g.: hal daemon is not yet ready. */
+    LOCATION_RESPONSE_SYSTEM_NOT_READY = 6,
 };
 
 /** Specify the SV constellation type in GnssSv
@@ -338,9 +410,8 @@ enum GnssSvType {
     /**  SV is of GALILEO constellation. <br/>   */
     GNSS_SV_TYPE_GALILEO = 6,
     /**  SV is of NAVIC constellation. <br/>   */
-    GNSS_SV_TYPE_NAVIC = 7,
+    GNSS_SV_TYPE_NAVIC   = 7
 };
-
 
 /** Specify the valid fields in GnssLocation.
  *  <br/>
@@ -353,101 +424,112 @@ enum GnssSvType {
 enum GnssLocationInfoFlagMask {
     /** GnssLocation has valid
      *  GnssLocation::altitudeMeanSeaLevel. <br/>   */
-    GNSS_LOCATION_INFO_ALTITUDE_MEAN_SEA_LEVEL_BIT      = (1<<0),
+    GNSS_LOCATION_INFO_ALTITUDE_MEAN_SEA_LEVEL_BIT      = (1ULL<<0),
     /** GnssLocation has valid
      *  GnssLocation::pdop,
      *  GnssLocation::hdop and
      *  GnssLocation::vdop. <br/>   */
-    GNSS_LOCATION_INFO_DOP_BIT                          = (1<<1),
+    GNSS_LOCATION_INFO_DOP_BIT                          = (1ULL<<1),
     /** GnssLocation has valid
      *  GnssLocation::magneticDeviation. <br/>   */
-    GNSS_LOCATION_INFO_MAGNETIC_DEVIATION_BIT           = (1<<2),
+    GNSS_LOCATION_INFO_MAGNETIC_DEVIATION_BIT           = (1ULL<<2),
     /** GnssLocation has valid
      *  GnssLocation::horReliability. <br/>   */
-    GNSS_LOCATION_INFO_HOR_RELIABILITY_BIT              = (1<<3),
+    GNSS_LOCATION_INFO_HOR_RELIABILITY_BIT              = (1ULL<<3),
     /** GnssLocation has valid
      *  GnssLocation::verReliability.  <br/>   */
-    GNSS_LOCATION_INFO_VER_RELIABILITY_BIT              = (1<<4),
+    GNSS_LOCATION_INFO_VER_RELIABILITY_BIT              = (1ULL<<4),
     /** GnssLocation has valid
      *  GnssLocation::horUncEllipseSemiMajor. <br/>   */
-    GNSS_LOCATION_INFO_HOR_ACCURACY_ELIP_SEMI_MAJOR_BIT = (1<<5),
+    GNSS_LOCATION_INFO_HOR_ACCURACY_ELIP_SEMI_MAJOR_BIT = (1ULL<<5),
     /** GnssLocation has valid
      *  GnssLocation::horUncEllipseSemiMinor. <br/>   */
-    GNSS_LOCATION_INFO_HOR_ACCURACY_ELIP_SEMI_MINOR_BIT = (1<<6),
+    GNSS_LOCATION_INFO_HOR_ACCURACY_ELIP_SEMI_MINOR_BIT = (1ULL<<6),
     /** GnssLocation has valid
      *  GnssLocation::horUncEllipseOrientAzimuth. <br/>   */
-    GNSS_LOCATION_INFO_HOR_ACCURACY_ELIP_AZIMUTH_BIT    = (1<<7),
+    GNSS_LOCATION_INFO_HOR_ACCURACY_ELIP_AZIMUTH_BIT    = (1ULL<<7),
     /** GnssLocation has valid
      *  GnssLocation::svUsedInPosition and
      *  GnssLocation::measUsageInfo. <br/>   */
-    GNSS_LOCATION_INFO_GNSS_SV_USED_DATA_BIT            = (1<<8),
+    GNSS_LOCATION_INFO_GNSS_SV_USED_DATA_BIT            = (1ULL<<8),
     /** GnssLocation has valid
      *  GnssLocation::navSolutionMask. <br/>   */
-    GNSS_LOCATION_INFO_NAV_SOLUTION_MASK_BIT            = (1<<9),
+    GNSS_LOCATION_INFO_NAV_SOLUTION_MASK_BIT            = (1ULL<<9),
     /** GnssLocation has valid
      *  GnssLocation::posTechMask. <br/>   */
-    GNSS_LOCATION_INFO_POS_TECH_MASK_BIT                = (1<<10),
+    GNSS_LOCATION_INFO_POS_TECH_MASK_BIT                = (1ULL<<10),
     /** Deplicated field as there is no corresponding field in
      *  GnssLocation. <br/>   */
-    GNSS_LOCATION_INFO_SV_SOURCE_INFO_BIT               = (1<<11),
+    GNSS_LOCATION_INFO_SV_SOURCE_INFO_BIT               = (1ULL<<11),
     /** GnssLocation has valid
      *  GnssLocation::altitudeMeanSeaLevel. <br/> */
-    GNSS_LOCATION_INFO_POS_DYNAMICS_DATA_BIT            = (1<<12),
+    GNSS_LOCATION_INFO_POS_DYNAMICS_DATA_BIT            = (1ULL<<12),
     /** GnssLocation has valid
      *  GnssLocation::gdop and
      *  GnssLocation::tdop. <br/>   */
-    GNSS_LOCATION_INFO_EXT_DOP_BIT                      = (1<<13),
+    GNSS_LOCATION_INFO_EXT_DOP_BIT                      = (1ULL<<13),
     /** GnssLocation has valid GnssLocation::northStdDeviation.
      *  <br/> */
-    GNSS_LOCATION_INFO_NORTH_STD_DEV_BIT                = (1<<14),
+    GNSS_LOCATION_INFO_NORTH_STD_DEV_BIT                = (1ULL<<14),
     /** GnssLocation has valid
      *  GnssLocation::eastStdDeviation. <br/>   */
-    GNSS_LOCATION_INFO_EAST_STD_DEV_BIT                 = (1<<15),
+    GNSS_LOCATION_INFO_EAST_STD_DEV_BIT                 = (1ULL<<15),
     /** GnssLocation has valid
      *  GnssLocation::northVelocity. <br/>   */
-    GNSS_LOCATION_INFO_NORTH_VEL_BIT                    = (1<<16),
+    GNSS_LOCATION_INFO_NORTH_VEL_BIT                    = (1ULL<<16),
     /** GnssLocation has valid
      *  GnssLocation::eastVelocity. <br/>   */
-    GNSS_LOCATION_INFO_EAST_VEL_BIT                     = (1<<17),
+    GNSS_LOCATION_INFO_EAST_VEL_BIT                     = (1ULL<<17),
     /** GnssLocation has valid
      *  GnssLocation::upVelocity. <br/>   */
-    GNSS_LOCATION_INFO_UP_VEL_BIT                       = (1<<18),
+    GNSS_LOCATION_INFO_UP_VEL_BIT                       = (1ULL<<18),
     /** GnssLocation has valid
      *  GnssLocation::northVelocityStdDeviation. <br/>   */
-    GNSS_LOCATION_INFO_NORTH_VEL_UNC_BIT                = (1<<19),
+    GNSS_LOCATION_INFO_NORTH_VEL_UNC_BIT                = (1ULL<<19),
     /** GnssLocation has valid
      *  GnssLocation::eastVelocityStdDeviation. <br/>   */
-    GNSS_LOCATION_INFO_EAST_VEL_UNC_BIT                 = (1<<20),
+    GNSS_LOCATION_INFO_EAST_VEL_UNC_BIT                 = (1ULL<<20),
     /** GnssLocation has valid
      *  GnssLocation::upVelocityStdDeviation. <br/>   */
-    GNSS_LOCATION_INFO_UP_VEL_UNC_BIT                   = (1<<21),
+    GNSS_LOCATION_INFO_UP_VEL_UNC_BIT                   = (1ULL<<21),
     /** GnssLocation has valid
      *  GnssLocation::leapSeconds. <br/>   */
-    GNSS_LOCATION_INFO_LEAP_SECONDS_BIT                 = (1<<22),
+    GNSS_LOCATION_INFO_LEAP_SECONDS_BIT                 = (1ULL<<22),
     /** GnssLocation has valid
      *  GnssLocation::timeUncMs. <br/>   */
-    GNSS_LOCATION_INFO_TIME_UNC_BIT                     = (1<<23),
+    GNSS_LOCATION_INFO_TIME_UNC_BIT                     = (1ULL<<23),
     /** GnssLocation has valid
      *  GnssLocation::numSvUsedInPosition. <br/>   */
-    GNSS_LOCATION_INFO_NUM_SV_USED_IN_POSITION_BIT      = (1<<24),
+    GNSS_LOCATION_INFO_NUM_SV_USED_IN_POSITION_BIT      = (1ULL<<24),
     /** GnssLocation has valid
      *  GnssLocation::calibrationConfidencePercent. <br/>   */
-    GNSS_LOCATION_INFO_CALIBRATION_CONFIDENCE_PERCENT_BIT = (1<<25),
+    GNSS_LOCATION_INFO_CALIBRATION_CONFIDENCE_PERCENT_BIT = (1ULL<<25),
     /** GnssLocation has valid
      *  GnssLocation::calibrationStatus.  <br/>   */
-    GNSS_LOCATION_INFO_CALIBRATION_STATUS_BIT           = (1<<26),
+    GNSS_LOCATION_INFO_CALIBRATION_STATUS_BIT           = (1ULL<<26),
     /** GnssLocation has valid
      *  GnssLocation::locOutputEngType.  <br/>   */
-    GNSS_LOCATION_INFO_OUTPUT_ENG_TYPE_BIT              = (1<<27),
+    GNSS_LOCATION_INFO_OUTPUT_ENG_TYPE_BIT              = (1ULL<<27),
     /** GnssLocation has valid
      *  GnssLocation::locOutputEngMask. <br/>   */
-    GNSS_LOCATION_INFO_OUTPUT_ENG_MASK_BIT              = (1<<28),
+    GNSS_LOCATION_INFO_OUTPUT_ENG_MASK_BIT              = (1ULL<<28),
     /** GnssLocation has valid GnssLocation::conformityIndex.
      *  <br/> */
-    GNSS_LOCATION_INFO_CONFORMITY_INDEX_BIT             = (1<<29),
+    GNSS_LOCATION_INFO_CONFORMITY_INDEX_BIT             = (1ULL<<29),
     /** GnssLocation has valid
      *  GnssLocation::llaVRPBased. <br/>   */
-    GNSS_LOCATION_INFO_LLA_VRP_BASED_BIT                = (1<<30),
+    GNSS_LOCATION_INFO_LLA_VRP_BASED_BIT                = (1ULL<<30),
+    /** GnssLocation has valid GnssLocation::enuVelocityVRPBased.
+     *  <br/> */
+    GNSS_LOCATION_INFO_ENU_VELOCITY_VRP_BASED_BIT       = (1ULL<<31),
+    /** GnssLocation has valid GnssLocation::drSolutionStatusMask.
+     *  <br/>   */
+    GNSS_LOCATION_INFO_DR_SOLUTION_STATUS_MASK_BIT      = (1ULL<<32),
+    /** GnssLocation has valid GnssLocation::altitudeAssumed.
+     *  <br/> */
+    GNSS_LOCATION_INFO_ALTITUDE_ASSUMED_BIT             = (1ULL<<33),
+    /** GnssLocation has valid GnssLocation::sessionStatus. <br/> */
+    GNSS_LOCATION_INFO_SESSION_STATUS_BIT               = (1ULL<<34),
 };
 
 /** Specify the reliability level of
@@ -485,8 +567,8 @@ enum Gnss_LocSvSystemEnumType {
     GNSS_LOC_SV_SYSTEM_BDS     = 5,
     /**  SV is of QZSS constellation. <br/>   */
     GNSS_LOC_SV_SYSTEM_QZSS    = 6,
-    /**  SV is of NAVIC constellation. <br/>   */
-    GNSS_LOC_SV_SYSTEM_NAVIC   = 7,
+    /** SV is of NAVIC constellation. <br/>   */
+    GNSS_LOC_SV_SYSTEM_NAVIC   = 7
 };
 
 /** Specify the valid fields in GnssSystemTimeStructType.
@@ -561,8 +643,8 @@ enum DrCalibrationStatusMask {
  *  GnssLocation. <br/>  */
 struct GnssLocationSvUsedInPosition {
     /** Specify the set of SVs from GPS constellation that are used
-     *  to compute the position.<br/>
-     *  Bit 0 to Bit 31 corresponds to GPS SV id 1 to 32. <br/> */
+     *  to compute the position. <br/> Bit 0 to Bit 31 corresponds
+     *  to GPS SV id 1 to 32.  <br/>  */
     uint64_t gpsSvUsedIdsMask;
     /** Specify the set of SVs from GLONASS constellation that are
      *  used to compute the position. <br/>
@@ -575,19 +657,22 @@ struct GnssLocationSvUsedInPosition {
     uint64_t galSvUsedIdsMask;
     /** ISpecify the set of SVs from BEIDOU constellation that are
      *  used to compute the position. <br/>
-     *  Bit 0 to Bit 36 corresponds to BDS SV id 201 to 237.
+     *  Bit 0 to Bit 62 corresponds to BDS SV id 201 to 263.
      *  <br/> */
     uint64_t bdsSvUsedIdsMask;
     /** Specify the set of SVs from QZSS constellation that are used
      *  to compute the position. <br/>
-     *  Bit 0 to Bit 4 corresponds to BDS SV id 193 to 197.
+     *  Bit 0 to Bit 4 corresponds to QZSS SV id 193 to 197.
      *  <br/> */
     uint64_t qzssSvUsedIdsMask;
-    /** Specify the set of SVs from NAVIC constellation that are
-     *  used to compute the position. <br/>
-     *  Bit 0 to Bit 13 corresponds to BDS SV id 401 to 414.
+    /** Specify the set of SVs from NAVIC constellation that are used
+     *  to compute the position. <br/>
+     *  Bit 0 to Bit 13 corresponds to NAVIC SV id 401 to 414.
      *  <br/> */
     uint64_t navicSvUsedIdsMask;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify the SV measurements that are used to calculate
@@ -602,6 +687,9 @@ struct GnssMeasUsageInfo {
     uint16_t gnssSvId;
     /** Specify the signal type mask of the SV.  <br/> */
     GnssSignalTypeMask gnssSignalType;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify device body frame parameters. <br/>   */
@@ -618,10 +706,6 @@ struct GnssLocationPositionDynamics {
     /** Vertical acceleration in body frame, in unit of
      *  meters/second^2. <br/>   */
     float           vertAccel;
-    /** Heading rate, in unit of radians/second. <br/>   */
-    float           yawRate;
-    /** Body pitch, in unit of radians. <br/>   */
-    float           pitch;
     /** Uncertainty of forward acceleration in body frame, in unit
      *  of meters/second^2. <br/>   */
     float           longAccelUnc;
@@ -631,33 +715,44 @@ struct GnssLocationPositionDynamics {
     /** Uncertainty of vertical acceleration in body frame, in unit
      *  of meters/second^2. <br/>   */
     float           vertAccelUnc;
-    /** Uncertainty of heading rate, in unit of radians/second.
-     *  <br/> */
-    float           yawRateUnc;
+    /** Body pitch, in unit of radians. <br/>   */
+    float           pitch;
     /** Uncertainty of body pitch, in unit of radians. <br/>   */
     float           pitchUnc;
     /** Body pitch rate, in unit of radians/second.  <br/> */
-    float pitchRate;
+    float           pitchRate;
     /** Uncertainty of pitch rate, in unit of radians/second.  <br/> */
-    float pitchRateUnc;
+    float           pitchRateUnc;
     /** Roll of body frame, clockwise is positive, in unit of
      *  radian.  <br/> */
-    float roll;
+    float           roll;
     /** Uncertainty of roll, 68% confidence level, in unit of
     radian. <br/>  */
-    float rollUnc;
+    float           rollUnc;
     /** Roll rate of body frame, clockwise is
     positive, in unit of radian/second. <br/> */
-    float rollRate;
+    float           rollRate;
     /** Uncertainty of roll rate, 68% confidence level, in unit of
      *  radian/second. <br/>  */
-    float rollRateUnc;
+    float           rollRateUnc;
     /** Yaw of body frame, clockwise is positive, in unit of
      *  radian. <br/> */
-    float yaw;
+    float           yaw;
     /** Uncertainty of yaw, 68% confidence level, in unit of radian.
      *  <br/> */
-    float yawUnc;
+    float           yawUnc;
+    /** Heading rate, in unit of radians/second. <br/>
+     *  Range: +/- pi (where pi is ~3.14159). <br/>
+     *  The positive value is clockwise and negative value is
+     *  anti-clockwise. <br/>
+     */
+    float           yawRate;
+    /** Uncertainty of heading rate, in unit of radians/second.
+     *  <br/> */
+    float           yawRateUnc;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify none-Glonass GNSS system time info. */
@@ -698,6 +793,9 @@ struct GnssSystemTimeStructType {
     /** Number of clock resets/discontinuities detected, which
      *  affects the local hardware counter value. <br/>   */
     uint32_t numClockResets;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify Glonass system time info. <br/>   */
@@ -732,6 +830,9 @@ struct GnssGloTimeStructType {
     /** Number of clock resets/discontinuities detected,
      *  affecting the local hardware counter value. <br/> */
     uint32_t numClockResets;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Union to hold GNSS system time from different
@@ -749,6 +850,9 @@ union SystemTimeStructUnion {
     GnssGloTimeStructType gloSystemTime;
     /** System time info from NAVIC constellation. <br/>   */
     GnssSystemTimeStructType navicSystemTime;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /**  GNSS system time in GnssLocation. <br/>
@@ -760,6 +864,9 @@ struct GnssSystemTime {
     /** Specify the GNSS system time corresponding to the source.
      *  <br/> */
     SystemTimeStructUnion u;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify the set of engines whose position reports are
@@ -767,7 +874,7 @@ struct GnssSystemTime {
     LocReqEngineTypeMask, const EngineReportCbs&,ResponseCb).
     <br/>
 */
-typedef enum {
+enum LocReqEngineTypeMask {
     /** Mask to indicate that client requests the fused/default
       position via registering location_client::EngineLocationsCb
       for the tracking session. <br/>
@@ -785,10 +892,15 @@ typedef enum {
       for the tracking session. <br/>
     */
     LOC_REQ_ENGINE_PPE_BIT   = (1<<2),
-} LocReqEngineTypeMask;
+    /** Mask to indicate that the client requests unmodified VPE
+      position via registering location_client::EngineLocationsCb
+      for the tracking session. <br/>
+    */
+    LOC_REQ_ENGINE_VPE_BIT  = (1<<3)
+};
 
 /** Specify the position engine type that produced GnssLocation. <br/> */
-typedef enum {
+enum LocOutputEngineType {
     /** This is the propagated/aggregated report from the fixes of
      *  all engines running on the system (e.g.: DR/SPE/PPE).
      *  <br/> */
@@ -798,21 +910,25 @@ typedef enum {
     LOC_OUTPUT_ENGINE_SPE   = 1,
     /** This is the unmodified fix from PPE engine. <br/> */
     LOC_OUTPUT_ENGINE_PPE   = 2,
+    /** This is the unmodified fix from VPE engine. <br/> */
+    LOC_OUTPUT_ENGINE_VPE  = 3,
     /** This is the entry count of this enum. <br/>   */
     LOC_OUTPUT_ENGINE_COUNT,
-} LocOutputEngineType;
+};
 
 
 /** Specify the set of position engines supported by
  *  LocationClientAPI. <br/>   */
-typedef enum {
+enum PositioningEngineMask {
     /** Mask for standard GNSS position engine. <br/>   */
     STANDARD_POSITIONING_ENGINE = (1 << 0),
     /** Mask for dead reckoning position engine. <br/>   */
     DEAD_RECKONING_ENGINE       = (1 << 1),
     /** Mask for precise position engine. <br/>   */
-    PRECISE_POSITIONING_ENGINE  = (1 << 2)
-} PositioningEngineMask;
+    PRECISE_POSITIONING_ENGINE  = (1 << 2),
+    /** Mask for vpe engine. <br/>   */
+    VP_POSITIONING_ENGINE       = (1 << 3)
+};
 
 /** Specify the location info received by client via
  *  startPositionSession(uint32_t, uint32_t
@@ -847,6 +963,9 @@ struct Location {
     float bearingAccuracy;
     /** Sets of technology that contributed to the fix. <br/>   */
     LocationTechnologyMask techMask;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify latitude, longitude and altitude info of location.
@@ -863,7 +982,33 @@ typedef struct {
     /** Altitude above the WGS 84 reference ellipsoid, in unit
     of meters. <br/> */
     float altitude;
+
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 } LLAInfo;
+
+/** Specify various status that contributes to the DR poisition
+ *  engine. <br/> */
+enum DrSolutionStatusMask {
+    /** Vehicle sensor speed input was detected by the DR position
+     *  engine. <br/> */
+    DR_SOLUTION_STATUS_VEHICLE_SENSOR_SPEED_INPUT_DETECTED = (1<<0),
+    /** Vehicle sensor speed input was used by the DR position
+     *  engine. <br/> */
+    DR_SOLUTION_STATUS_VEHICLE_SENSOR_SPEED_INPUT_USED     = (1<<1),
+};
+
+/** Specify the session status. <br/> */
+enum LocSessionStatus {
+    /** Session is successful. <br/> */
+    LOC_SESS_SUCCESS      = 0,
+    /** Session is still in progress, the reported has not yet
+    achieved the needed criteria. <br/>*/
+    LOC_SESS_INTERMEDIATE = 1,
+    /** Session has failed. <br/>*/
+    LOC_SESS_FAILURE      = 2,
+};
 
 /** Specify the location info received by client via
  *  startPositionSession(uint32_t, const
@@ -935,7 +1080,7 @@ struct GnssLocation : public Location {
      *  report. <br/>   */
     GnssLocationNavSolutionMask  navSolutionMask;
     /** Position technology used in computing this fix. */
-    GnssLocationPosTechMask      posTechMask;
+    LocationTechnologyMask       posTechMask;
     /** Body frame dynamics info. <br/>   */
     GnssLocationPositionDynamics bodyFrameData;
     /** GNSS system time when this position is calculated. <br/>  */
@@ -966,10 +1111,24 @@ struct GnssLocation : public Location {
      * will indicate how well the various input data considered for
      * navigation solution conform to expectations.
      * Range: [0.0, 1.0], with 0.0 for least conforming and 1.0 for
-     * most conforming. </br> */
+     * most conforming.
+     * </br> */
     float conformityIndex;
     /** VRR-based latitude/longitude/altitude.  <br/> */
     LLAInfo llaVRPBased;
+    /** VRR-based east, north, and up velocity */
+    float enuVelocityVRPBased[3];
+    /** Dead reckoning position engine status.  <br/> */
+    DrSolutionStatusMask drSolutionStatusMask;
+    /** When this field is valid, it will indicates whether altitude
+     *  is assumed or calculated. <br/>
+     *  false: Altitude is calculated. <br/>
+     *  true:  Altitude is assumed; there may not be enough
+     *         satellites to determine the precise altitude. <br/> */
+    bool altitudeAssumed;
+    /** Indicates whether session is success, failure or
+     *  intermediate. <br/> */
+    LocSessionStatus sessionStatus;
 
     /* Default constructor to initalize GnssLocation structure */
     inline GnssLocation() :
@@ -985,7 +1144,7 @@ struct GnssLocation : public Location {
             eastVelocityStdDeviation(0.0f), upVelocityStdDeviation(0.0f),
             numSvUsedInPosition(0), svUsedInPosition({}),
             navSolutionMask((GnssLocationNavSolutionMask)0),
-            posTechMask((GnssLocationPosTechMask)0),
+            posTechMask((LocationTechnologyMask)0),
             bodyFrameData({}),
             gnssSystemTime({}), measUsageInfo(), leapSeconds(0),
             timeUncMs(0.0f), calibrationConfidencePercent(0),
@@ -993,8 +1152,14 @@ struct GnssLocation : public Location {
             locOutputEngType ((LocOutputEngineType)0),
             locOutputEngMask((PositioningEngineMask)0),
             conformityIndex(0.0f),
-            llaVRPBased({}) {
+            llaVRPBased({}),
+            enuVelocityVRPBased{0.0f, 0.0f, 0.0f},
+            drSolutionStatusMask((DrSolutionStatusMask)0),
+            altitudeAssumed(false), sessionStatus(LOC_SESS_FAILURE) {
     }
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** GNSS SV report that comes when clients registers for
@@ -1004,10 +1169,13 @@ struct GnssSv {
      *   SV Range for supported constellation is specified as below:
      *   <br/>
      *    - For GPS:     1 to 32 <br/>
-     *    - For GLONASS: 65 to 96 <br/>
+     *    - For GLONASS: 65 to 96 or FCN+104
+     *                   [65, 96] if orbital slot number(OSN) is known
+     *                   [97, 110] as frequency channel number(FCN) [-7, 6] plus 104
+     *                   i.e. encode FCN -7 as 97, 0 as 104, 6 as 110 <br/>
      *    - For SBAS:    120 to 158 and 183 to 191 <br/>
      *    - For QZSS:    193 to 197 <br/>
-     *    - For BDS:     201 to 237 <br/>
+     *    - For BDS:     201 to 263 <br/>
      *    - For GAL:     301 to 336 <br/>
      *    - For NAVIC:   401 to 414 <br/>   */
     uint16_t svId;
@@ -1037,14 +1205,23 @@ struct GnssSv {
      *  This field is valid if gnssSvOptionsMask has
      *  GNSS_SV_OPTIONS_HAS_GNSS_SIGNAL_TYPE_BIT. <br/> */
     GnssSignalTypeMask gnssSignalTypeMask;
+    /** Baseband signal strength Db Hz. <br/>
+     *  This field is always available in sv report. <br/> */
+    double basebandCarrierToNoiseDbHz;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    uint16_t gloFrequency;
+    /** GLONASS frequency channel number
+     * <br/> */
+    string toString() const;
 };
 
 /** Specify the GNSS signal type and RF band for jammer info and
- *  automatic gain control metric in GnssData. <br/>
- *  To find out the jammer info and automatic gain control
- *  metric for a particular GNSS signal type, refer to the array
- *  element with index set to the signal type. <br/>
- */
+- *  automatic gain control metric in GnssData. <br/>
+- *  To find out the jammer info and automatic gain control
+- *  metric for a particular GNSS signal type, refer to the array
+- *  element with index set to the signal type. <br/>
+- */
 enum GnssSignalTypes {
     /**  GNSS signal is of GPS L1CA RF band.  <br/>   */
     GNSS_SIGNAL_TYPE_GPS_L1CA = 0,
@@ -1126,6 +1303,9 @@ struct GnssData {
     double        jammerInd[GNSS_MAX_NUMBER_OF_SIGNAL_TYPES];
     /** Automatic gain control metric, in unit of dB.  <br/>   */
     double        agc[GNSS_MAX_NUMBER_OF_SIGNAL_TYPES];
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify valid fields in
@@ -1186,6 +1366,15 @@ enum GnssMeasurementsDataFlagsMask{
     /** GnssMeasurementsData has valid
      *  GnssMeasurementsData::agcLevelDb.  <br/>   */
     GNSS_MEASUREMENTS_DATA_AUTOMATIC_GAIN_CONTROL_BIT       = (1<<17),
+    /** GnssMeasurementsData has valid
+     *  GnssMeasurementsData::interSignalBiasNs.  <br/>   */
+    GNSS_MEASUREMENTS_DATA_FULL_ISB_BIT                     = (1<<18),
+    /** GnssMeasurementsData has valid
+     *  GnssMeasurementsData::interSignalBiasUncertaintyNs.  <br/>   */
+    GNSS_MEASUREMENTS_DATA_FULL_ISB_UNCERTAINTY_BIT         = (1<<19),
+    /** GnssMeasurementsData has valid
+     *  GnssMeasurementsData::cycleslipCount.  <br/>   */
+    GNSS_MEASUREMENTS_DATA_CYCLE_SLIP_COUNT_BIT             = (1<<20),
 };
 
 /** Specify GNSS measurement state in
@@ -1281,7 +1470,7 @@ enum GnssMeasurementsClockFlagsMask {
 };
 
 /** Specify the SV pseudo range and carrier phase measurement
- *  from GNSS positioning engine. <br/>
+ *  from standard SPE engine. <br/>
  *
  *  User should determine whether a field in
  *  GnssMeasurementsClock is valid or not by
@@ -1347,6 +1536,21 @@ struct GnssMeasurementsData {
     double signalToNoiseRatioDb;
     /** Automatic gain control level, in unit of dB <br/> */
     double agcLevelDb;
+    /** Baseband signal strength, in uint of dB Hz.
+     *  Should always be available in measurement report. <br/> */
+    double basebandCarrierToNoiseDbHz;
+    /** GNSS signal type mask of the SV.
+     *  Should always be available in measurement report. <br/> */
+    GnssSignalTypeMask gnssSignalType;
+    /** GNSS Intersystem Time Bias. <br/> */
+    double interSignalBiasNs;
+    /** GNSS Intersystem Time Bias uncertanity. <br/> */
+    double interSignalBiasUncertaintyNs;
+    /** Increments when a cycle slip is detected. <br/> */
+    uint8_t cycleSlipCount;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify GNSS measurements clock. <br/>
@@ -1380,6 +1584,9 @@ struct GnssMeasurementsClock {
     /** HW clock discontinuity count - incremented
      *  for each discontinuity in HW clock. <br/>   */
     uint32_t hwClockDiscontinuityCount;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify GNSS measurements clock and data. <br/>   */
@@ -1388,6 +1595,9 @@ struct GnssMeasurements {
     GnssMeasurementsClock clock;
     /** GNSS measurements data. <br/>   */
     std::vector<GnssMeasurementsData> measurements;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify the valid fields in LeapSecondSystemInfo. <br/> */
@@ -1422,6 +1632,9 @@ struct LeapSecondChangeInfo {
      *  <br/>
      *  In unit of seconds. <br/> */
     uint8_t leapSecondsAfterChange;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify leap second system info, including current leap
@@ -1454,15 +1667,18 @@ struct LeapSecondSystemInfo {
         to choose leapSecondBefore or leapSecondAfter as current
         leap second. <br/> */
     LeapSecondChangeInfo  leapSecondChangeInfo;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
 };
 
 /** Specify the set of valid fields in
  *  LocationSystemInfo. <br/>   */
-typedef enum {
+enum LocationSystemInfoMask {
     /** LocationSystemInfo has valid
      *  LocationSystemInfo::leapSecondSysInfo. <br/>   */
     LOC_SYS_INFO_LEAP_SECOND = (1ULL << 0),
-} LocationSystemInfoMask;
+};
 
 /** Specify the location system info that can be received via
  *  LocationSystemInfoCb. <br/>
@@ -1478,6 +1694,18 @@ struct LocationSystemInfo {
     LocationSystemInfoMask systemInfoMask;
     /** Current leap second and leap second info. <br/>   */
     LeapSecondSystemInfo   leapSecondSysInfo;
+    /** Method to print the struct to human readable form, for logging.
+     *  <br/> */
+    string toString() const;
+};
+
+/** Specify the set of terrestrial technologies to be used when
+ *  invoking getSingleTerrestrialPosition(). <br/>
+ *
+ *  Currently, only TERRESTRIAL_TECH_GTP_WWAN is supported.
+ *  <br/> */
+enum TerrestrialTechnologyMask {
+    TERRESTRIAL_TECH_GTP_WWAN = 1 << 0,
 };
 
 enum BatchingStatus {
@@ -1962,12 +2190,85 @@ public:
                               ResponseCb responseCallback);
 
     /** @brief Stop the ongoing positioning session and
-     *  de-register the callbacks of previous
-     *  startPositionSession. <br/>
-     *  If ResponseCb is registerd with previous
-     *  startPositionSession(), it will be invoked to deliver the
-     *  processing status. <br/> */
+     *  de-register the callbacks of previous startPositionSession.
+     *  No callback will be issued regarding the procesing status.
+     *  <br/> */
     void stopPositionSession();
+
+    /** @brief
+        Retrieve single-shot terrestrial position using the set of
+        specified terrestrial technologies. <br/>
+
+        For this phase, only TERRESTRIAL_TECH_GTP_WWAN will be
+        supported and this will return cell-based position. <br/.
+
+        This API can be invoked with on-going tracking session
+        initiated via startPositionSession(). <br/
+
+        If this API is invoked with single-shot terrestrial position
+        already in progress, the request will fail and the
+        responseCallback will get invoked with
+        LOCATION_RESPONSE_BUSY. <br/
+
+        @param timeoutMsec
+        The amount of time that user is willing to wait for
+        the terrestrial positioning to become available. <br/>
+
+        @param techMask
+        The set of terrestrial technologies that are allowed to be
+        used for producing the position. <br/>
+
+        For this phase, only TERRESTRIAL_TECH_GTP_WWAN will be
+        supported. Passing other values to this API will return
+        false. <br/>
+
+        @param horQoS
+        horizontal accuracy requirement for the terrestrial fix.
+        0(Zero) means client does not specify horizontal accuracy
+        requirement. <br/>
+
+        For this phase, only 0 will be accepted. None-zero
+        horizontal accuracy requirement will not be supported and
+        API call will return false. <br/>
+
+        @param terrestrialPositionCallback
+        callback to receive terrestrial position. Some fields in
+        LocationClientApi::Location, e.g.: speed, bearing and their
+        uncertainty may not be available for terrestrial position.
+        Please check Location::flags for the fields that are
+        available. <br/>
+
+        This callback will only be invoked when
+        responseCallback is invoked with ResponseCb with processing
+        status set to LOCATION_RESPONSE_SUCCESS. <br/>
+
+        Null terrestrialPositionCallback will cancel the current
+        request. If responseCallback is none-null,
+        LOCATION_RESPONSE_SUCCESS will be delivered. <br/>
+
+        @param responseCallback
+        Callback to receive processing status, e.g.: success or
+        failure code: e.g.: timeout. <br/>
+
+        When the processing status is LOCATION_RESPONSE_SUCCESS, the
+        terrestrialPositionCallback will be invoked to deliver the
+        single-shot terrestrial position report. <br/>
+
+        If this API is invoked with invalid parameter, e.g.: 0
+        milli-seconds timeout, or techMask set to value other than
+        TERRESTRIAL_TECH_GTP_WWAN or horQoS set to none-zero value,
+        the responseCallback will get invoked with
+        LOCATION_RESPONSE_PARAM_INVALID. <br/>
+
+        If this API is invoked with single-shot terrestrial position
+        already in progress, the request will fail and the
+        responseCallback will get invoked with
+        LOCATION_RESPONSE_BUSY. <br/> */
+    void getSingleTerrestrialPosition(uint32_t timeoutMsec,
+                                      TerrestrialTechnologyMask techMask,
+                                      float horQos,
+                                      LocationCb terrestrialPositionCallback,
+                                      ResponseCb responseCallback);
 
     /** @example example1:testTrackingApi
     * <pre>
@@ -2265,6 +2566,24 @@ public:
         */
     void updateLocationSystemInfoListener(LocationSystemInfoCb locSystemInfoCallback,
                                           ResponseCb responseCallback);
+
+
+    /** @brief
+        Get the year of Hardware information.<br/>
+        This information is available after CapabilitiesCb is invoked.<br/>
+        @return The year of Hardware.<br/>
+                0, if the year of Hardware information is not available.
+    */
+    uint16_t getYearOfHw();
+
+    /** @brief
+        Returns the feature capability corresponding to mask as a string
+        for easy inference of features supported. <br/>
+
+        @param capabMask
+        Mask of Location capabilities from LocationCapabilitiesMask. <br/>
+    */
+    static string capabilitiesToString(LocationCapabilitiesMask capabMask);
 
 private:
     /** Internal implementation for LocationClientApi */

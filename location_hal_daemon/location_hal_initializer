@@ -1,7 +1,6 @@
-
 #!/bin/sh
 #
-# Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+# Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -55,7 +54,6 @@ case "$1" in
         wait_for_dir_mount
         create_set_folder "/dev/socket/location" "gps:gps" 755
         create_set_folder "/dev/socket/loc_client" "gps:locclient" 775
-        create_set_folder "/data/vendor/location/extap_locclient" "gps:gps" 755
         create_set_folder "/dev/socket/location/ehub" "gps:gps" 755
         echo "Done creating folders for location hal daemon"
         ;;

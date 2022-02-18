@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019 - 2020 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -99,8 +99,9 @@ protected:
                            sizeof(mAddr));
     }
 public:
-    inline LocIpcQsockSender(const shared_ptr<Sock>& sock, const qsockaddr_ipcr& destAddr) :
-            LocIpcSender(), mSock(sock),
+    inline LocIpcQsockSender(const qsockaddr_ipcr& destAddr) :
+            LocIpcSender(),
+            mSock(make_shared<Sock>(::socket(AF_IPC_ROUTER, SOCK_DGRAM, 0))),
             mServiceInfo(0, 0), mAddr(destAddr), mLookupPending(false) {
     }
     inline LocIpcQsockSender(int service, int instance) :
@@ -144,7 +145,7 @@ public:
         }
     }
     inline virtual unique_ptr<LocIpcSender> getLastSender() const override {
-        return make_unique<LocIpcQsockSender>(mSock, mAddr);
+        return make_unique<LocIpcQsockSender>(mAddr);
     }
     inline virtual const char* getName() const override {
         return mServiceInfo.getName();
@@ -161,14 +162,13 @@ shared_ptr<LocIpcSender> createLocIpcQrtrSender(int service, int instance) {
     return make_shared<LocIpcQsockSender>(service, instance);
 }
 unique_ptr<LocIpcRecver> createLocIpcQrtrRecver(const shared_ptr<ILocIpcListener>& listener,
-                                                 int service, int instance) {
+                                                int service, int instance,
+                                                const shared_ptr<LocIpcQrtrWatcher>& qrtrWatcher) {
     return make_unique<LocIpcQsockRecver>(listener, service, instance);
 }
 
 #else
 
-#define RETRY_FINDNEWSERVICE_MAX_COUNT 10000
-#define RETRY_FINDNEWSERVICE_SLEEP_MS  5
 #define SOCKET_TIMEOUT_SEC 2
 
 static inline __le32 cpu_to_le32(uint32_t x) { return htole32(x); }
@@ -189,30 +189,20 @@ protected:
             mCtrlPkt.cmd = cpu_to_le32(cmd);
             if ((rc = ::sendto(mSock->mSid, &mCtrlPkt, sizeof(mCtrlPkt), 0,
                                (const struct sockaddr *)&addr, sizeof(addr))) < 0) {
-                LOC_LOGe("failed: sendto rc=%d reason=(%s)\n", rc, strerror(errno));
+                LOC_LOGe("failed: sendto rc=%d reason=(%s)", rc, strerror(errno));
             } else if (QRTR_TYPE_NEW_LOOKUP == cmd) {
                 int len;
                 struct qrtr_ctrl_pkt pkt;
-                bool serviceFound = false;
                 while ((len = ::recv(mSock->mSid, &pkt, sizeof(pkt), 0)) > 0) {
-                    if (cpu_to_le32(QRTR_TYPE_DEL_SERVER) == pkt.cmd) {
-                        LOC_LOGe("server deleted");
+                    if (len >= (decltype(len))sizeof(pkt) && 0 != pkt.server.service &&
+                            cpu_to_le32(QRTR_TYPE_NEW_SERVER) == pkt.cmd) {
+                        mAddr.sq_node = le32_to_cpu(pkt.server.node);
+                        mAddr.sq_port = le32_to_cpu(pkt.server.port);
+                        LOC_LOGv("server found pkt.cmd %d, service %d, node, %d, port %d",
+                                 le32_to_cpu(pkt.cmd), le32_to_cpu(pkt.server.service),
+                                 mAddr.sq_node, mAddr.sq_port);
                         break;
                     }
-
-                   if ((len >= (decltype(len))sizeof(pkt)) &&
-                       (cpu_to_le32(QRTR_TYPE_NEW_SERVER) == pkt.cmd) &&
-                       (0 != pkt.server.service)) {
-                       serviceFound = true;
-                       break;
-                   }
-                }
-
-                if (serviceFound == true) {
-                    mAddr.sq_node = le32_to_cpu(pkt.server.node);
-                    mAddr.sq_port = le32_to_cpu(pkt.server.port);
-                    LOC_LOGd("pkt.cmd %d, service %d, node, %d, port %d",
-                             pkt.cmd, pkt.server.service, mAddr.sq_node, mAddr.sq_port);
                 }
             }
         }
@@ -233,8 +223,9 @@ protected:
         return mSock->send(data, length, 0, (struct sockaddr*)&mAddr, sizeof(mAddr));
     }
 public:
-    inline LocIpcQrtrSender(const shared_ptr<Sock>& sock, const sockaddr_qrtr& destAddr) :
-            LocIpcSender(), mServiceInfo(0, 0), mSock(sock),
+    inline LocIpcQrtrSender(const sockaddr_qrtr& destAddr) :
+            LocIpcSender(), mServiceInfo(0, 0),
+            mSock(make_shared<Sock>(::socket(AF_QIPCRTR, SOCK_DGRAM, 0))),
             mAddr(destAddr), mCtrlPkt({}), mLookupPending(false) {
     }
     inline LocIpcQrtrSender(int service, int instance) : LocIpcSender(),
@@ -265,36 +256,68 @@ public:
         }
     }
 
-    // when the qrtr socket sender is informed that the socket
-    // receiver has restarted, it need to find the re-started
-    // service node/port as the old node/port is no longer valid
-    inline virtual void informRecverRestarted() override {
-
-        sockaddr_qrtr oldAddr = mAddr;
-        int retryCount = 0;
-
-        while (retryCount < RETRY_FINDNEWSERVICE_MAX_COUNT) {
-            if (true == ctrlCmdAndResponse(QRTR_TYPE_NEW_LOOKUP)) {
-                LOC_LOGd("retry count %d, old %d %d, new %d %d",
-                         retryCount, oldAddr.sq_node, oldAddr.sq_port,
-                         mAddr.sq_node, mAddr.sq_port);
-                if ((mAddr.sq_node != 0 || mAddr.sq_port != 0) &&
-                    ((mAddr.sq_node != oldAddr.sq_node) ||
-                     (mAddr.sq_port != oldAddr.sq_port))) {
-                    break;
-                }
-            }
-            usleep(RETRY_FINDNEWSERVICE_SLEEP_MS*1000*10);
-            retryCount++;
-        }
-
-        LOC_LOGd("retry count %d, old %d %d, new %d %d",
-                 retryCount, oldAddr.sq_node, oldAddr.sq_port,
-                 mAddr.sq_node, mAddr.sq_port);
-    }
-
     unique_ptr<LocIpcRecver> getRecver(const shared_ptr<ILocIpcListener>& listener) override {
         return make_unique<SockRecver>(listener, *this, mSock);
+    }
+
+    inline virtual void copyDestAddrFrom(const LocIpcSender& otherSender) override {
+        mLookupPending = false;
+        mAddr = (reinterpret_cast<const LocIpcQrtrSender&>(otherSender)).mAddr;
+    }
+};
+
+class LocIpcQrtrListener : public ILocIpcListener {
+    const shared_ptr<ILocIpcListener> mRealListener;
+    const shared_ptr<LocIpcQrtrWatcher> mQrtrWatcher;
+    inline bool handleQrtrCtrlMsg(const char* data, uint32_t len) {
+        const struct qrtr_ctrl_pkt* pkt = reinterpret_cast<const struct qrtr_ctrl_pkt*>(data);
+        bool handledAsQrtrCtrlMsg = false;
+
+        if (sizeof(*pkt) == len) {
+            const uint32_t cmd = le32_to_cpu(pkt->cmd);
+            if (cmd >= QRTR_TYPE_DATA && cmd <= QRTR_TYPE_DEL_LOOKUP) {
+                handledAsQrtrCtrlMsg = true;
+                int serviceId = le32_to_cpu(pkt->server.service);
+                int instanceId = le32_to_cpu(pkt->server.instance);
+                uint32_t serverNodeId = le32_to_cpu(pkt->server.node);
+                uint32_t serverPort = le32_to_cpu(pkt->server.port);
+                int clientNodeId = le32_to_cpu(pkt->client.node);
+                int clientPort = le32_to_cpu(pkt->client.port);
+
+                LOC_LOGv("qrtr control msg: cmd %d, server.service:instance-node:port %d:%d-%d:%d,"
+                         " client node:port %d:%d", cmd, serviceId, instanceId, serverNodeId,
+                         serverPort, clientNodeId, clientPort);
+
+                if (nullptr != mQrtrWatcher) {
+                    if ((QRTR_TYPE_NEW_SERVER == cmd || QRTR_TYPE_DEL_SERVER == cmd) &&
+                        mQrtrWatcher->isServiceInWatch(serviceId)) {
+                        LocIpcQrtrWatcher::ServiceStatus status = (QRTR_TYPE_NEW_SERVER == cmd) ?
+                                LocIpcQrtrWatcher::ServiceStatus::UP :
+                                LocIpcQrtrWatcher::ServiceStatus::DOWN;
+                        sockaddr_qrtr addr = {AF_QIPCRTR, serverNodeId, serverPort};
+                        const LocIpcQrtrSender sender(addr);
+                        mQrtrWatcher->onServiceStatusChange(serviceId, instanceId, status, sender);
+                    } else if ((QRTR_TYPE_DEL_CLIENT == cmd || QRTR_TYPE_BYE == cmd) &&
+                               mQrtrWatcher->isClientInWatch(clientNodeId)) {
+                        mQrtrWatcher->onClientGone(clientNodeId, clientPort);
+                    }
+                }
+            }
+        }
+        return handledAsQrtrCtrlMsg;
+    }
+public:
+    inline LocIpcQrtrListener(const shared_ptr<ILocIpcListener>& listener,
+                              const shared_ptr<LocIpcQrtrWatcher>& qrtrWatcher) :
+            mRealListener(listener), mQrtrWatcher(qrtrWatcher) {}
+    inline virtual void onListenerReady() override {
+        if (nullptr != mRealListener) mRealListener->onListenerReady();
+    }
+    inline virtual void onReceive(const char* data, uint32_t len,
+                                  const LocIpcRecver* recver) override {
+        if ((!handleQrtrCtrlMsg(data, len)) && (nullptr != mRealListener)) {
+            mRealListener->onReceive(data, len, recver);
+        }
     }
 };
 
@@ -306,13 +329,29 @@ protected:
     }
 public:
     inline LocIpcQrtrRecver(const shared_ptr<ILocIpcListener>& listener,
-                            int service, int instance) :
-            LocIpcQrtrSender(service, instance), LocIpcRecver(listener, *this) {
+                            int service, int instance,
+                            const shared_ptr<LocIpcQrtrWatcher>& qrtrWatcher) :
+            LocIpcQrtrSender(service, instance),
+            LocIpcRecver(make_shared<LocIpcQrtrListener>(listener, qrtrWatcher), *this) {
         ctrlCmdAndResponse(QRTR_TYPE_NEW_SERVER);
+        if (nullptr != qrtrWatcher) {
+            sockaddr_qrtr addr = mAddr;
+            addr.sq_port = QRTR_PORT_CTRL;
+            struct qrtr_ctrl_pkt pkt = {};
+            pkt.cmd = cpu_to_le32(QRTR_TYPE_NEW_LOOKUP);
+            int rc = 0;
+            for (int serviceId : qrtrWatcher->getServicesToWatch()) {
+                pkt.server.service = cpu_to_le32(serviceId);
+                if ((rc = ::sendto(mSock->mSid, &pkt, sizeof(pkt), 0,
+                                   (const struct sockaddr *)&addr, sizeof(addr))) < 0) {
+                    LOC_LOGe("failed: sendto rc=%d reason=(%s)\n", rc, strerror(errno));
+                }
+            }
+        }
     }
     inline ~LocIpcQrtrRecver() { ctrlCmdAndResponse(QRTR_TYPE_DEL_SERVER); }
     inline virtual unique_ptr<LocIpcSender> getLastSender() const override {
-        return make_unique<LocIpcQrtrSender>(mSock, mAddr);
+        return make_unique<LocIpcQrtrSender>(mAddr);
     }
     inline virtual const char* getName() const override {
         return mServiceInfo.getName();
@@ -328,8 +367,9 @@ shared_ptr<LocIpcSender> createLocIpcQrtrSender(int service, int instance) {
     return make_shared<LocIpcQrtrSender>(service, instance);
 }
 unique_ptr<LocIpcRecver> createLocIpcQrtrRecver(const shared_ptr<ILocIpcListener>& listener,
-                                                int service, int instance) {
-    return make_unique<LocIpcQrtrRecver>(listener, service, instance);
+                                                int service, int instance,
+                                                const shared_ptr<LocIpcQrtrWatcher>& qrtrWatcher) {
+    return make_unique<LocIpcQrtrRecver>(listener, service, instance, qrtrWatcher);
 }
 
 #endif
