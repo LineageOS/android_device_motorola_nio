@@ -127,6 +127,7 @@
 	<device name="SND_DEVICE_IN_VOICE_SPEAKER_DMIC" acdb_id="35" />
 	<device name="SND_DEVICE_IN_VOICE_TTY_VCO_HANDSET_MIC" acdb_id="41" />
 	<device name="SND_DEVICE_IN_USB_HEADSET_MIC" acdb_id="44" />
+	<device name="SND_DEVICE_IN_USB_HEADSET_MIC_ELEVOC" acdb_id="44" />
 	<device name="SND_DEVICE_IN_SPEAKER_MIC_AEC" acdb_id="114" />
 	<device name="SND_DEVICE_IN_SPEAKER_MIC_AEC_NS" acdb_id="114" />
 	<device name="SND_DEVICE_IN_SPEAKER_MIC_NS" acdb_id="114" />
@@ -157,6 +158,7 @@
 	<device name="SND_DEVICE_IN_UNPROCESSED_USB_HEADSET_MIC" acdb_id="125" />
 	<device name="SND_DEVICE_IN_VOICE_REC_EXTERNAL_MIC" acdb_id="147" />
 	<device name="SND_DEVICE_IN_USB_HEADSET_MIC_AEC" acdb_id="244" />
+	<device name="SND_DEVICE_IN_USB_HEADSET_MIC_AEC_ELEVOC" acdb_id="306" />
 	<device name="SND_DEVICE_IN_GAME_HANDSET_MIC" acdb_id="4" />
 	<device name="SND_DEVICE_IN_MIC1" acdb_id="125" />
 	<device name="SND_DEVICE_IN_MIC2" acdb_id="125" />
@@ -347,10 +349,20 @@
         <device name="SND_DEVICE_IN_VOICE_USB_HEADSET_MIC" backend="usb-headset-mic" interface="USB_AUDIO_TX"/>
         <device name="SND_DEVICE_IN_UNPROCESSED_USB_HEADSET_MIC" backend="usb-headset-mic" interface="USB_AUDIO_TX"/>
         <device name="SND_DEVICE_IN_VOICE_RECOG_USB_HEADSET_MIC" backend="usb-headset-mic" interface="USB_AUDIO_TX"/>
+        <device name="SND_DEVICE_IN_USB_HEADSET_MIC_AEC_ELEVOC" backend="usb-headset-mic" interface="USB_AUDIO_TX"/>
+        <device name="SND_DEVICE_IN_USB_HEADSET_MIC_ELEVOC" backend="usb-headset-mic" interface="USB_AUDIO_TX"/>
         <device name="SND_DEVICE_IN_MIC1" interface="TX_CDC_DMA_TX_3"/>
         <device name="SND_DEVICE_IN_MIC2" interface="TX_CDC_DMA_TX_3"/>
         <device name="SND_DEVICE_IN_VOICE_RX" interface="PROXY_TX"/>
     </backend_names>
+    <app_types>
+        <app uc_type="PCM_PLAYBACK" mode="default" bit_width="16" id="69936" max_rate="96000" />
+        <app uc_type="PCM_PLAYBACK" mode="default" bit_width="24" id="69940" max_rate="192000" />
+        <app uc_type="PCM_PLAYBACK" mode="voip" bit_width="16" id="69946" max_rate="48000" />
+        <app uc_type="PCM_CAPTURE"  mode="default" bit_width="16" id="69938" max_rate="96000" />
+        <app uc_type="PCM_CAPTURE"  mode="default" bit_width="24" id="69940" max_rate="96000" />
+        <app uc_type="PCM_CAPTURE"  mode="voip" bit_width="16" id="69946" max_rate="48000" />
+    </app_types>
     <!-- below values are for ref purpose to OEM, doesn't contain actual hardware info on MTP -->
     <microphone_characteristics>
         <microphone valid_mask="31" device_id="builtin_mic_1" type="AUDIO_DEVICE_IN_BUILTIN_MIC" address="bottom" location="AUDIO_MICROPHONE_LOCATION_MAINBODY"

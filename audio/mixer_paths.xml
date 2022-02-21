@@ -419,6 +419,15 @@
         <path name="echo-reference headphones" />
     </path>
 
+    <path name="echo-reference usb-headphones">
+        <ctl name="AUDIO_REF_EC_UL1 MUX" value="USB_AUDIO_RX" />
+        <ctl name="EC Reference Channels" value="One" />
+    </path>
+
+    <path name="echo-reference usb-headset">
+        <path name="echo-reference usb-headphones" />
+    </path>
+
     <path name="echo-reference display-port">
         <ctl name="AUDIO_REF_EC_UL1 MUX" value="DISPLAY_PORT" />
         <ctl name="EC Reference Channels" value="One"/>
@@ -484,6 +493,15 @@
     <path name="echo-reference-voip headphones">
         <ctl name="AUDIO_REF_EC_UL10 MUX" value="RX_CDC_DMA_RX_0" />
         <ctl name="EC Reference Channels" value="Two"/>
+    </path>
+
+    <path name="echo-reference-voip usb-headphones">
+        <ctl name="AUDIO_REF_EC_UL10 MUX" value="USB_AUDIO_RX" />
+        <ctl name="EC Reference Channels" value="One" />
+    </path>
+
+    <path name="echo-reference-voip usb-headset">
+        <path name="echo-reference-voip usb-headphones" />
     </path>
 
     <path name="echo-reference-voip bt-sco">
@@ -2235,6 +2253,7 @@
     </path>
 
     <path name="audio-playback-voip handset">
+        <ctl name="TERT_MI2S_RX Audio Mixer MultiMedia10" value="0" />
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia10" value="1" />
     </path>
 
@@ -2247,6 +2266,7 @@
     </path>
 
     <path name="audio-playback-voip bt-sco">
+        <ctl name="TERT_MI2S_RX Audio Mixer MultiMedia10" value="0" />
         <ctl name="SLIMBUS_7_RX Audio Mixer MultiMedia10" value="1" />
     </path>
 
@@ -2259,6 +2279,7 @@
     </path>
 
     <path name="audio-playback-voip bt-a2dp">
+        <ctl name="TERT_MI2S_RX Audio Mixer MultiMedia10" value="0" />
         <ctl name="SLIMBUS_7_RX Audio Mixer MultiMedia10" value="1" />
     </path>
 
@@ -2267,14 +2288,20 @@
     </path>
 
     <path name="audio-playback-voip usb-headphones">
+        <ctl name="TERT_MI2S_RX Audio Mixer MultiMedia10" value="0" />
         <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia10" value="1" />
     </path>
 
     <path name="audio-playback-voip usb-headset">
+        <ctl name="TERT_MI2S_RX Audio Mixer MultiMedia10" value="0" />
         <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia10" value="1" />
     </path>
 
     <path name="audio-playback-voip display-port">
+        <ctl name="DISPLAY_PORT Mixer MultiMedia10" value="1" />
+    </path>
+
+    <path name="audio-playback-voip hdmi">
         <ctl name="DISPLAY_PORT Mixer MultiMedia10" value="1" />
     </path>
 
@@ -2283,6 +2310,11 @@
     </path>
 
     <path name="audio-playback-voip speaker-and-display-port">
+        <path name="audio-playback-voip display-port" />
+        <path name="audio-playback-voip" />
+    </path>
+
+    <path name="audio-playback-voip speaker-and-hdmi">
         <path name="audio-playback-voip display-port" />
         <path name="audio-playback-voip" />
     </path>
