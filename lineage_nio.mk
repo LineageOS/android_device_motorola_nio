@@ -28,7 +28,7 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 PRODUCT_NAME := lineage_nio
 PRODUCT_DEVICE := nio
 PRODUCT_BRAND := motorola
-PRODUCT_MODEL := Motorola Edge S
+PRODUCT_MODEL := XT2125-4
 PRODUCT_MANUFACTURER := motorola
 PRODUCT_SHIPPING_API_LEVEL := 30
 
