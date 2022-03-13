@@ -294,7 +294,7 @@ PRODUCT_PACKAGES += \
     libvndfwk_detect_jni.qti \
     libvndfwk_detect_jni.qti.vendor
 
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+PRODUCT_SYSTEM_EXT_PROPERTIES += \
     ro.vendor.qti.va_aosp.support=1
 
 PRODUCT_ODM_PROPERTIES += \
