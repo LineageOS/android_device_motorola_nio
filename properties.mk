@@ -362,6 +362,10 @@ PRODUCT_PROPERTY_OVERRIDES += vendor.display.enable_async_powermode=1
 PRODUCT_PROPERTY_OVERRIDES += persist.vendor.dpmhalservice.enable=1
 PRODUCT_SYSTEM_EXT_PROPERTIES += persist.vendor.dpm.feature=11
 
+############### DRM ###############
+PRODUCT_PROPERTY_OVERRIDES += \
+    drm.service.enabled=true
+
 ############### FRP ###############
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.frp.pst=/dev/block/bootdevice/by-name/frp
@@ -414,6 +418,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.data.iwlan.enable=true \
+    persist.vendor.radio.start_ota_daemon=0 \
     persist.vendor.radio.no_wait_for_card=1 \
     persist.vendor.radio.dfr_mode_set=1 \
     persist.vendor.radio.oem_ind_to_both=0 \
@@ -426,6 +431,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.radio.add_power_save=1 \
     persist.vendor.radio.msgtunnel.start=true \
     persist.vendor.radio.lte_vrte_ltd=1 \
+    persist.vendor.radio.sw_mbn_update=0 \
     persist.vendor.radio.sar_sensor=1 \
     persist.vendor.radio.fi_supported=0 \
     persist.vendor.radio.data_ltd_sys_ind=1 \
