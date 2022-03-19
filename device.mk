@@ -38,13 +38,14 @@ DEVICE_PACKAGE_OVERLAYS += \
 PRODUCT_ENFORCE_RRO_TARGETS := *
 
 PRODUCT_PACKAGES += \
-    FrameworksResCommon \
-    CarrierConfigResCommon \
-    CellBroadcastReceiverResCommon \
-    SystemUIResCommon \
-    TelecommResCommon \
-    TelephonyResCommon \
-    WifiResCommon \
+    FrameworksResCommon_Sys \
+    CarrierConfigResCommon_Sys \
+    CellBroadcastReceiverResCommon_Sys \
+    SettingsResCommon_Sys \
+    SystemUIResCommon_Sys \
+    TelecommResCommon_Sys \
+    TelephonyResCommon_Sys \
+    WifiResCommon_Sys \
     FrameworksResTarget \
     WifiResTarget
 
