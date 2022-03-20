@@ -105,6 +105,7 @@ lib64/libaptX_encoder.so
 lib64/libaptXHD_encoder.so
 
 # Camera
+vendor/etc/init/android.hardware.camera.provider@2.4-service_64.rc
 vendor/lib/libcamxexternalformatutils.so
 vendor/lib64/camera/com.mot.eeprom.mot_gt24p64b_ov16a1q_eeprom.so
 vendor/lib64/camera/com.mot.eeprom.mot_ov02b1b_otp.so
