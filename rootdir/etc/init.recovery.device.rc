@@ -1,2 +1,0 @@
-on early-init
-    insmod /lib/modules/nova_0flash_mmi.ko

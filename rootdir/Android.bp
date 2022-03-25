@@ -10,10 +10,3 @@ prebuilt_etc {
     sub_dir: "init/hw",
     vendor: true,
 }
-
-prebuilt_etc {
-    name: "init.recovery.device.rc",
-    src: "etc/init.recovery.device.rc",
-    sub_dir: "init",
-    recovery: true,
-}
