@@ -26,8 +26,7 @@ PRODUCT_COPY_FILES += \
 
 # Init
 PRODUCT_PACKAGES += \
-    init.device.rc \
-    init.recovery.device.rc
+    init.device.rc
 
 # Media
 PRODUCT_COPY_FILES += \
