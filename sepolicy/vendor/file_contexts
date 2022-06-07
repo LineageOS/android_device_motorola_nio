@@ -36,6 +36,7 @@
 /sys/devices/virtual/input/input[0-9]+/xtalk            u:object_r:vendor_sysfs_laser:s0
 
 # Fingerprint
+/(mnt/vendor/persist|persist)/egis(/.*)?                u:object_r:vendor_persist_fps_file:s0
 /(mnt/vendor/persist|persist)/fps(/.*)?                 u:object_r:vendor_persist_fps_file:s0
 /(vendor|system/vendor)/bin/fpc_ident                   u:object_r:hal_fingerprint_default_exec:s0
 /(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service-ets              u:object_r:hal_fingerprint_default_exec:s0
@@ -62,7 +63,7 @@
 /dev/socket/cutback                                     u:object_r:cutback_socket:s0
 
 # Touch
-/(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch@1\.0-service\.nio			u:object_r:hal_lineage_touch_default_exec:s0
+/(vendor|system/vendor)/bin/hw/vendor\.lineage\.touch@1\.0-service\.nio                 u:object_r:hal_lineage_touch_default_exec:s0
 
 # Thermal
 /dev/mmi_sys_temp                                       u:object_r:vendor_thermal_device:s0
