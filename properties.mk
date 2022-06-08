@@ -1,4 +1,4 @@
-############### Audio ###############
+# Audio {{{
 # Low latency audio buffer size in frames
 PRODUCT_PROPERTY_OVERRIDES += \
     vendor.audio_hal.period_size=192
@@ -255,8 +255,9 @@ media.stagefright.audio.deep=false
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.audio.dualmic.config=endfire \
     ro.config.vc_call_vol_steps=8
+# }}}
 
-############### Bluetooth ###############
+# Bluetooth {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     vendor.qcom.bluetooth.soc=hastings
 
@@ -282,19 +283,22 @@ PRODUCT_PROPERTY_OVERRIDES += persist.vendor.qcom.bluetooth.aac_vbr_ctl.enabled=
 PRODUCT_PROPERTY_OVERRIDES += persist.vendor.qcom.bluetooth.aptxadaptiver2_1_support=false
 #HearingAid support
 PRODUCT_PROPERTY_OVERRIDES += persist.sys.fflag.override.settings_bluetooth_hearing_aid=true
+# }}}
 
-############### Camera ###############
+# Camera {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.camera.expose.aux=1 \
     persist.vendor.camera.physical.num=5
+# }}}
 
-############### Dalvik ###############
+# Dalvik {{{
 $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.dex2oat-threads=6 \
     dalvik.vm.dex2oat64.enabled=true
+# }}}
 
-############### Display ###############
+# Display {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.hardware.vulkan=adreno \
     ro.hardware.egl=adreno
@@ -358,26 +362,31 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Enable power async mode
 PRODUCT_PROPERTY_OVERRIDES += vendor.display.enable_async_powermode=1
+# }}}
 
-############### DPM ###############
+# DPM {{{
 PRODUCT_PROPERTY_OVERRIDES += persist.vendor.dpmhalservice.enable=1
 PRODUCT_SYSTEM_EXT_PROPERTIES += persist.vendor.dpm.feature=11
+# }}}
 
-############### DRM ###############
+# DRM {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     drm.service.enabled=true
+# }}}
 
-############### FRP ###############
+# FRP {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.frp.pst=/dev/block/bootdevice/by-name/frp
+# }}}
 
-############### IMS ###############
+# IMS {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.ims.playout_delay=50 \
     persist.vendor.ims.cam_sensor_delay=20 \
     persist.vendor.ims.display_delay=40 \
+# }}}
 
-############### Keymaster ###############
+# Keymaster {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     vendor.gatekeeper.disable_spu=true
 
@@ -385,14 +394,16 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.crypto.volume.filenames_mode = "aes-256-cts" \
     ro.crypto.dm_default_key.options_format.version = 2 \
     ro.crypto.volume.metadata.method=dm-default-key
+# }}}
 
-############### Media ###############
+# Media {{{
 PRODUCT_PROPERTY_OVERRIDES += debug.stagefright.omx_default_rank=0
 
 #Vendor property to enable Codec2 for audio and OMX for Video
 PRODUCT_PROPERTY_OVERRIDES += debug.stagefright.ccodec=1
+# }}}
 
-############### Perf ###############
+# Perf {{{
 #Property to enable/disable PASR
 PRODUCT_PROPERTY_OVERRIDES += vendor.power.pasr.enabled=true
 PRODUCT_PROPERTY_OVERRIDES += vendor.pasr.activemode.enabled=true
@@ -403,8 +414,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.extension_library=libqti-perfd-client.so
+# }}}
 
-############### RIL ###############
+# RIL {{{
 # Vendor property to enable advanced network scanning
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.radio.enableadvancedscan=true
@@ -442,20 +454,23 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.radio.aosp_usr_pref_sel=true \
     persist.vendor.radio.flexmap_type=none \
     persist.vendor.radio.enable_temp_dds=true
+# }}}
 
-############### Sensors ###############
+# Sensors {{{
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.sensors.sync_request=true \
     persist.vendor.sensors.allow_non_default_discovery=true
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.sensors.glance_approach=false
+# }}}
 
-############### USB ###############
+# USB {{{
 PRODUCT_PROPERTY_OVERRIDES += vendor.usb.diag.func.name=diag
 PRODUCT_PROPERTY_OVERRIDES += vendor.usb.use_ffs_mtp=0
+# }}}
 
-############### Misc ###############
+# Misc {{{
 # Enable incremental FS feature
 PRODUCT_PROPERTY_OVERRIDES += ro.incremental.enable=1
 
@@ -479,3 +494,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.mot.build.customerid=retcn \
     ro.vendor.mot.factory=false
+# }}}
+
+# vim:fdm=marker
