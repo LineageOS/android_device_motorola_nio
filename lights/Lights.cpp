@@ -20,6 +20,7 @@
 #include "Lights.h"
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <thread>
 
 /* clang-format off */
 #define PPCAT_NX(A, B) A/B
@@ -37,10 +38,12 @@ namespace light {
 
 namespace {
 
+using ::android::base::WriteStringToFile;
+
 // Write value to path and close file.
 template <typename T>
 inline bool WriteToFile(const std::string& path, T content) {
-    return ::android::base::WriteStringToFile(std::to_string(content), path);
+    return WriteStringToFile(std::to_string(content), path);
 }
 
 uint32_t RgbaToBrightness(uint32_t color) {
@@ -66,6 +69,49 @@ inline bool IsLit(uint32_t color) {
     return color & 0x00ffffff;
 }
 
+bool SetChargingLedTimerTrigger(int on_ms, int off_ms) {
+    using namespace std::chrono_literals;
+    bool rc;
+
+    rc = WriteStringToFile("timer", CHARGING_ATTR(trigger));
+    if (!rc) {
+        LOG(DEBUG) << "charging doesn't support timer trigger";
+        return rc;
+    }
+
+    auto retries = 20;
+    while (retries--) {
+        LOG(DEBUG) << "retry " << retries << " set delay_off and delay_on";
+        std::this_thread::sleep_for(2ms);
+
+        rc = WriteToFile(CHARGING_ATTR(delay_off), off_ms);
+        if (!rc) continue;
+
+        rc = WriteToFile(CHARGING_ATTR(delay_on), on_ms);
+        if (rc) break;
+    }
+
+    if (!rc) {
+        LOG(ERROR) << "Error in writing to delay_on/off for charging";
+    }
+
+    return rc;
+}
+
+bool SetChargingLedBrightness(uint32_t brightness) {
+    bool rc;
+
+    rc = WriteStringToFile("none", CHARGING_ATTR(trigger));
+    if (!rc) {
+        LOG(DEBUG) << "charging failed to set trigger to none";
+        return rc;
+    }
+
+    rc = WriteToFile(CHARGING_ATTR(brightness), brightness);
+
+    return rc;
+}
+
 void ApplyNotificationState(const HwLightState& state) {
     bool blink = state.flashOnMs > 0 && state.flashOffMs > 0;
     bool ok = false;
@@ -77,14 +123,13 @@ void ApplyNotificationState(const HwLightState& state) {
             if (ok) break;
             FALLTHROUGH_INTENDED;
         case FlashMode::TIMED:
-            ok = WriteToFile(CHARGING_ATTR(delay_off), state.flashOffMs);
-            ok &= WriteToFile(CHARGING_ATTR(delay_on), state.flashOnMs);
+            ok = SetChargingLedTimerTrigger(state.flashOnMs, state.flashOffMs);
             // fallback to constant on if timed blinking is not supported
             if (ok) break;
             FALLTHROUGH_INTENDED;
         case FlashMode::NONE:
         default:
-            ok = WriteToFile(CHARGING_ATTR(brightness), RgbaToBrightness(state.color));
+            ok = SetChargingLedBrightness(RgbaToBrightness(state.color));
             break;
     }
 
