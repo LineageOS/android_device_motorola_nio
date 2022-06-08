@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac5e858b_1b378f1e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2022-06-08T13:45:44Z",
+      "side": 1,
+      "message": "Why aren\u0027t you also removing the service?\n\nhttps://github.com/LineageOS/android_device_motorola_nio/blob/c5010b3aa0efb4dd89f4cd2df7eb9828339f30c0/rootdir/etc/init.qcom.rc#L529",
+      "revId": "b1d727ede467e575f0d0b16ae9d751874ce75f0e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
