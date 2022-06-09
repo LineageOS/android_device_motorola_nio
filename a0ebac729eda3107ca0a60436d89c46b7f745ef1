@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "451daa2c_574e6d18",
+        "filename": "rootdir/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 22856
+      },
+      "writtenOn": "2022-06-09T16:55:41Z",
+      "side": 1,
+      "message": "$(TARGET_OUT_VENDOR_ETC)/init, otherwise script isn\u0027t triggered",
+      "range": {
+        "startLine": 99,
+        "startChar": 22,
+        "endLine": 99,
+        "endChar": 54
+      },
+      "revId": "a0ebac729eda3107ca0a60436d89c46b7f745ef1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
