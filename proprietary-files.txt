@@ -1,4 +1,4 @@
-# All unpinned blobs below are extracted from nio S1RN32.19
+# All unpinned blobs below are extracted from nio_retcn S1RN32.55-16-1
 
 # ACDB
 vendor/etc/acdbdata/adsp_avs_config.acdb
@@ -865,6 +865,13 @@ vendor/radio/qcril_database/upgrade/28_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/29_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/30_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/31_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/33_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/34_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/35_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/36_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/37_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/38_version_qcrildb.sql
+vendor/radio/qcril_database/upgrade/39_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/3_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/4_version_qcrildb.sql
 vendor/radio/qcril_database/upgrade/5_version_qcrildb.sql
@@ -878,7 +885,7 @@ etc/permissions/moto-telephony.xml:system_ext/etc/permissions/moto-telephony.xml
 framework/moto-telephony.jar:system_ext/framework/moto-telephony.jar
 
 # Radio - IMS (APK) - from patched source
--system_ext/priv-app/ims/ims.apk|6899c19f642d692f1c86c56651bd4d7db892ba7a
+-system_ext/priv-app/ims/ims.apk|fe3c36c4d8fc9d7720cfd1833ea2ade51f6b5111
 
 # Radio - IMS
 -system_ext/app/ImsRcsService/ImsRcsService.apk

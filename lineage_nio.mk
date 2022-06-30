@@ -40,9 +40,9 @@ TARGET_SCREEN_HEIGHT := 2520
 TARGET_SCREEN_WIDTH := 1080
 
 # Build info
-BUILD_FINGERPRINT := "motorola/nio_retcn/nio:11/RRN31.Q3-1-11-6/f81cc:user/release-keys"
+BUILD_FINGERPRINT := "motorola/nio_retcn/nio:12/S1RN32M.55-16-1/548707:user/release-keys"
 PRODUCT_BUILD_PROP_OVERRIDES += \
     PRODUCT_NAME=nio_retcn \
-    PRIVATE_BUILD_DESC="nio_retcn-user 11 RRN31.Q3-1-11-6 f81cc release-keys"
+    PRIVATE_BUILD_DESC="nio_retcn-user 12 S1RN32M.55-16-1 548707 release-keys"
 
 PRODUCT_GMS_CLIENTID_BASE := android-motorola
