@@ -1,4 +1,4 @@
-# All unpinned blobs below are extracted from nio S1RN32.19
+# All unpinned blobs below are extracted from nio_retcn S1RN32.55-16-2
 
 # ACDB
 vendor/etc/acdbdata/adsp_avs_config.acdb
