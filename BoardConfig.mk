@@ -11,8 +11,17 @@ DEVICE_PATH := device/motorola/nio
 # Bootloader
 TARGET_BOOTLOADER_BOARD_NAME := nio
 
+# HIDL
+DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest.xml
+
 # Kernel
 TARGET_KERNEL_CONFIG := vendor/lineageos_nio_defconfig
+
+# Touch
+SOONG_CONFIG_NAMESPACES += MOTO_KONA_TOUCH
+SOONG_CONFIG_MOTO_KONA_TOUCH := SINGLE_TAP_PATH
+SOONG_CONFIG_MOTO_KONA_TOUCH_SINGLE_TAP_PATH := /sys/class/touchscreen/NVT-ts/single_click
+TARGET_TAP_TO_WAKE_NODE := /sys/class/touchscreen/NVT-ts/double_click
 
 # Inherit from the proprietary version
 -include vendor/motorola/nio/BoardConfigVendor.mk

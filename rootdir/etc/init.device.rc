@@ -1,0 +1,4 @@
+on early-boot
+   # gestures
+   chown system system /sys/class/touchscreen/NVT-ts/double_click
+   chown system system /sys/class/touchscreen/NVT-ts/single_click
