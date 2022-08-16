@@ -25,5 +25,13 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     init.device.rc
 
+# NFC
+PRODUCT_PACKAGES += \
+    android.hardware.nfc@1.2-service
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/nfc/libnfc-nci.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nci.conf \
+    $(LOCAL_PATH)/nfc/libnfc-nxp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nxp.conf
+
 # Get non-open-source specific aspects
 $(call inherit-product-if-exists, vendor/motorola/nio/nio-vendor.mk)
