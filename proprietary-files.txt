@@ -156,6 +156,9 @@ vendor/etc/camera/vidhance_calibration
 # Camera (Firmware)
 vendor/firmware/CAMERA_ICP.elf
 
+# Display (Calibration Data)
+vendor/etc/qdcm_calib_data_mipi_mot_vid_tm_1080x2520_670.xml
+
 # Thermal
 vendor/etc/thermal-engine-nio.conf
 
