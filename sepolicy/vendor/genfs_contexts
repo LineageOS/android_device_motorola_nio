@@ -1,0 +1,2 @@
+# Vibrator
+genfscon sysfs /devices/platform/soc/884000.i2c/i2c-1/1-005a/leds/vibrator      u:object_r:sysfs_vibrator:s0
