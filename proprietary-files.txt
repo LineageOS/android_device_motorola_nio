@@ -1,0 +1,4 @@
+# All unpinned blobs below are extracted from nio S1RN32.19
+
+# Thermal
+vendor/etc/thermal-engine-nio.conf
