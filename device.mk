@@ -11,5 +11,10 @@ $(call inherit-product, device/motorola/sm8250-common/common.mk)
 PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH)
 
+# Overlays
+PRODUCT_PACKAGES += \
+    FrameworksResNio \
+    SystemUIResNio
+
 # Get non-open-source specific aspects
 $(call inherit-product-if-exists, vendor/motorola/nio/nio-vendor.mk)
