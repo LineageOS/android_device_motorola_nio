@@ -1,5 +1,0 @@
-runtime_resource_overlay {
-    name: "SettingsResNio",
-    sdk_version: "current",
-    vendor: true
-}
