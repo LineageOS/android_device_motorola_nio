@@ -159,4 +159,5 @@
     <item name="modem.controller.rx">130</item>
     <item name="modem.controller.tx">160</item>
     <item name="modem.controller.voltage">3700</item>
+    <item name="bluetooth.controller.voltage">3700</item>
 </device>
