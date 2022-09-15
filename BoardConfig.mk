@@ -11,9 +11,6 @@ DEVICE_PATH := device/motorola/nio
 # Bootloader
 TARGET_BOOTLOADER_BOARD_NAME := nio
 
-# HIDL
-DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest.xml
-
 # Kernel
 TARGET_KERNEL_CONFIG := vendor/lineageos_nio_defconfig
 
