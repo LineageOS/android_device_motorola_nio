@@ -11,6 +11,9 @@ DEVICE_PATH := device/motorola/nio
 # Bootloader
 TARGET_BOOTLOADER_BOARD_NAME := nio
 
+# Display
+TARGET_SCREEN_DENSITY := 480
+
 # HIDL
 DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest.xml
 
