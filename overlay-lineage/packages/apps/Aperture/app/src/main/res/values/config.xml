@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2022-2023 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- There are aux cams on nio. -->
+    <bool name="config_enableAuxCameras">true</bool>
+
+    <!-- ID3 is mono, serves no purpose in Aperture. -->
+    <string-array name="config_ignoredAuxCameraIds">
+        <item>3</item>
+    </string-array>
+
+    <!-- ID7 is for synthetic bokeh, ID5 and ID6 don't seem to be useful/usable. -->
+    <bool name="config_ignoreLogicalAuxCameras">true</bool>
+
+    <!-- Made according to SensorModeTable in dumpsys. -->
+    <string-array name="config_additionalVideoConfigurations">
+        <item>0</item> <item>sd|hd</item> <item>24|30|60|120</item>
+        <item>0</item> <item>fhd</item> <item>24|30|60|120</item>
+        <item>0</item> <item>uhd</item> <item>24|30|60</item>
+        <item>1</item> <item>sd|hd</item> <item>24|30|120</item>
+        <item>1</item> <item>fhd</item> <item>24|30|120</item>
+        <item>1</item> <item>uhd</item> <item>24|30</item>
+        <item>2</item> <item>sd|hd|fhd</item> <item>24|30|60</item>
+        <item>2</item> <item>uhd</item> <item>24|30</item>
+        <item>3</item> <item>sd|hd</item> <item>24|30</item>
+        <item>4</item> <item>sd|hd|fhd</item> <item>24|30</item>
+    </string-array>
+</resources>
