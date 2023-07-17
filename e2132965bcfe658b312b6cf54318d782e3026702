@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3df76138_b2cb30b7",
+        "filename": "overlay-lineage/packages/apps/Aperture/app/src/main/res/values/config.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 25732
+      },
+      "writtenOn": "2023-07-17T14:58:31Z",
+      "side": 1,
+      "message": "true by default, you can remove this",
+      "range": {
+        "startLine": 15,
+        "startChar": 0,
+        "endLine": 16,
+        "endChar": 59
+      },
+      "revId": "e2132965bcfe658b312b6cf54318d782e3026702",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "caaf08a1_7f39e0e5",
+        "filename": "overlay-lineage/packages/apps/Aperture/app/src/main/res/values/config.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 25732
+      },
+      "writtenOn": "2023-07-17T14:58:31Z",
+      "side": 1,
+      "message": "Can be simplified to:\n\n        \u003citem\u003e0\u003c/item\u003e \u003citem\u003esd|hd|fhd\u003c/item\u003e \u003citem\u003e24|30|60|120\u003c/item\u003e\n        \u003citem\u003e0\u003c/item\u003e \u003citem\u003euhd\u003c/item\u003e \u003citem\u003e24|30|60\u003c/item\u003e\n        \u003citem\u003e1\u003c/item\u003e \u003citem\u003esd|hd|fhd\u003c/item\u003e \u003citem\u003e24|30|120\u003c/item\u003e\n        \u003citem\u003e1\u003c/item\u003e \u003citem\u003euhd\u003c/item\u003e \u003citem\u003e24|30\u003c/item\u003e\n        \u003citem\u003e2\u003c/item\u003e \u003citem\u003esd|hd|fhd\u003c/item\u003e \u003citem\u003e24|30|60\u003c/item\u003e\n        \u003citem\u003e2\u003c/item\u003e \u003citem\u003euhd\u003c/item\u003e \u003citem\u003e24|30\u003c/item\u003e\n        \u003citem\u003e3\u003c/item\u003e \u003citem\u003esd|hd\u003c/item\u003e \u003citem\u003e24|30\u003c/item\u003e\n        \u003citem\u003e4\u003c/item\u003e \u003citem\u003esd|hd|fhd\u003c/item\u003e \u003citem\u003e24|30\u003c/item\u003e\n\nUsually 24 and 30 FPS are already available by default, check if that\u0027s the case before force adding them here",
+      "range": {
+        "startLine": 20,
+        "startChar": 0,
+        "endLine": 29,
+        "endChar": 64
+      },
+      "revId": "e2132965bcfe658b312b6cf54318d782e3026702",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
