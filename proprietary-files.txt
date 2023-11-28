@@ -1,7 +1,6 @@
 # All unpinned blobs below are extracted from nio_retcn S1RN32.55-16-2
 
 # ACDB
-vendor/etc/acdbdata/adsp_avs_config.acdb
 vendor/etc/acdbdata/Bluetooth_cal.acdb
 vendor/etc/acdbdata/General_cal.acdb
 vendor/etc/acdbdata/Global_cal.acdb
@@ -9,6 +8,7 @@ vendor/etc/acdbdata/Handset_cal.acdb
 vendor/etc/acdbdata/Hdmi_cal.acdb
 vendor/etc/acdbdata/Headset_cal.acdb
 vendor/etc/acdbdata/Speaker_cal.acdb
+vendor/etc/acdbdata/adsp_avs_config.acdb
 
 # Camera
 vendor/lib/libcamxexternalformatutils.so
@@ -163,6 +163,6 @@ vendor/etc/qdcm_calib_data_mipi_mot_vid_tm_1080x2520_670.xml
 vendor/etc/thermal-engine-nio.conf
 
 # Touchscreen firmware
+vendor/firmware/NT36xxx_MP_Setting_Criteria_6029.csv
 vendor/firmware/novatek_ts_fw.bin
 vendor/firmware/novatek_ts_mp.bin
-vendor/firmware/NT36xxx_MP_Setting_Criteria_6029.csv
