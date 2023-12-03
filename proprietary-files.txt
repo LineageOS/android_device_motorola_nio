@@ -159,6 +159,21 @@ vendor/firmware/CAMERA_ICP.elf
 # Display (Calibration Data)
 vendor/etc/qdcm_calib_data_mipi_mot_vid_tm_1080x2520_670.xml
 
+# Fingerprint
+vendor/bin/hw/android.hardware.biometrics.fingerprint@2.1-service-ets
+vendor/etc/init/android.hardware.biometrics.fingerprint@2.1-service-ets2.rc
+vendor/lib64/libets_fp_et5.so
+vendor/lib64/libets_teeclient.so
+vendor/lib64/vendor.egistec.hardware.fingerprint@2.0.so
+
+# NFC
+vendor/lib64/libpn557_fw.so
+
+# Sensor-configs
+vendor/etc/sensors/config/icm4x6xx_0.json
+vendor/etc/sensors/config/lsm6ds3c_0.json
+vendor/etc/sensors/config/vcnl36866_0.json
+
 # Thermal
 vendor/etc/thermal-engine-nio.conf
 
