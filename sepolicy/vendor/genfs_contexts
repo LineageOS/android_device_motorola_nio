@@ -1,3 +1,6 @@
+# Touchscreen
+genfscon sysfs /devices/platform/soc/a94000.spi/spi_master/spi0/spi0.0/touchscreen/primary u:object_r:vendor_sysfs_touchpanel:s0
+
 # Vibrator
 genfscon sysfs /devices/platform/soc/884000.i2c/i2c-1/1-005a/leds/vibrator      u:object_r:sysfs_vibrator:s0
 

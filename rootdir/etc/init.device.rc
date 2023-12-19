@@ -1,9 +1,5 @@
 on early-boot
    exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules nova_0flash_mmi
 
-   # gestures
-   chown system system /sys/class/touchscreen/NVT-ts/double_click
-   chown system system /sys/class/touchscreen/NVT-ts/single_click
-
 on fs
    exec u:r:vendor_modprobe:s0 -- /vendor/bin/modprobe -a -d /vendor/lib/modules wl2864c sx933x_sar
