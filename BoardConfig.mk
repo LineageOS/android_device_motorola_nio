@@ -28,11 +28,5 @@ VENDOR_SECURITY_PATCH := 2022-06-01
 # SEPolicy
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 
-# Touch
-SOONG_CONFIG_NAMESPACES += MOTO_KONA_TOUCH
-SOONG_CONFIG_MOTO_KONA_TOUCH := SINGLE_TAP_PATH
-SOONG_CONFIG_MOTO_KONA_TOUCH_SINGLE_TAP_PATH := /sys/class/touchscreen/NVT-ts/single_click
-TARGET_TAP_TO_WAKE_NODE := /sys/class/touchscreen/NVT-ts/double_click
-
 # Inherit from the proprietary version
 -include vendor/motorola/nio/BoardConfigVendor.mk
