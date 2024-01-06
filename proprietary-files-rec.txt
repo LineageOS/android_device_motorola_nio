@@ -1,5 +1,0 @@
-# All unpinned blobs below are extracted from nio_retcn S1RN32.55-16-2
-
-# Touchscreen firmware
-vendor/firmware/novatek_ts_fw.bin:recovery/root/vendor/firmware/novatek_ts_fw.bin
-vendor/firmware/novatek_ts_mp.bin:recovery/root/vendor/firmware/novatek_ts_mp.bin
