@@ -24,7 +24,7 @@ PRODUCT_MANUFACTURER := motorola
 PRODUCT_SYSTEM_NAME := nio_retcn
 
 # Build info
-BUILD_FINGERPRINT := "motorola/nio_retcn/nio:12/S1RN32.55-16-2/125d6-32b4dd:user/release-keys"
+BUILD_FINGERPRINT := "motorola/nio_retcn/nio:12/S1RN32.55-16-13/fce21a-b9f4e9:user/release-keys"
 PRODUCT_BUILD_PROP_OVERRIDES += \
-    PRIVATE_BUILD_DESC="nio_retcn-user 12 S1RN32.55-16-2 125d6-32b4dd release-keys" \
+    PRIVATE_BUILD_DESC="nio_retcn-user 12 S1RN32.55-16-13 fce21a-b9f4e9 release-keys" \
     TARGET_PRODUCT=$(PRODUCT_SYSTEM_NAME)
