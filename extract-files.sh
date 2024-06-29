@@ -6,6 +6,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+function blob_fixup() {
+    case "${1}" in
+    vendor/lib64/com.qti.feature2.gs.so | vendor/lib64/com.qti.feature2.rt.so)
+        sed -i "s/camera.mot.is.coming.cts/vendor.camera.coming.cts/g" "${2}"
+        ;;
+    *)
+        blob_fixup_common "$@"
+        ;;
+    esac
+}
+
 # If we're being sourced by the common script that we called,
 # stop right here. No need to go down the rabbit hole.
 if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
