@@ -3413,7 +3413,7 @@
     </path>
 
     <path name="speaker-dmic-endfire">
-        <path name="speaker-mic" />
+        <path name="camcorder-mic-bf" />
     </path>
 
     <path name="voice-dmic-endfire">
