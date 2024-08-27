@@ -1,19 +1,20 @@
 #!/bin/bash
 #
-# Copyright (C) 2016 The CyanogenMod Project
-# Copyright (C) 2017-2020 The LineageOS Project
+# SPDX-FileCopyrightText: 2016 The CyanogenMod Project
+# SPDX-FileCopyrightText: 2017-2024 The LineageOS Project
 #
 # SPDX-License-Identifier: Apache-2.0
 #
 
 function blob_fixup() {
     case "${1}" in
-    vendor/lib64/com.qti.feature2.gs.so | vendor/lib64/com.qti.feature2.rt.so)
-        sed -i "s/camera.mot.is.coming.cts/vendor.camera.coming.cts/g" "${2}"
-        ;;
-    *)
-        blob_fixup_common "$@"
-        ;;
+        vendor/lib64/com.qti.feature2.gs.so | vendor/lib64/com.qti.feature2.rt.so)
+            [ "$2" = "" ] && return 0
+            sed -i "s/camera.mot.is.coming.cts/vendor.camera.coming.cts/g" "${2}"
+            ;;
+        *)
+            blob_fixup_common "$@"
+            ;;
     esac
 }
 
