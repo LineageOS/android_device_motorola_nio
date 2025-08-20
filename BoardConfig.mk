@@ -14,9 +14,6 @@ TARGET_BOOTLOADER_BOARD_NAME := nio
 # Display
 TARGET_SCREEN_DENSITY := 480
 
-# HIDL
-DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest.xml
-
 # Kernel
 TARGET_KERNEL_CONFIG += vendor/ext_config/nio-default.config
 BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD += nova_0flash_mmi.ko
