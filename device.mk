@@ -29,7 +29,7 @@ PRODUCT_PACKAGES += \
     init.device.rc
 
 # LiveDisplay
-$(call soong_config_set,livedisplay_sysfs,enable_ab,true)
+$(call soong_config_bool,livedisplay_sysfs,enable_ab,true)
 
 # Media
 PRODUCT_COPY_FILES += \
